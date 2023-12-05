@@ -66,7 +66,7 @@ class ISPyBClientMockup(HardwareObject):
                 "proposalId": 1,
                 "type": "MX",
             },
-            "Session": [
+            "Session":[
                 {
                     "scheduled": 0,
                     "startDate": "2013-06-11 00:00:00",
@@ -77,8 +77,8 @@ class ISPyBClientMockup(HardwareObject):
                     "sessionId": 34591,
                     "proposalId": 1,
                     "nbShifts": 3,
-                }
-            ],
+                }]
+            ,
             "Laboratory": {"laboratoryId": 1, "name": "TEST eh1"},
         }
 
