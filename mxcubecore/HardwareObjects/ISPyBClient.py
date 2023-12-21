@@ -190,6 +190,7 @@ class ISPyBClient(HardwareObject):
         self.pyispyb = self.get_object_by_role("pyispyb")
         self.icat_client = self.get_object_by_role("icat_client")
 
+        self.samples = []
         self.authServerType = self.get_property("authServerType") or "ldap"
         if self.authServerType == "ldap":
             # Initialize ldap
@@ -753,8 +754,6 @@ class ISPyBClient(HardwareObject):
         return ldap_connection.authenticate(login_name, psd)
 
     def get_todays_session(self, prop, create_session=True):
-        #logging.getLogger("HWR").debug("getting proposal for todays session")
-
         try:
             sessions = prop["Session"]
         except KeyError:
@@ -816,7 +815,6 @@ class ISPyBClient(HardwareObject):
             logging.getLogger("HWR").debug("create new session")
         elif todays_session:
             session_id = todays_session["sessionId"]
-            #logging.getLogger("HWR").debug("getting local contact for %s" % session_id)
             localcontact = self.get_session_local_contact(session_id)
         elif prop.get("Session", None):
             logging.getLogger("HWR").debug(
@@ -1082,6 +1080,23 @@ class ISPyBClient(HardwareObject):
                 "Error in store_image: could not connect to server"
             )
 
+    def find_sample_by_sample_id(self, sample_id):
+        """
+        Returns the sample  with the matching sample_id.
+
+        Args:
+            sample_id(int): Sample id from lims.
+        Returns:
+            (): sample or None if not found
+        """
+        for sample in self.samples:
+            try:
+                if int(sample.get("limsID")) == sample_id:
+                    return sample
+            except (TypeError, KeyError):
+                pass
+        return None
+
     def __find_sample(self, sample_ref_list, code=None, location=None):
         """
         Returns the sample with the matching "search criteria" <code> and/or
@@ -1134,6 +1149,8 @@ class ISPyBClient(HardwareObject):
                 response_samples = [
                     utf_encode(asdict(sample)) for sample in response_samples
                 ]
+
+                self.samples = response_samples
 
             except WebFault as e:
                 logging.getLogger("ispyb_client").exception(str(e))
@@ -2540,6 +2557,12 @@ class ISPyBValueFactory:
             raise ISPyBArgumentError(err_msg)
 
         return workflow_step_vo
+
+    def create_mx_collection(self, collection_parameters):
+        self.icat_client.create_mx_collection(collection_parameters)
+
+    def create_ssx_collection(self, data_path, collection_parameters, beamline_parameters, extra_lims_values):
+        self.icat_client.create_ssx_collection(data_path, collection_parameters, beamline_parameters, extra_lims_values)
 
     def grid_info_from_workflow_info(self, workflow_info_dict):
         """
