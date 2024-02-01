@@ -193,9 +193,9 @@ class Lima2Detector(AbstractDetector):
 
         update_lima2_loggers()
 
-        # dump_params_file_pattern = "lima2_params-%Y-%m-%d-%H%M%S.json"
-        # file_name = time.strftime(dump_params_file_pattern)
-        # dump_params_filename = os.path.json(data_root_path, file_name)
+        dump_params_file_pattern = "lima2_params-%Y-%m-%d-%H%M%S.json"
+        file_name = time.strftime(dump_params_file_pattern)
+        dump_params_filename = os.path.join(data_root_path, file_name)
 
         packet_fifo_depth = 20000
 
@@ -460,14 +460,11 @@ class Lima2Detector(AbstractDetector):
         uuid = uuid1()
         _logger.info(f'UUID={uuid}')
 
-        self.__device.prepareAcq(uuid)
-        """
         lima2_params = self.__device.prepareAcq(uuid)
         if dump_params_filename:
             _logger.info("saving lima2 params to %s", dump_params_filename)
             with open(dump_params_filename, "wt") as f:
                 json.dump(lima2_params, f, indent=4, sort_keys=True)
-        """
 
         # Async version
         #gevent.spawn(self.__device.prepareAcq, uuid).link_value(on_prepared)
