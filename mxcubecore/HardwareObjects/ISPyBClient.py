@@ -753,7 +753,7 @@ class ISPyBClient(HardwareObject):
         return ldap_connection.authenticate(login_name, psd)
 
     def get_todays_session(self, prop, create_session=True):
-        logging.getLogger("HWR").debug("getting proposal for todays session")
+        #logging.getLogger("HWR").debug("getting proposal for todays session")
 
         try:
             sessions = prop["Session"]
@@ -816,7 +816,7 @@ class ISPyBClient(HardwareObject):
             logging.getLogger("HWR").debug("create new session")
         elif todays_session:
             session_id = todays_session["sessionId"]
-            logging.getLogger("HWR").debug("getting local contact for %s" % session_id)
+            #logging.getLogger("HWR").debug("getting local contact for %s" % session_id)
             localcontact = self.get_session_local_contact(session_id)
         elif prop.get("Session", None):
             logging.getLogger("HWR").debug(
