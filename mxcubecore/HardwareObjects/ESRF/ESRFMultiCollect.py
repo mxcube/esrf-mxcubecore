@@ -112,8 +112,6 @@ class ESRFMultiCollect(AbstractMultiCollect, HardwareObject):
         self._detector._emit_status()
         HWR.beamline.lims.icat_client.create_mx_collection(data_collect_parameters)
 
-    #     self._metadataClient.end(data_collect_parameters)
-
     def prepare_oscillation(
         self,
         start,
