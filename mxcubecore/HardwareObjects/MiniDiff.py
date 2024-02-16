@@ -604,11 +604,15 @@ class MiniDiff(HardwareObject):
                 self.wait_ready(30)
                 fun = self.centringMethods[method]
             else:
-                logging.getLogger("HWR").error(
-                    "Using change phase for centering in Java script (DN)"
+                logging.getLogger("HWR").info(
+                    "Using change phase for centering in Java script (DN) for MiniDiff"
                 )
                 self.run_script("ChangePhase_centring")
+                time.sleep(0.5)
                 self.wait_ready(60)
+                logging.getLogger("HWR").info(
+                    "Using centering in Java script (DN) for MiniDiff"
+                )
                 self.run_script("sample_centering")
                 time.sleep(0.5)
                 self.wait_ready(120)
@@ -878,8 +882,8 @@ class MiniDiff(HardwareObject):
                 self.reject_centring()
             else:
                 self.emitCentringSuccessful()
-                if not self.user_confirms_centring:
-                    self.accept_centring()
+                # if not self.user_confirms_centring:
+                self.accept_centring()
                 logging.getLogger("user_level_log").info(
                     "Automatic loop centring successful"
                 )
@@ -972,6 +976,8 @@ class MiniDiff(HardwareObject):
             self.emit("centringSuccessful", (method, self.get_centring_status()))
             self.currentCentringMethod = None
             self.current_centring_procedure = None
+            tmp_img_name = os.path.join(tempfile.gettempdir(), "last_img.png")
+            # sample_view.camera.save_snapshot(tmp_img_name)
         else:
             logging.getLogger("HWR").debug(
                 "MiniDiff: trying to emit centringSuccessful outside of a centring"

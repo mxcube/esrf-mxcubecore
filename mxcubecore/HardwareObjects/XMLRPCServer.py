@@ -8,7 +8,6 @@ configuration XML for more information.
 import logging
 import sys
 import os
-import shutil
 import inspect
 import pkgutil
 import types
@@ -137,6 +136,7 @@ class XMLRPCServer(HardwareObject):
         self._server.register_function(self.move_diffractometer)
         self._server.register_function(self.save_snapshot)
         self._server.register_function(self.save_multiple_snapshots)
+        self._server.register_function(self.save_twelve_snapshots_new_script)
         self._server.register_function(self.save_twelve_snapshots_script)
         self._server.register_function(self.cryo_temperature)
         self._server.register_function(self.flux)
@@ -445,8 +445,14 @@ class XMLRPCServer(HardwareObject):
         HWR.beamline.diffractometer.move_motors(roles_positions_dict)
         return True
 
-    def save_twelve_snapshots_script(self, path):
-        HWR.beamline.diffractometer.run_script("Take12Snapshots")
+    def save_twelve_snapshots_new_script(self, path):
+        path = path[14:]
+        logging.getLogger("HWR").info(
+            "Taking 6 snapshots to be saved in  %s " % str(path)
+        )
+        # import pdb; pdb.set_trace()
+        path = path.replace("/", "\\")
+        HWR.beamline.diffractometer.run_script("Take6Snapshots, " + path)
         # Wait a couple of seconds for the files to appear
 
         time.sleep(2)
@@ -457,8 +463,26 @@ class XMLRPCServer(HardwareObject):
 
         file_list = os.listdir(tmp_path)
 
-        for filename in file_list:
-            shutil.copy(tmp_path + filename, path)
+    def save_twelve_snapshots_script(self, path):
+        logging.getLogger("HWR").info(
+            "Taking 12 snapshots to be saved in  %s " % str(path[13:])
+        )
+        # HWR.beamline.diffractometer.run_script("Take12Snapshots " + path)
+        # import pdb; pdb.set_trace()
+        HWR.beamline.diffractometer.run_script("Take12Snapshots," + path[13:])
+        # Wait a couple of seconds for the files to appear
+
+        HWR.beamline.diffractometer.wait_ready(300)
+        time.sleep(2)
+
+        # tmp_path = HWR.beamline.diffractometer.get_property(
+        #    "custom_snapshot_script_dir", "/tmp"
+        # )
+
+        file_list = os.listdir(path)
+
+        # for filename in file_list:
+        #    shutil.copy(tmp_path + filename, path)
 
     def save_multiple_snapshots(self, path_list, show_scale=False):
         logging.getLogger("HWR").info("Taking snapshot %s " % str(path_list))
