@@ -395,12 +395,19 @@ class Lima2Detector(AbstractDetector):
         )
 
         if os.path.exists(fpath):
+            _logger.info(f"Reading parameters from {fpath}")
             with open(fpath, "rt") as f:
                 pf_params = json.load(f)
 
+            _logger.info(f"Parameters: {pf_params}")
+
+        pixel_size = 75e-6
+
         _logger.info("peakfinder params: %s", pf_params)
         # the "threshold" parameter will always refer to int32 scale
+        radius_max = pf_params.get("radius_max", 0.0) * pixel_size
         fai_user_params = {
+            "radius_max": radius_max,
             "cutoff_pick": pf_params["snr"],
             "noise": pf_params["threshold"] / legacy_photon_adus,
             "patch_size": pf_params["patch_size"],
@@ -436,6 +443,9 @@ class Lima2Detector(AbstractDetector):
             "fai": fai_params,
         }
 
+        _logger.info("FAI PARAMS: %s", fai_params)
+        _logger.info("PARAMS: %s", proc_params)
+
         proc_params.update({
             f"saving_{stream}": get_saving(stream) for stream in saving_streams
         })
@@ -464,8 +474,6 @@ class Lima2Detector(AbstractDetector):
 
         if self.__stopped:
             return
-
-        pixel_size = 75e-6
 
         # Read calibration data
         calib_params_file = get_param_file("calib_params.txt")
