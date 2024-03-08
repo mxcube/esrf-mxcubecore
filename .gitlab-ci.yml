@@ -1,0 +1,60 @@
+# Official language image. Look for the different tagged releases at:
+# https://hub.docker.com/r/library/python/tags/
+image: python:3.10
+
+workflow:
+  rules:
+    # Run only on prod branch
+    - if: $CI_COMMIT_BRANCH == "prod"
+
+# Change pip's cache directory to be inside the project directory since we can
+# only cache local items.
+variables:
+  PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
+
+# https://pip.pypa.io/en/stable/topics/caching/
+cache:
+  paths:
+    - .cache/pip
+
+stages:          # List of stages for jobs, and their order of execution
+  - build
+  - test
+  - tag
+  - deploy
+
+before_script:
+  - curl -Ls https://micro.mamba.pm/api/micromamba/linux-64/latest | tar -xvj bin/micromamba
+  - export MAMBA_ROOT_PREFIX=/micromamba
+  - eval "$(./bin/micromamba shell hook -s posix)"
+  - micromamba env create -f conda-environment-dev.yml
+  - micromamba run --name mxcubecore poetry install
+
+lint-test-job:   # This job also runs in the test stage.
+  stage: test    # It can run at the same time as unit-test-job (in parallel).
+  script:
+    - micromamba run --name mxcubecore poetry run pre-commit run --all-files
+
+unit-test-job:   # This job runs in the test stage.
+  stage: test    # It only starts when the job in the build stage completes successfully.
+  script:
+    - micromamba run --name mxcubecore poetry run pytest
+
+tag-job:      # This job runs in the deploy stage.
+  stage: tag  # It only runs when *both* jobs in the test stage complete successfully.
+  script:
+    - micromamba run --name mxcubecore git remote remove origin
+    - micromamba run --name mxcubecore git remote add origin https://oauth2:${TAGTOKEN}@gitlab.esrf.fr/bcu/mxcubecore
+    - micromamba run --name mxcubecore git config user.email oscarsso@esrf.fr
+    - micromamba run --name mxcubecore git config user.name Marcus Oskarsson
+    - micromamba run --name mxcubecore git tag -a $(micromamba run --name mxcubecore poetry version -s) -m "[skip-ci] Bumped version"
+    - micromamba run --name mxcubecore git push --tags
+
+deploy-job:      # This job runs in the deploy stage.
+  stage: deploy  # It only runs when *both* jobs in the test stage complete successfully.
+  environment: production
+  script:
+    - micromamba run --name mxcubecore poetry build
+    - micromamba run --name mxcubecore poetry config repositories.gitlab ${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/pypi
+    - micromamba run --name mxcubecore poetry config http-basic.gitlab gitlab-ci-token $CI_JOB_TOKEN
+    - micromamba run --name mxcubecore poetry publish --repository gitlab
