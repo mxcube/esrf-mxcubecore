@@ -1,6 +1,3 @@
-import os
-import subprocess
-
 from typing_extensions import Literal
 
 from pydantic.v1 import BaseModel, Field
@@ -12,12 +9,12 @@ from mxcubecore.HardwareObjects.ESRF.queue_entry.ssx_base_queue_entry import (
     SsxBaseQueueEntry,
     SsxBaseQueueTaskParameters,
     BaseUserCollectionParameters,
+    SSXPathParameters,
 )
 
 
 from mxcubecore.model.common import (
     CommonCollectionParamters,
-    PathParameters,
     LegacyParameters,
     StandardCollectionParameters,
 )
@@ -38,7 +35,7 @@ class TestUserCollectionParameters(BaseUserCollectionParameters):
 
 
 class TestCollectionTaskParameters(SsxBaseQueueTaskParameters):
-    path_parameters: PathParameters
+    path_parameters: SSXPathParameters
     common_parameters: CommonCollectionParamters
     collection_parameters: StandardCollectionParameters
     user_collection_parameters: TestUserCollectionParameters
@@ -72,29 +69,29 @@ class TestCollectionQueueEntry(SsxBaseQueueEntry):
         super().execute()
         debug(self._data_model._task_data)
 
-        data_root_path = HWR.beamline.session.get_image_directory(
-            os.path.join(
-                self._data_model._task_data.path_parameters.subdir,
-                self._data_model._task_data.path_parameters.experiment_type,
-            )
-        )
+        # data_root_path = HWR.beamline.session.get_image_directory(
+        #     os.path.join(
+        #         self._data_model._task_data.path_parameters.subdir,
+        #         self._data_model._task_data.path_parameters.experiment_type,
+        #     )
+        # )
 
-        process_path = os.path.join(
-            HWR.beamline.session.get_base_process_directory(),
-            self._data_model._task_data.path_parameters.subdir,
-        )
+        # process_path = os.path.join(
+        #     HWR.beamline.session.get_base_process_directory(),
+        #     self._data_model._task_data.path_parameters.subdir,
+        # )
 
-        subprocess.Popen(
-            "mkdir --parents %s" % (data_root_path),
-            shell=True,
-            stdin=None,
-            stdout=None,
-            stderr=None,
-            close_fds=True,
-        ).wait()
+        # subprocess.Popen(
+        #     "mkdir --parents %s" % (data_root_path),
+        #     shell=True,
+        #     stdin=None,
+        #     stdout=None,
+        #     stderr=None,
+        #     close_fds=True,
+        # ).wait()
 
-        dcg = HWR.beamline.lims.pyispyb.create_ssx_data_collection_group()
-        HWR.beamline.lims.pyispyb.create_ssx_data_collection(dcg)
+        # dcg = HWR.beamline.lims.icat_client.create_ssx_data_collection_group()
+        # HWR.beamline.lims.icat_client.create_ssx_data_collection()
 
     def pre_execute(self):
         super().pre_execute()

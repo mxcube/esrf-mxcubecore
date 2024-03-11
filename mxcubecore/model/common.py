@@ -14,9 +14,6 @@ class PathParameters(BaseModel):
     prefix: str
     subdir: str
     experiment_name: Optional[str]
-    use_experiment_name: bool = Field(
-        False, description="Whether to use the experiment name in the data path"
-    )
 
     class Config:
         extra: "ignore"

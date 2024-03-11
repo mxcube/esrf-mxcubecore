@@ -1,9 +1,7 @@
 import logging
-import time
-import enum
 import gevent
 
-from pydantic.v1 import BaseModel, Field
+from pydantic import BaseModel, Field
 from devtools import debug
 
 from mxcubecore import HardwareRepository as HWR
@@ -30,7 +28,7 @@ __license__ = "LGPLv3+"
 __category__ = "General"
 
 
-class InjectorUserCollectionParameters(BaseUserCollectionParameters):
+class LaserInjectorUserCollectionParameters(BaseUserCollectionParameters):
     num_images: int = Field(1000, gt=0, lt=10000000)
     take_pedestal: bool = Field(True)
 
@@ -39,30 +37,30 @@ class InjectorUserCollectionParameters(BaseUserCollectionParameters):
         use_enum_values: True
 
 
-class InjectorColletionTaskParameters(SsxBaseQueueTaskParameters):
+class LaserInjectorColletionTaskParameters(SsxBaseQueueTaskParameters):
     path_parameters: SSXPathParameters
     common_parameters: CommonCollectionParamters
     collection_parameters: StandardCollectionParameters
-    user_collection_parameters: InjectorUserCollectionParameters
+    user_collection_parameters: LaserInjectorUserCollectionParameters
     legacy_parameters: LegacyParameters
 
 
-class SsxInjectorCollectionQueueModel(DataCollection):
+class SsxLaserInjectorCollectionQueueModel(DataCollection):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
 
-class SsxInjectorCollectionQueueEntry(SsxBaseQueueEntry):
+class SsxLaserInjectorCollectionQueueEntry(SsxBaseQueueEntry):
     """
     Defines the behaviour of a data collection.
     """
 
-    QMO = SsxInjectorCollectionQueueModel
-    DATA_MODEL = InjectorColletionTaskParameters
-    NAME = "SSX Injector Collection"
+    QMO = SsxLaserInjectorCollectionQueueModel
+    DATA_MODEL = LaserInjectorColletionTaskParameters
+    NAME = "SSX LaserInjector Collection"
     REQUIRES = ["point", "line", "no_shape", "chip", "mesh"]
 
-    def __init__(self, view, data_model: SsxInjectorCollectionQueueModel):
+    def __init__(self, view, data_model: SsxLaserInjectorCollectionQueueModel):
         super().__init__(view=view, data_model=data_model)
         self.__scanning = False
 
@@ -78,6 +76,10 @@ class SsxInjectorCollectionQueueEntry(SsxBaseQueueEntry):
         reject_empty_frames = (
             self._data_model._task_data.user_collection_parameters.reject_empty_frames
         )
+
+        delay = HWR.beamline.diffractometer.get_ssx_delay()
+        ssx_laser_scan_method = HWR.beamline.diffractometer.get_ssx_scan_method()
+
         data_root_path = self.get_data_path()
 
         HWR.beamline.diffractometer.set_phase("DataCollection")
@@ -101,6 +103,10 @@ class SsxInjectorCollectionQueueEntry(SsxBaseQueueEntry):
         HWR.beamline.diffractometer.wait_ready()
         HWR.beamline.detector.wait_ready()
 
+        logging.getLogger("user_level_log").info(
+            f"Laser scan method {ssx_laser_scan_method}"
+        )
+        logging.getLogger("user_level_log").info(f"Laser delay {delay}")
         logging.getLogger("user_level_log").info(f"Acquiring ...")
         HWR.beamline.detector.start_acquisition()
 
