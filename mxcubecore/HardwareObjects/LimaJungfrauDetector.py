@@ -16,6 +16,7 @@ class LimaJungfrauDetector(AbstractDetector):
         self.start_angles = list()
 
     def init(self):
+
         AbstractDetector.init(self)
         lima_device = self.get_property("lima_device", "")
 
