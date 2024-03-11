@@ -225,13 +225,13 @@ class Microdiff(MiniDiff.MiniDiff):
             "setRoomTemperatureMode",
         )
 
-        self.auto_align_ssx_block = self.add_command(
+        self.prepare_ssx_grid_scan = self.add_command(
             {
                 "type": "exporter",
                 "exporter_address": self.exporter_addr,
-                "name": "auto_align_ssx_block",
+                "name": "prepare_ssx_grid_scan",
             },
-            "autoAlignSSXBlock",
+            "prepareSSXGridScan",
         )
 
         self.start_ssx_scan = self.add_command(
@@ -240,7 +240,7 @@ class Microdiff(MiniDiff.MiniDiff):
                 "exporter_address": self.exporter_addr,
                 "name": "start_ssx_scan",
             },
-            "startSSXScan",
+            "startSSXGridScan",
         )
 
         self.start_still_ssx_scan = self.add_command(
@@ -249,16 +249,34 @@ class Microdiff(MiniDiff.MiniDiff):
                 "exporter_address": self.exporter_addr,
                 "name": "start_still_ssx_scan",
             },
-            "startStillSSXScan",
+            "startSSXStillScan",
         )
 
-        self.define_ssx_scan_region = self.add_command(
+        self.prepare_ssx_grid_scan = self.add_command(
             {
                 "type": "exporter",
                 "exporter_address": self.exporter_addr,
-                "name": "define_ssx_scan_region",
+                "name": "prepare_ssx_grid_scan",
             },
-            "defineSSXScanRegion",
+            "prepareSSXGridScan",
+        )
+
+        self.get_ssx_scan_method = self.add_command(
+            {
+                "type": "exporter",
+                "exporter_address": self.exporter_addr,
+                "name": "get_ssx_scan_method",
+            },
+            "getSSXScanMethod",
+        )
+
+        self.get_ssx_delay = self.add_command(
+            {
+                "type": "exporter",
+                "exporter_address": self.exporter_addr,
+                "name": "get_ssx_delay",
+            },
+            "getSSXDeltaT",
         )
 
         MiniDiff.MiniDiff.init(self)
