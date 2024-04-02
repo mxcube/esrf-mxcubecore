@@ -620,6 +620,10 @@ class DataCollection(TaskNode):
         self.workflow_name = None
         self.workflow_type = None
         self.workflow_uid = None
+        self.workflow_kappa_settings_id = None
+        self.workflow_characterisation_id = None
+        self.workflow_position_id = None
+        self.workflow_group_by = None
 
     @staticmethod
     def set_processing_methods(processing_methods):
@@ -2692,7 +2696,11 @@ def to_collect_dict(data_collection, session, sample, centred_pos=None):
             "ispyb_group_data_collections": data_collection.ispyb_group_data_collections,
             "workflow_name": data_collection.workflow_name,
             "workflow_type": data_collection.workflow_type,
-            "workflow_uid": data_collection.workflow_uid
+            "workflow_uid": data_collection.workflow_uid,
+            "workflow_kappa_settings_id": data_collection.workflow_kappa_settings_id,
+            "workflow_charactersiation_id": data_collection.workflow_characterisation_id,
+            "workflow_position_id": data_collection.workflow_position_id,
+            "workflow_group_by": data_collection.workflow_group_by,
         }
     ]
 
