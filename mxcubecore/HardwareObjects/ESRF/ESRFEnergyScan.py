@@ -270,7 +270,7 @@ class ESRFEnergyScan(AbstractEnergyScan, HardwareObject):
         # while waiting fro chooch to work...
         subprocess.call(
             [
-                "/opt/pxsoft/bin/chooch",
+                "/cvmfs/sb.esrf.fr/bin/chooch",
                 "-e",
                 elt,
                 "-a",
