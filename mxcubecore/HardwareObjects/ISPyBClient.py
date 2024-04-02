@@ -2016,6 +2016,12 @@ class ISPyBClient(HardwareObject):
 
         return action_id
 
+    def create_mx_collection(self, collection_parameters):
+        self.icat_client.create_mx_collection(collection_parameters)
+
+    def create_ssx_collection(self, data_path, collection_parameters, beamline_parameters, extra_lims_values):
+        self.icat_client.create_ssx_collection(data_path, collection_parameters, beamline_parameters, extra_lims_values)
+
     # Bindings to methods called from older bricks.
     getProposal = get_proposal
     getSessionLocalContact = get_session_local_contact
@@ -2557,12 +2563,6 @@ class ISPyBValueFactory:
             raise ISPyBArgumentError(err_msg)
 
         return workflow_step_vo
-
-    def create_mx_collection(self, collection_parameters):
-        self.icat_client.create_mx_collection(collection_parameters)
-
-    def create_ssx_collection(self, data_path, collection_parameters, beamline_parameters, extra_lims_values):
-        self.icat_client.create_ssx_collection(data_path, collection_parameters, beamline_parameters, extra_lims_values)
 
     def grid_info_from_workflow_info(self, workflow_info_dict):
         """
