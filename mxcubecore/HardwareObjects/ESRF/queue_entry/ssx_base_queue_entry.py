@@ -380,8 +380,8 @@ class SsxBaseQueueEntry(BaseQueueEntry):
     def get_additional_lims_values(self):
         return ISPYBCollectionPrameters(
             **{
-                "flux_start": 10e15,
-                "flux_end": 10e15,
+                "flux_start": 3e15,
+                "flux_end": 3e15,
                 "start_time": datetime.datetime.now(),
                 "end_time": datetime.datetime.now(),
                 "chip_model": "",
