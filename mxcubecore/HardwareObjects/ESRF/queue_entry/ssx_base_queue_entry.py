@@ -200,7 +200,7 @@ class SsxBaseQueueEntry(BaseQueueEntry):
                 close_fds=True,
             ).wait()
 
-        # HWR.beamline.control.mtdsx.wait_move()
+        HWR.beamline.control.mtdsx.wait_move()
 
     def start_processing(self, exp_type):
         data_root_path = self.get_data_path()
@@ -262,9 +262,9 @@ class SsxBaseQueueEntry(BaseQueueEntry):
         super().pre_execute()
         self._current_data_path = self.get_data_model().get_path_template().directory
 
-        # HWR.beamline.control.mtdsx.wait_move()
+        HWR.beamline.control.mtdsx.wait_move()
         logging.getLogger("user_level_log").info(f"Moving detector table")
-        # HWR.beamline.control.mtdsx.move(0, wait=False)
+        HWR.beamline.control.mtdsx.move(0, wait=False)
         self._beamline_values = self.get_current_beamline_values()
         self._additional_lims_values = self.get_additional_lims_values()
         self.emit_progress(0)
@@ -282,7 +282,7 @@ class SsxBaseQueueEntry(BaseQueueEntry):
         )
 
         logging.getLogger("user_level_log").info(f"Moving detector back")
-        # HWR.beamline.control.mtdsx.move(1000, wait=False)
+        HWR.beamline.control.mtdsx.move(1000, wait=False)
 
         if HWR.beamline.control.safshut_oh2.state.name == "OPEN":
             logging.getLogger("user_level_log").info(f"Closing OH2 safety shutter")
