@@ -19,6 +19,7 @@ except Exception:
     from urllib.parse import urljoin
     from urllib.error import URLError
 
+from mxcubecore.HardwareObjects.abstract import AbstractLims
 from suds.sudsobject import asdict
 from suds import WebFault
 from suds.client import Client
@@ -157,13 +158,13 @@ def utf_decode(res_d):
     return res_d
 
 
-class ISPyBClient(HardwareObject):
+class ISPyBClient(AbstractLims):
     """
     Web-service client for ISPyB.
     """
 
     def __init__(self, name):
-        HardwareObject.__init__(self, name)
+        super().__init__(name)
         self.ldapConnection = None
         self.beamline_name = "unknown"
         self.lims_rest = None
