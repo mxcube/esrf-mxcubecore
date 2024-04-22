@@ -514,6 +514,10 @@ class Line(Shape):
         self.label = "Line"
         self.set_id(Line.SHAPE_COUNT)
 
+    def set_id(self, id_num):
+        Shape.set_id(self, id_num)
+        self.cp_list[0].index = self.id
+
     def get_centred_positions(self):
         return [self.start_cpos, self.end_cpos]
 
