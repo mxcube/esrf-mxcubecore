@@ -451,12 +451,12 @@ class ICATLIMSRestClient(HardwareObject):
             (cell, puck, sample_position) = sample_node.location  # Example: (8,2,5)
             self.__add_sample_changer_position(cell, puck, metadata)
             metadata["SampleTrackingContainer_position"] = sample_position
-            metadata["SampleTrackingContainer_type"] = (
-                "UNIPUCK"  # this could be read from the configuration file somehow
-            )
-            metadata["SampleTrackingContainer_capaticy"] = (
-                "16"  # this could be read from the configuration file somehow
-            )
+            metadata[
+                "SampleTrackingContainer_type"
+            ] = "UNIPUCK"  # this could be read from the configuration file somehow
+            metadata[
+                "SampleTrackingContainer_capaticy"
+            ] = "16"  # this could be read from the configuration file somehow
 
             self.__add_protein_acronym(sample_node, metadata)
 
@@ -514,6 +514,7 @@ class ICATLIMSRestClient(HardwareObject):
                 "MX_exposureTime": oscillation_sequence["exposure_time"],
                 "MX_flux": collection_parameters["flux"],
                 "MX_fluxEnd": collection_parameters["flux_end"],
+                "MX_positionName": collection_parameters["position_name"],
                 "MX_numberOfImages": oscillation_sequence["number_of_images"],
                 "MX_oscillationRange": oscillation_sequence["range"],
                 "MX_oscillationStart": oscillation_sequence["start"],
