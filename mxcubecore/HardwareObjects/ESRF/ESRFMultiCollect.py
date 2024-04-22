@@ -113,7 +113,7 @@ class ESRFMultiCollect(AbstractMultiCollect, HardwareObject):
         try:
             HWR.beamline.lims.create_mx_collection(data_collect_parameters)
         except:
-            logging.getLogger("HWR").exception("")            
+            logging.getLogger("HWR").exception("")
 
     def prepare_oscillation(
         self,
