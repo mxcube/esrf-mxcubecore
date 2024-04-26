@@ -2,10 +2,7 @@
 A client for PyISPyB Webservices.
 """
 
-import json
 import logging
-import pathlib
-import shutil
 from mxcubecore.BaseHardwareObjects import HardwareObject
 from mxcubecore import HardwareRepository as HWR
 from mxcubecore.HardwareObjects.abstract.AbstractLims import AbstractLims
