@@ -465,7 +465,7 @@ class Point(Shape):
 
     def set_id(self, id_num):
         Shape.set_id(self, id_num)
-        self.cp_list[0].index = self.id
+        self.cp_list[0].index = self.name
 
     def as_dict(self):
         d = Shape.as_dict(self)
@@ -496,7 +496,6 @@ class Line(Shape):
 
     def set_id(self, id_num):
         Shape.set_id(self, id_num)
-        self.cp_list[0].index = self.id
 
     def get_centred_positions(self):
         return [self.start_cpos, self.end_cpos]
@@ -564,7 +563,6 @@ class Grid(Shape):
 
     def set_id(self, id_num):
         Shape.set_id(self, id_num)
-        self.cp_list[0].index = self.id
 
     def set_result(self, result_data):
         self.result = result_data
