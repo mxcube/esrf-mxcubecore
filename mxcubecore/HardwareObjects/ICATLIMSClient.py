@@ -357,12 +357,12 @@ class ICATLIMSClient(AbstractLims):
             (cell, puck, sample_position) = sample_node.location  # Example: (8,2,5)
             self.__add_sample_changer_position(cell, puck, metadata)
             metadata["SampleTrackingContainer_position"] = sample_position
-            metadata[
-                "SampleTrackingContainer_type"
-            ] = "UNIPUCK"  # this could be read from the configuration file somehow
-            metadata[
-                "SampleTrackingContainer_capaticy"
-            ] = "16"  # this could be read from the configuration file somehow
+            metadata["SampleTrackingContainer_type"] = (
+                "UNIPUCK"  # this could be read from the configuration file somehow
+            )
+            metadata["SampleTrackingContainer_capaticy"] = (
+                "16"  # this could be read from the configuration file somehow
+            )
 
             self.__add_protein_acronym(sample_node, metadata)
 
