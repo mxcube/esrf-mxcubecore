@@ -21,6 +21,7 @@
 """
 import abc
 from mxcubecore.BaseHardwareObjects import HardwareObject
+from mxcubecore.model.lims_session import LIMSSession
 
 
 __credits__ = ["MXCuBE collaboration"]
@@ -32,12 +33,23 @@ class AbstractLims(HardwareObject):
     def __init__(self, name):
         super().__init__(name)
 
+        # current lims session
+        self.session = LIMSSession()
+
     @abc.abstractmethod
-    def set_horizontal_gap(self, value, timeout=None):
+    def set_lims_session(self, session: LIMSSession):
         """
-        Sets vertical gap in microns
-        :param value: target value
-        :param timeout: timeout is sec. If None do not wait
+        Sets the curent lims session
+        :param session: lims session value
         :return:
         """
-        pass
+        self.session = session
+
+    @abc.abstractmethod
+    def get_lims_session(self) -> LIMSSession:
+        """
+        Getter for the curent lims session
+        :return: current lims session
+        """
+        print(self.session)
+        return self.session
