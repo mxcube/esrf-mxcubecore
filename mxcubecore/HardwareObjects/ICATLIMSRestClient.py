@@ -5,6 +5,7 @@ import json
 import shutil
 from mxcubecore.BaseHardwareObjects import HardwareObject
 from mxcubecore import HardwareRepository as HWR
+from mxcubecore.mxcubecore.model.lims_session import LIMSSession
 from pyicat_plus.client.main import IcatClient, IcatInvestigationClient
 from pyicat_plus.client.models.session import Session
 
@@ -266,6 +267,33 @@ class ICATLIMSRestClient(HardwareObject):
         )
 
         # If session has been rescheduled new date is overwritten
+        session = LIMSSession(
+            code=investigation["type"]["name"],
+            number=self.__get_proposal_number_by_investigation(investigation),
+            title=f'{investigation["title"]}',
+            proposalId=investigation["id"],
+            startDate=self._string_to_date(investigation.get("startDate", None)),
+            endDate=self._string_to_date(investigation.get("endDate", None)),
+            startTime=self._string_to_time(investigation.get("startDate", None)),
+            endTime=self._string_to_time(investigation.get("endDate", None)),
+            actualStartDate=self._string_to_date(actual_start_date),
+            actualStartTime=self._string_to_time(actual_start_date),
+            actualEndDate=self._string_to_date(actual_end_date),
+            actualEndTime=self._string_to_time(actual_end_date),
+            beamlineName=investigation["instrument"]["name"],
+            sessionId=investigation["id"],
+            isScheduledBeamline=self.is_scheduled_on_host_beamline(
+                investigation["instrument"]["name"]
+            ),
+            isScheduledTime=self.is_scheduled_now(actual_start_date, actual_end_date),
+            isRescheduled=(
+                True if "__actualEndDate" in investigation["parameters"] else False
+            ),
+            dataPortalURL=self._get_data_portal_url(investigation),
+            userPortalURL=self._get_user_portal_url(investigation),
+            logbookURL=self._get_logbook_url(investigation),
+        )
+        """
         session = {
             "code": investigation["type"]["name"],
             "number": self.__get_proposal_number_by_investigation(investigation),
@@ -294,7 +322,7 @@ class ICATLIMSRestClient(HardwareObject):
             "dataPortalURL": self._get_data_portal_url(investigation),
             "userPortalURL": self._get_user_portal_url(investigation),
             "logbookURL": self._get_logbook_url(investigation),
-        }
+        }"""
 
         return {
             "status": {"code": "ok", "msg": "Successful login"},
@@ -451,12 +479,12 @@ class ICATLIMSRestClient(HardwareObject):
             (cell, puck, sample_position) = sample_node.location  # Example: (8,2,5)
             self.__add_sample_changer_position(cell, puck, metadata)
             metadata["SampleTrackingContainer_position"] = sample_position
-            metadata[
-                "SampleTrackingContainer_type"
-            ] = "UNIPUCK"  # this could be read from the configuration file somehow
-            metadata[
-                "SampleTrackingContainer_capaticy"
-            ] = "16"  # this could be read from the configuration file somehow
+            metadata["SampleTrackingContainer_type"] = (
+                "UNIPUCK"  # this could be read from the configuration file somehow
+            )
+            metadata["SampleTrackingContainer_capaticy"] = (
+                "16"  # this could be read from the configuration file somehow
+            )
 
             self.__add_protein_acronym(sample_node, metadata)
 
