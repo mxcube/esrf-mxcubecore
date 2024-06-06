@@ -5,12 +5,13 @@ import json
 import shutil
 from mxcubecore.BaseHardwareObjects import HardwareObject
 from mxcubecore import HardwareRepository as HWR
-from mxcubecore.mxcubecore.model.lims_session import LIMSSession
+from mxcubecore.model.lims_session import LIMSSession
+from mxcubecore.HardwareObjects.abstract import AbstractLims
 from pyicat_plus.client.main import IcatClient, IcatInvestigationClient
 from pyicat_plus.client.models.session import Session
 
 
-class ICATLIMSRestClient(HardwareObject):
+class ICATLIMSRestClient(AbstractLims):
     """
     ICAT client.
     """
@@ -99,26 +100,6 @@ class ICATLIMSRestClient(HardwareObject):
             return datetime.fromisoformat(date).astimezone()
         except Exception:
             return None
-
-    def is_scheduled_on_host_beamline(self, beamline) -> bool:
-        return beamline.strip().upper() == self.override_beamline_name.strip().upper()
-
-    def is_scheduled_now(self, startDate, endDate) -> bool:
-        return self.is_time_between(startDate, endDate)
-
-    def is_time_between(self, start_date: str, end_date: str, check_time=None):
-        if start_date is None or end_date is None:
-            return False
-
-        begin_time = datetime.fromisoformat(start_date).date()
-        end_time = datetime.fromisoformat(end_date).date()
-
-        # If check time is not given, default to current UTC time
-        check_time = check_time or datetime.utcnow().date()
-        if begin_time <= check_time <= end_time:
-            return True
-        else:
-            return False
 
     def allow_session(self, session):
         logging.getLogger("MX3.HWR").debug(
@@ -267,6 +248,7 @@ class ICATLIMSRestClient(HardwareObject):
         )
 
         # If session has been rescheduled new date is overwritten
+        """
         session = LIMSSession(
             code=investigation["type"]["name"],
             number=self.__get_proposal_number_by_investigation(investigation),
@@ -294,6 +276,7 @@ class ICATLIMSRestClient(HardwareObject):
             logbookURL=self._get_logbook_url(investigation),
         )
         """
+
         session = {
             "code": investigation["type"]["name"],
             "number": self.__get_proposal_number_by_investigation(investigation),
@@ -322,7 +305,7 @@ class ICATLIMSRestClient(HardwareObject):
             "dataPortalURL": self._get_data_portal_url(investigation),
             "userPortalURL": self._get_user_portal_url(investigation),
             "logbookURL": self._get_logbook_url(investigation),
-        }"""
+        }
 
         return {
             "status": {"code": "ok", "msg": "Successful login"},
