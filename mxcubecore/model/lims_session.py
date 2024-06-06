@@ -1,5 +1,5 @@
-from datetime import datetime
-from typing import Optional, Union
+from datetime import date, datetime
+from typing import Optional, Union, List
 from pydantic import BaseModel, Field
 
 
@@ -41,3 +41,67 @@ class LIMSSession(BaseModel):
     userPortalURL: Optional[str] = None
     dataPortalURL: Optional[str] = None
     logbookURL: Optional[str] = None
+
+
+class Proposal(BaseModel):
+    proposalId: str = ""
+    personId: str = ""
+    type: str = ""
+    code: str = ""
+    number: str = ""
+    title: str = ""
+
+
+class Person(BaseModel):
+    personId: str = ""
+    laboratoryId: str = ""
+    siteId: str = ""
+    emailAddress: str = ""
+    familyName: str = ""
+    # faxNumber: str = ""
+    givenName: str = ""
+    login: str = ""
+    # phoneNumber: str = ""
+    title: str = ""
+
+
+class Status(BaseModel):
+    code: str = "error"
+    msg: Optional[str] = ""
+
+
+class Laboratoty(BaseModel):
+    address: str = ""
+    city: str = ""
+    country: str = ""
+    laboratoryExtPk: str = ""
+    laboratoryId: str = ""
+    name: str = ""
+
+
+class Session(BaseModel):
+    sessionId: str = ""
+    proposalId: str = ""
+    proposalName: str = ""
+    beamlineName: str = ""
+    comments: str = ""
+    startDate: datetime
+    endDate: datetime
+    nbShifts: str = ""
+    scheduled: str = ""
+    comments: str = ""
+
+
+class ProposalTuple(BaseModel):
+    """
+    Kept for legacy purposes and used by ISPyBClient
+    It is a tuple containning information about Proposal, Person, Laboratory
+    Sessions, Status
+    """
+
+    proposal: Proposal = None
+    person: Person = None
+    laboratory: Laboratoty = None
+    status: Status = None
+    sessions: Optional[List[Session]] = []
+    todays_session: Optional[Session] = None
