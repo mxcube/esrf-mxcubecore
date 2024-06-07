@@ -79,53 +79,16 @@ class ISPyBDataAdapter:
         return self._shipping  # type: ignore
 
     def create_session(self, session: Session):
-        """
-        Create a new session for "current proposal", the attribute
-        porposalId in <session_dict> has to be set (and exist in ISPyB).
-
-        :param session_dict: Dictonary with session parameters.
-        :type session_dict: dict
-
-        :returns: The session id of the created session.
-        :rtype: int
+        # TODO: TO BE IMPLEMENTED
+        pass
         """
         if self._collection:
-
             try:
-                # The old API used date formated strings and the new
-                # one uses DateTime objects.
-                # session_dict["startDate"] = datetime.strptime(
-                #    session_dict["startDate"], "%Y-%m-%d %H:%M:%S"
-                # )
-                # session_dict["endDate"] = datetime.strptime(
-                #    session_dict["endDate"], "%Y-%m-%d %H:%M:%S"
-                # )
-
-                # try:
-                #    session_dict["lastUpdate"] = datetime.strptime(
-                #        session_dict["lastUpdate"].split("+")[0], "%Y-%m-%d %H:%M:%S"
-                #    )
-                #    session_dict["timeStamp"] = datetime.strptime(
-                #        session_dict["timeStamp"].split("+")[0], "%Y-%m-%d %H:%M:%S"
-                #    )
-                # except Exception:
-                #    pass
-
                 print("Creating session--------")
                 print(session)
                 # return data to original codification
                 # decoded_dict = utf_decode(session_dict)
                 # session = self._collection.service.storeOrUpdateSession(decoded_dict)
-
-                # changing back to string representation of the dates,
-                # since the session_dict is used after this method is called,
-                session_dict["startDate"] = datetime.strftime(
-                    session_dict["startDate"], "%Y-%m-%d %H:%M:%S"
-                )
-                session_dict["endDate"] = datetime.strftime(
-                    session_dict["endDate"], "%Y-%m-%d %H:%M:%S"
-                )
-
             except WebFault as e:
                 session = {}
                 logging.getLogger("ispyb_client").exception(str(e))
@@ -143,6 +106,7 @@ class ISPyBDataAdapter:
             logging.getLogger("ispyb_client").exception(
                 "Error in create_session: could not connect to server"
             )
+        """
 
     def __to_session(self, session: dict[str, str]) -> Session:
         """
