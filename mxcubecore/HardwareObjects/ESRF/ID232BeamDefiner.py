@@ -47,6 +47,10 @@ class ID232BeamDefiner(AbstractNState):
         if len(self.VALUES) == 1:
             self._initialise_values()
 
+        if self.get_value() == self.VALUES.UNKNOWN:
+            # set default beam value
+            self.set_value(self.pos_names[0])
+
     def is_ready(self):
         return self.controller is not None
 
