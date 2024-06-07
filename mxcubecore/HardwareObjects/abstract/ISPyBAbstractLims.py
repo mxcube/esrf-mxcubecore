@@ -383,7 +383,7 @@ class ISPyBAbstractLIMS(AbstractLims):
         return answer
 
     @trace
-    def get_proposal_by_username(self, username):
+    def get_proposal_by_username(self, username : str):
 
         proposal_code = ""
         proposal_number = 0

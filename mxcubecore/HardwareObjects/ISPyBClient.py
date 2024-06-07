@@ -101,61 +101,6 @@ def trace(fun):
         return result
 
     return _trace
-
-
-def in_greenlet(fun):
-    def _in_greenlet(*args, **kwargs):
-        log_msg = "lims client " + fun.__name__ + " called with: "
-
-        for arg in args[1:]:
-            try:
-                log_msg += pformat(arg, indent=4, width=80) + ", "
-            except Exception:
-                pass
-
-        logging.getLogger("ispyb_client").debug(log_msg)
-        task = gevent.spawn(fun, *args)
-        if kwargs.get("wait", False):
-            task.get()
-
-    return _in_greenlet
-
-
-def utf_encode(res_d):
-    for key, value in res_d.items():
-        if isinstance(value, dict):
-            utf_encode(value)
-
-        try:
-            # Decode bytes object or encode str object depending
-            # on Python version
-            res_d[key] = suds_encode("utf8", "ignore")
-        except Exception:
-            # If not primitive or Text data, complext type, try to convert to
-            # dict or str if the first fails
-            try:
-                res_d[key] = utf_encode(asdict(value))
-            except Exception:
-                try:
-                    res_d[key] = str(value)
-                except Exception:
-                    res_d[key] = "ISPyBClient: could not encode value"
-
-    return res_d
-
-
-def utf_decode(res_d):
-    for key, value in res_d.items():
-        if isinstance(value, dict):
-            utf_decode(value)
-        try:
-            res_d[key] = value.decode("utf8", "ignore")
-        except Exception:
-            pass
-
-    return res_d
-
-
 class ISPyBClient(ISPyBAbstractLIMS):
     """
     Web-service client for ISPyB.
@@ -207,121 +152,19 @@ class ISPyBClient(ISPyBAbstractLIMS):
         if self.loginType == "proposal":
             # get the proposal ID
             _code = self.translate(proposal_code, "ispyb")
-            prop = self.get_proposal(_code, proposal_number)
+            proposalTuple = self.get_proposal(_code, proposal_number)
         elif self.loginType == "user":
-            prop = self.get_proposal_by_username(loginID)
+            proposalTuple = self.adapter.get_proposal_tuple_by_username(loginID,  self.beamline_name) # get_proposal_by_username(loginID)
 
         # Check if everything went ok
-        prop_ok = True
-        try:
-            prop_ok = prop["status"]["code"] == "ok"
-        except KeyError:
-            prop_ok = False
-        if not prop_ok:
-            msg = "Couldn't contact the ISPyB database server: you've been logged as the local user.\nYour experiments' information will not be stored in ISPyB"
-            return {
-                "status": {"code": "ispybDown", "msg": msg},
-                "Proposal": None,
-                "session": None,
-            }
-
-        self.login_ok = True
-
-        logging.getLogger("HWR").debug("Proposal is fine, get sessions from ISPyB...")
-        logging.getLogger("HWR").debug(prop)
-
-        proposal = prop["Proposal"]
-        todays_session = self.get_todays_session(prop, create_session)
-
-        logging.getLogger("HWR").debug(
-            "LOGGED IN and todays session: " + str(todays_session)
-        )
-
-        session = todays_session["session"]
-        session["is_inhouse"] = todays_session["is_inhouse"]
-        todays_session_id = session.get("sessionId", None)
-        local_contact = (
-            self.get_session_local_contact(todays_session_id)
-            if todays_session_id
-            else {}
-        )
-
-        return {
-            "status": {"code": "ok", "msg": msg},
-            "Proposal": proposal,
-            "Session": todays_session,
-            "local_contact": local_contact,
-            "Person": prop["Person"],
-            "Laboratory": prop["Laboratory"],
-        }
-
+        return proposalTuple
 
     @trace
-    def get_proposal(self, code, number) -> ProposalTuple:
-        """
-        Returns the tuple (Proposal, Person, Laboratory, Session, Status).
-        Containing the data from the coresponding tables in the database
-        the status of the database operations are returned in Status.
-
-        :param code: The proposal code
-        :type code: str
-        :param number: The proposal number
-        :type number: int
-
-        :returns: The dict (Proposal, Person, Laboratory, Sessions, Status).
-        :rtype: dict
-        """
+    def get_proposal(self, code: str, number: str) -> ProposalTuple:
         logging.getLogger("HWR").debug(
-            "ISPyB. Obtaining proposal for code=%s / prop_number=%s"
-            % (code, number)
+            "get_proposal. code=%s number=%s beamline=%s"
+            % (code, number, self.beamline_name)
         )
-
-        # Default values
-        person = Person()
-        proposal = Proposal()
-        sessions = []
-        error = ProposalTuple(
-                    person=person,
-                    proposal=proposal,
-                    sessions=sessions,
-                    status=Status(code="error")
-                )
-
-        if self.adapter.isEnabled():
-            try:
-                try:
-                    person = self.adapter.findPersonByProposal(code, number)
-                    logging.getLogger("HWR").debug("ISPyB. person is=%s" % (person))
-                except WebFault as e:
-                    logging.getLogger("ispyb_client").exception(str(e))
-
-                try:
-                    proposal = self.adapter.findProposal(code, number)
-                except WebFault as e:
-                    logging.getLogger("ispyb_client").exception(str(e))
-                    return ProposalTuple()
-
-                try:
-                    sessions = (
-                        self.adapter.findSessionsByProposalAndBeamLine(code, number, self.beamline_name)
-                    )
-                except WebFault as e:
-                    logging.getLogger("ispyb_client").exception(str(e))
-            except URLError:
-                logging.getLogger("ispyb_client").exception(_CONNECTION_ERROR_MSG)
-                return error
-
-            return ProposalTuple(
-                person=person,
-                proposal=proposal,
-                sessions=sessions,
-                status=Status(code="ok")
-            )
-        else:
-            logging.getLogger("ispyb_client").exception(
-                "Error in get_proposal: Could not connect to server,"
-                + " returning empty proposal"
-            )
-            return error
+        return self.adapter.get_proposal_tuple_by_code_and_number(code, number, self.beamline_name) # type: ignore
 
 # Bindings to methods called from older bricks.
