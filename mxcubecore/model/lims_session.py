@@ -1,4 +1,4 @@
-from datetime import date, datetime
+from datetime import timedelta, datetime
 from typing import Optional, Union, List
 from pydantic import BaseModel, Field
 
@@ -54,15 +54,15 @@ class Proposal(BaseModel):
 
 class Person(BaseModel):
     personId: str = ""
-    laboratoryId: str = ""
-    siteId: str = ""
-    emailAddress: str = ""
-    familyName: str = ""
+    laboratoryId: Optional[str] = ""
+    siteId: Optional[str] = ""
+    emailAddress: Optional[str] = ""
+    familyName: Optional[str] = ""
     # faxNumber: str = ""
-    givenName: str = ""
-    login: str = ""
+    givenName: Optional[str] = ""
+    login: Optional[str] = ""
     # phoneNumber: str = ""
-    title: str = ""
+    title: Optional[str] = ""
 
 
 class Status(BaseModel):
@@ -71,12 +71,12 @@ class Status(BaseModel):
 
 
 class Laboratoty(BaseModel):
-    address: str = ""
-    city: str = ""
-    country: str = ""
-    laboratoryExtPk: str = ""
     laboratoryId: str = ""
-    name: str = ""
+    address: Optional[str] = ""
+    city: Optional[str] = ""
+    country: Optional[str] = ""
+    laboratoryExtPk: Optional[str] = ""
+    name: Optional[str] = ""
 
 
 class Session(BaseModel):
@@ -85,8 +85,10 @@ class Session(BaseModel):
     proposalName: str = ""
     beamlineName: str = ""
     comments: str = ""
-    startDate: datetime
-    endDate: datetime
+    startDate: datetime = Field(default_factory=datetime.now)
+    endDate: datetime = Field(
+        default_factory=lambda: datetime.now() + timedelta(days=1)
+    )
     nbShifts: str = ""
     scheduled: str = ""
     comments: str = ""
