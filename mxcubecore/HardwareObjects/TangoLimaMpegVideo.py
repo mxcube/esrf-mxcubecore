@@ -23,7 +23,7 @@ from mxcubecore.HardwareObjects.TangoLimaVideo import TangoLimaVideo
 
 class TangoLimaMpegVideo(TangoLimaVideo):
     def __init__(self, name):
-        super(TangoLimaMpegVideo, self).__init__(name)
+        super().__init__(name)
         self._format = "MPEG1"
         self._video_stream_process = None
         self._current_stream_size = "0, 0"
