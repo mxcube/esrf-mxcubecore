@@ -544,7 +544,6 @@ class __HardwareRepositoryClient:
         try:
             hardware_obj = HardwareObjectFileParser.parse_string(xml_string, ho_name)
         except Exception:
-            print(xml_string)
             logging.getLogger("HWR").exception(
                 "Cannot parse Hardware Repository file %s", ho_name
             )
