@@ -68,6 +68,8 @@ class ESRFBeam(AbstractBeam):
         self._complex = self.get_object_by_role("complex")
         if self._complex:
             self._definer_type = "complex"
+            self._aperture = None
+            self._slits = None
 
         beam_position = self.get_property("beam_position")
 
@@ -93,7 +95,7 @@ class ESRFBeam(AbstractBeam):
         _size = self._aperture.get_value().value[1]
 
         try:
-            _label = self._aperture.get_value().value[1]
+            _label = self._aperture.get_value().name
         except AttributeError:
             _label = str(_size)
 
@@ -106,6 +108,10 @@ class ESRFBeam(AbstractBeam):
         """
         try:
             value = self._complex.get_value()
+
+            if isinstance(value, tuple):
+                return value[1], value[0]
+
             return value.value[1], value.name
         except AttributeError:
             logging.getLogger("HWR").info("Could not read beam size")
