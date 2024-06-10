@@ -3,11 +3,9 @@ Emits new_plot, plot_data and plot_end.
 """
 
 import itertools
-import gevent
 import numpy
 from mxcubecore.BaseHardwareObjects import HardwareObject
 from bliss.config import static
-from bliss.data.node import DataNode, get_or_create_node
 
 __copyright__ = """ Copyright © 2019 by the MXCuBE collaboration """
 __license__ = "LGPLv3+"
@@ -57,37 +55,11 @@ def watch_data(scan_node, scan_new_callback, scan_data_callback, scan_end_callba
                 scan_data = dict()
 
 
-def watch_session(
-    session_name, scan_new_callback, scan_data_callback, scan_end_callback
-):
-    """Watch the bliss session for new data"""
-    session_node = get_or_create_node(session_name, node_type="session")
-    if session_node is not None:
-        data_iterator = DataNode("session", session_name)
-
-        watch_data_task = None
-        last = True
-        for scan_node in data_iterator.walk_from_last(filter="scan"):
-            if last:
-                # skip the last one, we are interested in new ones only
-                last = False
-                continue
-            if watch_data_task:
-                watch_data_task.kill()
-            watch_data_task = gevent.spawn(
-                watch_data,
-                scan_node,
-                scan_new_callback,
-                scan_data_callback,
-                scan_end_callback,
-            )
-
-
 class Bliss(HardwareObject):
     """Bliss class"""
 
     def __init__(self, *args):
-        HardwareObject.__init__(self, *args)
+        super().__init__(*args)
         self.__scan_data = {}
 
     def init(self, *args):
@@ -96,14 +68,6 @@ class Bliss(HardwareObject):
         session = cfg.get(self.get_property("session"))
 
         session.setup(self.__dict__, verbose=True)
-
-        # self.__session_watcher = gevent.spawn(
-        #    watch_session,
-        #    self.get_property("session"),
-        #    self.__on_scan_new,
-        #    self.__on_scan_data,
-        #    self.__on_scan_end,
-        # )
         self.__scan_data = dict()
 
     def __on_scan_new(self, scan_info):
