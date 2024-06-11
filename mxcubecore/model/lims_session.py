@@ -53,13 +53,12 @@ class Proposal(BaseModel):
 
 
 class Person(BaseModel):
-    personId: str = ""
-    laboratoryId: Optional[str] = ""
-    siteId: Optional[str] = ""
-    emailAddress: Optional[str] = ""
-    familyName: Optional[str] = ""
+    person_id: str = ""
+    site_id: Optional[str] = ""
+    email_address: Optional[str] = ""
+    family_name: Optional[str] = ""
     # faxNumber: str = ""
-    givenName: Optional[str] = ""
+    given_name: Optional[str] = ""
     login: Optional[str] = ""
     # phoneNumber: str = ""
     title: Optional[str] = ""
@@ -70,28 +69,21 @@ class Status(BaseModel):
     msg: Optional[str] = ""
 
 
-class Laboratoty(BaseModel):
-    laboratoryId: str = ""
-    address: Optional[str] = ""
-    city: Optional[str] = ""
-    country: Optional[str] = ""
-    laboratoryExtPk: Optional[str] = ""
-    name: Optional[str] = ""
-
-
 class Session(BaseModel):
-    sessionId: str = ""
-    proposalId: str = ""
-    proposalName: str = ""
-    beamlineName: str = ""
+    session_id: str = ""
+    proposal_id: str = ""
+    proposal_name: str = ""
+    beamline_name: str = ""
     comments: str = ""
-    startDate: datetime = Field(default_factory=datetime.now)
-    endDate: datetime = Field(
+    start_date: datetime = Field(default_factory=datetime.now)
+    end_date: datetime = Field(
         default_factory=lambda: datetime.now() + timedelta(days=1)
     )
-    nbShifts: str = ""
+    nb_shifts: str = ""
     scheduled: str = ""
     comments: str = ""
+    is_scheduled_time: bool = False
+    is_scheduled_beamline: bool = False
 
 
 class ProposalTuple(BaseModel):
@@ -103,7 +95,6 @@ class ProposalTuple(BaseModel):
 
     proposal: Proposal = None
     person: Person = None
-    laboratory: Laboratoty = None
     status: Status = None
     sessions: Optional[List[Session]] = []
     todays_session: Optional[Session] = None

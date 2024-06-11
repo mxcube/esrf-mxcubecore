@@ -113,14 +113,14 @@ class ISPyBDataAdapter:
         Converts a dictionary composed by the person entries to the object proposal
         """
         return Session(
-            sessionId=session.get("sessionId"),
-            proposalId=session.get("proposalId"),
-            beamlineName=session.get("beamlineName"),
+            session_id=session.get("sessionId"),
+            proposal_id=session.get("proposalId"),
+            beamline_name=session.get("beamlineName"),
             comments=session.get("comments"),
-            endDate=session.get("endDate"),
-            nbShifts=session.get("nbShifts"),
+            end_date=session.get("endDate"),
+            nb_shifts=session.get("nbShifts"),
             scheduled=session.get("scheduled"),
-            startDate=session.get("startDate"),
+            start_date=session.get("startDate"),
         )
 
     def __to_proposal(self, proposal: dict[str, str]) -> Proposal:
@@ -130,7 +130,7 @@ class ISPyBDataAdapter:
         return Proposal(
             code=proposal.get("code"),
             number=proposal.get("number"),
-            proposalId=proposal.get("proposalId"),
+            proposal_id=proposal.get("proposalId"),
             title=proposal.get("title"),
             type=proposal.get("type"),
         )
@@ -140,16 +140,14 @@ class ISPyBDataAdapter:
         Converts a dictionary composed by the person entries to the object Person
         """
         return Person(
-            emailAddress=person.get("emailAddress"),
-            familyName=person.get("familyName"),
-            faxNumber=person.get("faxNumber"),
-            givenName=person.get("givenName"),
+            email_address=person.get("emailAddress"),
+            family_name=person.get("familyName"),
+            given_name=person.get("givenName"),
             login=person.get("login"),
-            personId=person.get("personId"),
-            phoneNumber=person.get("phoneNumber"),
-            siteId=person.get("siteId"),
+            person_id=person.get("personId"),
+            phone_number=person.get("phoneNumber"),
+            site_id=person.get("siteId"),
             title=person.get("title"),
-            laboratoryId=person.get("laboratoryId"),
         )
 
     def _get_log(self):
@@ -221,11 +219,16 @@ class ISPyBDataAdapter:
             self._get_log().exception(str(e))
             raise e
 
+    def _is_session_scheduled_today(self, session: Session) -> bool:
+        now = datetime.datetime.now()
+        if session.start_date.date() <= now.date() <= session.end_date.date():
+            return True
+        return False
+
     def _get_todays_session(self, sessions: List[Session]) -> Session | None:
         try:
             for session in sessions:
-                now = datetime.datetime.now()
-                if session.startDate.date() <= now.date() <= session.endDate.date():
+                if self._is_session_scheduled_today(session):
                     return session
             return None
         except Exception as e:
