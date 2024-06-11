@@ -109,12 +109,11 @@ class ISPyBClient(ISPyBAbstractLIMS):
     def __init__(self, name):
         super().__init__(name)
 
+
     def login(self, loginID, psd, ldap_connection=None, create_session=True) -> ProposalTuple:
         login_name = loginID
         proposal_code = ""
         proposal_number = ""
-
-        self.login_ok = False
 
         # For porposal login, split the loginID to code and numbers
         if self.loginType == "proposal":
@@ -129,10 +128,10 @@ class ISPyBClient(ISPyBAbstractLIMS):
 
         # Authentication
         if self.authServerType == "ldap":
-            logging.getLogger("HWR").debug("LDAP login")
+            logging.getLogger("HWR").debug("Starting LDAP authentication %s" % login_name)
             ok = self.ldap_login(login_name, psd, ldap_connection)
             msg = loginID
-            logging.getLogger("HWR").debug("searching for user %s" % login_name)
+            logging.getLogger("HWR").debug("User %s logged in LDAP" % login_name)
         elif self.authServerType == "ispyb":
             logging.getLogger("HWR").debug("ISPyB login")
             ok, msg = self._ispybLogin(login_name, psd)
@@ -142,29 +141,14 @@ class ISPyBClient(ISPyBAbstractLIMS):
         if not ok:
             msg = "%s." % msg.capitalize()
             # refuse Login
-            return {
-                "status": {"code": "error", "msg": msg},
-                "Proposal": None,
-                "session": None,
-            }
+            return ProposalTuple(Status(code="error", msg=msg))
 
         # login succeed, get proposal and sessions
         if self.loginType == "proposal":
             # get the proposal ID
             _code = self.translate(proposal_code, "ispyb")
-            proposalTuple = self.get_proposal(_code, proposal_number)
+            return self.adapter.get_proposal_tuple_by_code_and_number(_code, proposal_number, self.beamline_name)
         elif self.loginType == "user":
-            proposalTuple = self.adapter.get_proposal_tuple_by_username(loginID,  self.beamline_name) # get_proposal_by_username(loginID)
-
-        # Check if everything went ok
-        return proposalTuple
-
-    @trace
-    def get_proposal(self, code: str, number: str) -> ProposalTuple:
-        logging.getLogger("HWR").debug(
-            "get_proposal. code=%s number=%s beamline=%s"
-            % (code, number, self.beamline_name)
-        )
-        return self.adapter.get_proposal_tuple_by_code_and_number(code, number, self.beamline_name) # type: ignore
+            return self.adapter.get_proposal_tuple_by_username(loginID,  self.beamline_name) # get_proposal_by_username(loginID)
 
 # Bindings to methods called from older bricks.

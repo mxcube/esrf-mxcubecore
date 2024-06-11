@@ -383,7 +383,7 @@ class ISPyBAbstractLIMS(AbstractLims):
         return answer
 
     @trace
-    def get_proposal_by_username(self, username : str):
+    def get_proposal_by_username(self, username: str):
 
         proposal_code = ""
         proposal_number = 0
@@ -527,86 +527,6 @@ class ISPyBAbstractLIMS(AbstractLims):
             ldap_connection = self.ldapConnection
 
         return ldap_connection.authenticate(login_name, psd)
-
-    def get_todays_session(self, prop, create_session=True):
-        try:
-            sessions = prop["Session"]
-        except KeyError:
-            sessions = None
-
-        # Check if there are sessions in the proposal
-        todays_session = None
-        if sessions is None or len(sessions) == 0:
-            pass
-        else:
-            # Check for today's session
-            for session in sessions:
-                beamline = session["beamlineName"]
-                start_date = "%s 00:00:00" % session["startDate"].split()[0]
-                end_date = "%s 23:59:59" % session["endDate"].split()[0]
-                try:
-                    start_struct = time.strptime(start_date, "%Y-%m-%d %H:%M:%S")
-                except ValueError:
-                    pass
-                else:
-                    try:
-                        end_struct = time.strptime(end_date, "%Y-%m-%d %H:%M:%S")
-                    except ValueError:
-                        pass
-                    else:
-                        start_time = time.mktime(start_struct)
-                        end_time = time.mktime(end_struct)
-                        current_time = time.time()
-                        # Check beamline name
-                        if beamline == self.beamline_name:
-                            # Check date
-                            if current_time >= start_time and current_time <= end_time:
-                                todays_session = session
-                                break
-
-        new_session_flag = False
-        if todays_session is None and create_session:
-            new_session_flag = True
-            current_time = time.localtime()
-            start_time = time.strftime("%Y-%m-%d 00:00:00", current_time)
-            end_time = time.mktime(current_time) + 60 * 60 * 24
-            tomorrow = time.localtime(end_time)
-            end_time = time.strftime("%Y-%m-%d 07:59:59", tomorrow)
-
-            # Create a session
-            new_session_dict = {}
-            new_session_dict["proposalId"] = prop["Proposal"]["proposalId"]
-            new_session_dict["startDate"] = start_time
-            new_session_dict["endDate"] = end_time
-            new_session_dict["beamlineName"] = self.beamline_name
-            new_session_dict["scheduled"] = 0
-            new_session_dict["nbShifts"] = 3
-            new_session_dict["comments"] = "Session created by the BCM"
-            session_id = self.create_session(new_session_dict)
-            new_session_dict["sessionId"] = session_id
-
-            todays_session = new_session_dict
-            localcontact = None
-            logging.getLogger("HWR").debug("create new session")
-        elif todays_session:
-            session_id = todays_session["sessionId"]
-            localcontact = self.get_session_local_contact(session_id)
-        elif prop.get("Session", None):
-            logging.getLogger("HWR").debug(
-                "No session for today, reusing previous ! %s" % prop["Session"]
-            )
-            todays_session = prop["Session"][0]
-        else:
-            todays_session = {}
-
-        is_inhouse = HWR.beamline.session.is_inhouse(
-            prop["Proposal"]["code"], prop["Proposal"]["number"]
-        )
-        return {
-            "session": todays_session,
-            "new_session_flag": new_session_flag,
-            "is_inhouse": is_inhouse,
-        }
 
     @trace
     def store_data_collection(self, *args, **kwargs):

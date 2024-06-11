@@ -4,6 +4,7 @@ Session hardware object.
 Contains information regarding the current session and methods to
 access and manipulate this information.
 """
+
 import os
 import time
 import socket
@@ -150,7 +151,10 @@ class Session(HardwareObject):
         directory = ""
 
         if self.session_start_date:
-            start_time = self.session_start_date.split(" ")[0].replace("-", "")
+            # start_time = self.session_start_date.split(" ")[0].replace("-", "")
+            start_time = self.session_start_date.strftime(
+                "%Y%m%d"
+            )  # .split(" ")[0].replace("-", "")
         else:
             start_time = time.strftime("%Y%m%d")
 
