@@ -60,7 +60,7 @@ class ISPyBDataAdapter:
             from suds.transport.https import HttpAuthenticated
         else:
             from suds.transport.http import HttpAuthenticated
-
+        print(url)
         client = Client(
             url,
             timeout=3,
@@ -177,6 +177,14 @@ class ISPyBDataAdapter:
             self._get_log().exception(str(e))
             raise e
 
+    def find_session(self, session_id: str) -> Session:
+        try:
+            response = self._collection.service.findSession(session_id)
+            return self.__to_session(asdict(response))
+        except Exception as e:
+            self._get_log().exception(str(e))
+            raise e
+
     def find_proposal(self, code: str, number: str) -> Proposal:
         try:
             self._info("find_proposal. code=%s number=%s" % (code, number))
@@ -208,6 +216,7 @@ class ISPyBDataAdapter:
                 "find_sessions_by_proposal_and_beamLine. code=%s number=%s beamline=%s"
                 % (code, number, beamline)
             )
+
             responses = self._collection.service.findSessionsByProposalAndBeamLine(
                 code.upper(), number, beamline
             )
@@ -217,7 +226,8 @@ class ISPyBDataAdapter:
             return sessions
         except Exception as e:
             self._get_log().exception(str(e))
-            raise e
+            # raise e
+        return []
 
     def _is_session_scheduled_today(self, session: Session) -> bool:
         now = datetime.datetime.now()
@@ -230,10 +240,9 @@ class ISPyBDataAdapter:
             for session in sessions:
                 if self._is_session_scheduled_today(session):
                     return session
-            return None
         except Exception as e:
             self._get_log().exception(str(e))
-            return None
+        return None
 
     def get_proposal_tuple_by_code_and_number(
         self, code: str, number: str, beamline_name: str
