@@ -279,6 +279,24 @@ class Microdiff(MiniDiff.MiniDiff):
             "getSSXDeltaT",
         )
 
+        self.prepare_ssx_line_scan = self.add_command(
+            {
+                "type": "exporter",
+                "exporter_address": self.exporter_addr,
+                "name": "prepare_ssx_line_scan",
+            },
+            "prepareSSXLineScan",
+        )
+
+        self.start_ssx_line_scan = self.add_command(
+            {
+                "type": "exporter",
+                "exporter_address": self.exporter_addr,
+                "name": "start_ssx_line_scan",
+            },
+            "startSSXLineScan",
+        )
+
         MiniDiff.MiniDiff.init(self)
         self.centringPhiy.direction = -1
         self.MOTOR_TO_EXPORTER_NAME = self.getMotorToExporterNames()
