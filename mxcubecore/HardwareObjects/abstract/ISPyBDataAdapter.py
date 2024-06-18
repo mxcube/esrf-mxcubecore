@@ -1,6 +1,8 @@
 from __future__ import print_function
-import datetime
+import time
+from datetime import datetime, timedelta
 from typing import List
+from typing import Union
 
 try:
     from urlparse import urljoin
@@ -60,7 +62,7 @@ class ISPyBDataAdapter:
             from suds.transport.https import HttpAuthenticated
         else:
             from suds.transport.http import HttpAuthenticated
-        print(url)
+
         client = Client(
             url,
             timeout=3,
@@ -78,35 +80,43 @@ class ISPyBDataAdapter:
     def isEnabled(self) -> object:
         return self._shipping  # type: ignore
 
-    def create_session(self, session: Session):
-        # TODO: TO BE IMPLEMENTED
-        pass
-        """
-        if self._collection:
-            try:
-                print("Creating session--------")
-                print(session)
-                # return data to original codification
-                # decoded_dict = utf_decode(session_dict)
-                # session = self._collection.service.storeOrUpdateSession(decoded_dict)
-            except WebFault as e:
-                session = {}
-                logging.getLogger("ispyb_client").exception(str(e))
-            except URLError:
-                logging.getLogger("ispyb_client").exception(_CONNECTION_ERROR_MSG)
+    def create_session(
+        self, proposal_tuple: ProposalTuple, beamline_name: str
+    ) -> ProposalTuple:
 
-            logging.getLogger("ispyb_client").info(
-                "[ISPYB] Session goona be created: session_dict %s" % session_dict
+        try:
+            current_time = time.localtime()
+            start_time = time.strftime("%Y-%m-%d 00:00:00", current_time)
+            end_time = time.mktime(current_time) + 60 * 60 * 24
+            tomorrow = time.localtime(end_time)
+            end_time = time.strftime("%Y-%m-%d 07:59:59", tomorrow)
+
+            session = {}
+            session["proposalId"] = proposal_tuple.proposal.proposal_id
+            session["beamlineName"] = beamline_name
+            session["scheduled"] = 0
+            session["nbShifts"] = 3
+            session["comments"] = "Session created by the BCM"
+            current_time = datetime.now()
+            session["startDate"] = datetime.strptime(start_time, "%Y-%m-%d %H:%M:%S")
+            session["endDate"] = datetime.strptime(end_time, "%Y-%m-%d %H:%M:%S")
+
+            # return data to original codification
+            logging.getLogger("ispyb_client").info("Session creation: %s" % session)
+            session_id = self._collection.service.storeOrUpdateSession(
+                utf_decode(session)
             )
             logging.getLogger("ispyb_client").info(
-                "[ISPYB] Session created: %s" % session
+                "Session created. session_id=%s" % session_id
             )
-            return session
-        else:
-            logging.getLogger("ispyb_client").exception(
-                "Error in create_session: could not connect to server"
+
+            return self.get_proposal_tuple_by_code_and_number(
+                proposal_tuple.proposal.code,
+                proposal_tuple.proposal.number,
+                beamline_name,
             )
-        """
+        except Exception:
+            raise
 
     def __to_session(self, session: dict[str, str]) -> Session:
         """
@@ -128,8 +138,8 @@ class ISPyBDataAdapter:
         Converts a dictionary composed by the person entries to the object proposal
         """
         return Proposal(
-            code=proposal.get("code"),
-            number=proposal.get("number"),
+            code=proposal.get("code").lower(),
+            number=proposal.get("number").lower(),
             proposal_id=proposal.get("proposalId"),
             title=proposal.get("title"),
             type=proposal.get("type"),
@@ -230,12 +240,12 @@ class ISPyBDataAdapter:
         return []
 
     def _is_session_scheduled_today(self, session: Session) -> bool:
-        now = datetime.datetime.now()
+        now = datetime.now()
         if session.start_date.date() <= now.date() <= session.end_date.date():
             return True
         return False
 
-    def _get_todays_session(self, sessions: List[Session]) -> Session | None:
+    def _get_todays_session(self, sessions: List[Session]) -> Union[Session, None]:
         try:
             for session in sessions:
                 if self._is_session_scheduled_today(session):

@@ -44,8 +44,8 @@ class LIMSSession(BaseModel):
 
 
 class Proposal(BaseModel):
-    proposalId: str = ""
-    personId: str = ""
+    proposal_id: str = ""
+    person_id: str = ""
     type: str = ""
     code: str = ""
     number: str = ""
