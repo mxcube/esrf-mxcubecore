@@ -1111,7 +1111,29 @@ class ISPyBAbstractLIMS(AbstractLims):
         :returns: None
         """
         if self._collection:
-            return self.create_session(session_dict)
+            session_dict["startDate"] = datetime.strptime(
+                session_dict["startDate"], "%Y-%m-%d %H:%M:%S"
+            )
+            session_dict["endDate"] = datetime.strptime(
+                session_dict["endDate"], "%Y-%m-%d %H:%M:%S"
+            )
+
+            try:
+                session_dict["lastUpdate"] = datetime.strptime(
+                    session_dict["lastUpdate"].split("+")[0], "%Y-%m-%d %H:%M:%S"
+                )
+                session_dict["timeStamp"] = datetime.strptime(
+                    session_dict["timeStamp"].split("+")[0], "%Y-%m-%d %H:%M:%S"
+                )
+            except Exception:
+                pass
+
+            print(session_dict)
+
+            #return self.create_session(session_dict)
+            return self._collection.service.storeOrUpdateSession(
+                utf_decode(session_dict)
+            )
         else:
             logging.getLogger("ispyb_client").exception(
                 "Error in update_session: could not connect to server"

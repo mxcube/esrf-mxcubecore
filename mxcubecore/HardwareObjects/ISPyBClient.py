@@ -110,7 +110,13 @@ class ISPyBClient(ISPyBAbstractLIMS):
         super().__init__(name)
 
 
-    def login(self, loginID, psd, ldap_connection=None, create_session=True) -> ProposalTuple:
+    def create_session(self, proposal_tuple: ProposalTuple) -> ProposalTuple:
+        logging.getLogger("HWR").debug("create_session %s" % proposal_tuple)
+        proposal_tuple = self.adapter.create_session(proposal_tuple, self.beamline_name)
+        logging.getLogger("HWR").debug("Session created %s" % proposal_tuple)
+        return proposal_tuple
+
+    def login(self, loginID, psd, ldap_connection=None) -> ProposalTuple:
         login_name = loginID
         proposal_code = ""
         proposal_number = ""
@@ -141,6 +147,7 @@ class ISPyBClient(ISPyBAbstractLIMS):
         if not ok:
             msg = "%s." % msg.capitalize()
             # refuse Login
+            logging.getLogger("HWR").error("ISPyB login not ok")
             return ProposalTuple(Status(code="error", msg=msg))
 
         # login succeed, get proposal and sessions

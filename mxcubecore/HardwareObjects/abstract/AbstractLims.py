@@ -20,10 +20,13 @@
 """
 """
 import abc
+from typing import Union
 from mxcubecore.BaseHardwareObjects import HardwareObject
 from mxcubecore.model.lims_session import LIMSSession, Session
 from datetime import datetime, timedelta
 import time
+
+
 
 __credits__ = ["MXCuBE collaboration"]
 
@@ -61,7 +64,7 @@ class AbstractLims(HardwareObject):
             return False
 
     @abc.abstractmethod
-    def is_session_today(self, session: Session) -> Session | None:
+    def is_session_today(self, session: Session) -> Union[Session, None]:
         """
         Given a session it returns the session if it is scheduled for today in the beamline
         otherwise it returns None

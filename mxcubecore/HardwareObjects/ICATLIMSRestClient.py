@@ -6,7 +6,7 @@ import shutil
 from mxcubecore.BaseHardwareObjects import HardwareObject
 from mxcubecore import HardwareRepository as HWR
 from mxcubecore.model.lims_session import LIMSSession
-from mxcubecore.HardwareObjects.abstract import AbstractLims
+from mxcubecore.HardwareObjects.abstract.AbstractLims import AbstractLims
 from pyicat_plus.client.main import IcatClient, IcatInvestigationClient
 from pyicat_plus.client.models.session import Session
 
