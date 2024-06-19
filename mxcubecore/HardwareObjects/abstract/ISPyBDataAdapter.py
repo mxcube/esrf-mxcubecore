@@ -3,6 +3,10 @@ import time
 from datetime import datetime, timedelta
 from typing import List
 from typing import Union
+from mxcubecore.HardwareObjects.abstract.ISPyBValueFactory import (
+    ISPyBValueFactory,
+)
+from mxcubecore.utils.conversion import string_types
 
 try:
     from urlparse import urljoin
@@ -24,6 +28,35 @@ from suds.sudsobject import asdict
 from suds import WebFault
 from suds.client import Client
 import logging
+import sys
+
+suds_encode = str.encode
+
+if sys.version_info > (3, 0):
+    suds_encode = bytes.decode
+
+
+def utf_encode(res_d):
+    for key, value in res_d.items():
+        if isinstance(value, dict):
+            utf_encode(value)
+
+        try:
+            # Decode bytes object or encode str object depending
+            # on Python version
+            res_d[key] = suds_encode("utf8", "ignore")
+        except Exception:
+            # If not primitive or Text data, complext type, try to convert to
+            # dict or str if the first fails
+            try:
+                res_d[key] = utf_encode(asdict(value))
+            except Exception:
+                try:
+                    res_d[key] = str(value)
+                except Exception:
+                    res_d[key] = "ISPyBClient: could not encode value"
+
+    return res_d
 
 
 def utf_decode(res_d):
@@ -48,11 +81,15 @@ class ISPyBDataAdapter:
 
         self.logger = logging.getLogger("ispyb_adapter")
 
-        _WS_SHIPPING_URL = ws_root + "ToolsForShippingWebService?wsdl"
-        _WS_COLLECTION_URL = ws_root + "ToolsForCollectionWebService?wsdl"
-
-        self._shipping = self.__create_client(_WS_SHIPPING_URL)
-        self._collection = self.__create_client(_WS_COLLECTION_URL)
+        self._shipping = self.__create_client(
+            self.ws_root + "ToolsForShippingWebService?wsdl"
+        )
+        self._collection = self.__create_client(
+            self.ws_root + "ToolsForCollectionWebService?wsdl"
+        )
+        self._tools_ws = self.__create_client(
+            self.ws_root + "ToolsForBLSampleWebService?wsdl"
+        )
 
     def __create_client(self, url: str):
         """
@@ -305,3 +342,106 @@ class ISPyBDataAdapter:
         except WebFault as e:
             self._get_log().exception(str(e))
         return ProposalTuple()
+
+    ############# Legacy methods #####################
+    def update_data_collection(self, mx_collection, wait=False):
+        if "collection_id" in mx_collection:
+            try:
+                # Update the data collection group
+                self.store_data_collection_group(mx_collection)
+                data_collection = ISPyBValueFactory().from_data_collect_parameters(
+                    self._collection, mx_collection
+                )
+                self._collection.service.storeOrUpdateDataCollection(data_collection)
+            except WebFault as e:
+                logging.getLogger("ispyb_client").exception(e)
+            except URLError as e:
+                logging.getLogger("ispyb_client").exception(e)
+        else:
+            logging.getLogger("ispyb_client").error(
+                "Error in update_data_collection: "
+                + "collection-id missing, the ISPyB data-collection is not updated."
+            )
+
+    def store_image(self, image_dict):
+        """
+        Stores the image (image parameters) <image_dict>
+
+        :param image_dict: A dictonary with image pramaters.
+        :type image_dict: dict
+
+        :returns: None
+        """
+        if self._collection:
+            logging.getLogger("HWR").debug(
+                "Storing image in lims. data to store: %s" % str(image_dict)
+            )
+            if "dataCollectionId" in image_dict:
+                try:
+                    image_id = self._collection.service.storeOrUpdateImage(image_dict)
+                    logging.getLogger("HWR").debug(
+                        "  - storing image in lims ok. id : %s" % image_id
+                    )
+                    return image_id
+                except WebFault:
+                    logging.getLogger("ispyb_client").exception(
+                        "ISPyBClient: exception in store_image"
+                    )
+                except URLError as e:
+                    logging.getLogger("ispyb_client").exception(e)
+            else:
+                logging.getLogger("ispyb_client").error(
+                    "Error in store_image: "
+                    + "data_collection_id missing, could not store image in ISPyB"
+                )
+        else:
+            logging.getLogger("ispyb_client").exception(
+                "Error in store_image: could not connect to server"
+            )
+
+    def get_samples(self, proposal_id, session_id):
+        response_samples = []
+
+        if self._tools_ws:
+            try:
+                response_samples = (
+                    self._tools_ws.service.findSampleInfoLightForProposal(
+                        proposal_id, self.beamline_name
+                    )
+                )
+                response_samples = [
+                    utf_encode(asdict(sample)) for sample in response_samples
+                ]
+
+            except WebFault as e:
+                logging.getLogger("ispyb_client").exception(str(e))
+            except URLError as e:
+                logging.getLogger("ispyb_client").exception(e)
+        else:
+            logging.getLogger("ispyb_client").exception(
+                "Error in get_samples: could not connect to server"
+            )
+
+        return response_samples
+
+    def update_bl_sample(self, bl_sample):
+        """
+        Creates or stos a BLSample entry.
+        # NBNB update doc string
+        :param sample_dict: A dictonary with the properties for the entry.
+        :type sample_dict: dict
+        """
+        if self._tools_ws:
+            try:
+                status = self._tools_ws.service.storeOrUpdateBLSample(bl_sample)
+            except WebFault as e:
+                logging.getLogger("ispyb_client").exception(str(e))
+                status = {}
+            except URLError as e:
+                logging.getLogger("ispyb_client").exception(e)
+
+            return status
+        else:
+            logging.getLogger("ispyb_client").exception(
+                "Error in update_bl_sample: could not connect to server"
+            )
