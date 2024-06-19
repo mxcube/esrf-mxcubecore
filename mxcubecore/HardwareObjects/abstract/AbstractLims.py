@@ -22,11 +22,10 @@
 import abc
 from typing import Union
 from mxcubecore.BaseHardwareObjects import HardwareObject
-from mxcubecore.model.lims_session import LIMSSession, Session
+from mxcubecore.model.lims_session import LIMSSession, ProposalTuple, Session
 from datetime import datetime, timedelta
 import time
-
-
+from mxcubecore import HardwareRepository as HWR
 
 __credits__ = ["MXCuBE collaboration"]
 
@@ -40,8 +39,58 @@ class AbstractLims(HardwareObject):
         # current lims session
         self.session = LIMSSession()
 
+        self.beamline_name = "unknown"
+
     @abc.abstractmethod
-    def is_scheduled_on_host_beamline(self, beamline) -> bool:
+    def echo(self) -> bool:
+        pass
+
+    @abc.abstractmethod
+    def init(self) -> None:
+        self.beamline_name = HWR.beamline.session.beamline_name
+
+    @abc.abstractmethod
+    def get_proposals_by_user(self, login_id: str):
+        pass
+
+    @abc.abstractmethod
+    def create_session(self, proposal_tuple: ProposalTuple) -> ProposalTuple:
+        pass
+
+    @abc.abstractmethod
+    def dc_link(self, id: str) -> str:
+        pass
+
+    @abc.abstractmethod
+    def get_dc(self, id: str) -> dict:
+        pass
+
+    @abc.abstractmethod
+    def get_dc_thumbnail(self, id: str):
+        pass
+
+    @abc.abstractmethod
+    def get_dc_image(self, id: str):
+        pass
+
+    @abc.abstractmethod
+    def get_quality_indicator_plot(self, id: str):
+        pass
+
+    @abc.abstractmethod
+    def get_samples(self, proposal_id: str):
+        pass
+
+    @abc.abstractmethod
+    def get_rest_token(self, proposal_id: str):
+        pass
+
+    @abc.abstractmethod
+    def store_robot_action(self, proposal_id: str):
+        pass
+
+    @abc.abstractmethod
+    def is_scheduled_on_host_beamline(self, beamline: str) -> bool:
         return beamline.strip().upper() == self.override_beamline_name.strip().upper()
 
     @abc.abstractmethod
