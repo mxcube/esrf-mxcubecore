@@ -6,7 +6,7 @@ from cookielib import CookieJar
 from suds.transport.http import HttpAuthenticated
 from suds.client import Client
 
-from mxcubecore.mxcubecore.HardwareObjects.ProposalISPyBClient import (
+from mxcubecore.mxcubecore.HardwareObjects.ProposalISPyBLims import (
     ISPyBClient,
     _CONNECTION_ERROR_MSG,
 )
