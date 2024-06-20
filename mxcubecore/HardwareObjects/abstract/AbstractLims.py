@@ -58,10 +58,6 @@ class AbstractLims(HardwareObject, abc.ABC):
         raise Exception("Abstract class. Not implemented")
 
     @abc.abstractmethod
-    def test(self):
-        pass
-
-    @abc.abstractmethod
     def dc_link(self, id: str) -> str:
         raise Exception("Abstract class. Not implemented")
 
