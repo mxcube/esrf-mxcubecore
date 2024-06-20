@@ -22,6 +22,9 @@ class ProposalISPyBClient(ISPyBAbstractLIMS):
     def is_user_login_type(self):
         return False
 
+    def get_proposals_by_user(self, login_id: str):
+        raise Exception("Not implemented")
+
     def get_user_name(self):
         """
         Because it is a proposal based it returns the proposal plus the uuid4
