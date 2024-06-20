@@ -344,6 +344,35 @@ class ISPyBDataAdapter:
         return ProposalTuple()
 
     ############# Legacy methods #####################
+    def _store_data_collection_group(self, group_data):
+        return self._collection.service.storeOrUpdateDataCollectionGroup(group_data)
+
+    def store_data_collection_group(self, mx_collection):
+        """
+        Stores or updates a DataCollectionGroup object.
+        The entry is updated of the group_id in the
+        mx_collection dictionary is set to an exisiting
+        DataCollectionGroup id.
+
+        :param mx_collection: The dictionary of values to create the object from.
+        :type mx_collection: dict
+
+        :returns: DataCollectionGroup id
+        :rtype: int
+        """
+        group_id = None
+        if mx_collection["ispyb_group_data_collections"]:
+            group_id = mx_collection.get("group_id", None)
+        if group_id is None:
+            # Create a new group id
+            group = ISPyBValueFactory().dcg_from_dc_params(
+                self._collection, mx_collection
+            )
+            self.group_id = self._collection.service.storeOrUpdateDataCollectionGroup(
+                group
+            )
+        mx_collection["group_id"] = self.group_id
+
     def update_data_collection(self, mx_collection, wait=False):
         if "collection_id" in mx_collection:
             try:
@@ -445,3 +474,358 @@ class ISPyBDataAdapter:
             logging.getLogger("ispyb_client").exception(
                 "Error in update_bl_sample: could not connect to server"
             )
+
+    def store_robot_action(self, robot_action_dict):
+        """Stores robot action"""
+        logging.getLogger("HWR").debug(
+            "  - storing robot_actions in lims : %s" % str(robot_action_dict)
+        )
+
+        if True:
+            robot_action_vo = self._collection.factory.create("robotActionWS3VO")
+
+            robot_action_vo.actionType = robot_action_dict.get("actionType")
+            robot_action_vo.containerLocation = robot_action_dict.get(
+                "containerLocation"
+            )
+            robot_action_vo.dewarLocation = robot_action_dict.get("dewarLocation")
+
+            # robot_action_vo.endTime = robot_action_dict.get("endTime")
+            robot_action_vo.message = robot_action_dict.get("message")
+            robot_action_vo.sampleBarcode = robot_action_dict.get("sampleBarcode")
+            robot_action_vo.sessionId = robot_action_dict.get("sessionId")
+            robot_action_vo.blSampleId = robot_action_dict.get("sampleId")
+            robot_action_vo.startTime = datetime.strptime(
+                robot_action_dict.get("startTime"), "%Y-%m-%d %H:%M:%S"
+            )
+            robot_action_vo.endTime = datetime.strptime(
+                robot_action_dict.get("endTime"), "%Y-%m-%d %H:%M:%S"
+            )
+            robot_action_vo.status = robot_action_dict.get("status")
+            robot_action_vo.xtalSnapshotAfter = robot_action_dict.get(
+                "xtalSnapshotAfter"
+            )
+            robot_action_vo.xtalSnapshotBefore = robot_action_dict.get(
+                "xtalSnapshotBefore"
+            )
+            return self._collection.service.storeRobotAction(robot_action_vo)
+        return None
+
+    def associate_bl_sample_and_energy_scan(self, entry_dict):
+        try:
+            return self._collection.service.storeBLSampleHasEnergyScan(
+                entry_dict["energyScanId"], entry_dict["blSampleId"]
+            )
+        except Exception as e:
+            logging.getLogger("ispyb_client").exception(str(e))
+            return -1
+
+    def get_data_collection(self, data_collection_id):
+        """
+        Retrives the data collection with id <data_collection_id>
+
+        :param data_collection_id: Id of data collection.
+        :type data_collection_id: int
+
+        :rtype: dict
+        """
+        try:
+            dc_response = self._collection.service.findDataCollection(
+                data_collection_id
+            )
+
+            dc = utf_encode(asdict(dc_response))
+            dc["startTime"] = datetime.strftime(dc["startTime"], "%Y-%m-%d %H:%M:%S")
+            dc["endTime"] = datetime.strftime(dc["endTime"], "%Y-%m-%d %H:%M:%S")
+            return dc
+        except Exception as e:
+            logging.getLogger("ispyb_client").exception(str(e))
+            return {}
+
+    def _store_data_collection(self, mx_collection, bl_config=None):
+        """
+        Stores the data collection mx_collection, and the beamline setup
+        if provided.
+
+        :param mx_collection: The data collection parameters.
+        :type mx_collection: dict
+
+        :param bl_config: The beamline setup.
+        :type bl_config: dict
+
+        :returns: None
+
+        """
+        logging.getLogger("HWR").debug(
+            "Storing data collection in lims. data to store: %s" % str(mx_collection)
+        )
+
+        data_collection = ISPyBValueFactory().from_data_collect_parameters(
+            self._collection, mx_collection
+        )
+
+        detector_id = 0
+        if bl_config:
+            lims_beamline_setup = ISPyBValueFactory.from_bl_config(
+                self._collection, bl_config
+            )
+
+            lims_beamline_setup.synchrotronMode = data_collection.synchrotronMode
+
+            self.store_beamline_setup(mx_collection["sessionId"], lims_beamline_setup)
+
+            detector_params = ISPyBValueFactory().detector_from_blc(
+                bl_config, mx_collection
+            )
+
+            detector = self.find_detector(*detector_params)
+            detector_id = 0
+
+            if detector:
+                detector_id = detector.detectorId
+                data_collection.detectorId = detector_id
+
+        collection_id = self._collection.service.storeOrUpdateDataCollection(
+            data_collection
+        )
+        logging.getLogger("HWR").debug(
+            "  - storing data collection ok. collection id : %s" % collection_id
+        )
+
+        return (collection_id, detector_id)
+
+    def store_beamline_setup(self, session_id, bl_config):
+        """
+        Stores the beamline setup dict <bl_config>.
+
+        :param session_id: The session id that the beamline_setup
+                           should be associated with.
+        :type session_id: int
+
+        :param bl_config: The dictonary with beamline settings.
+        :type bl_config: dict
+
+        :returns beamline_setup_id: The database id of the beamline setup.
+        :rtype: str
+        """
+        blSetupId = None
+        session = None
+
+        try:
+            session = self.get_session(session_id)
+        except Exception:
+            logging.getLogger("ispyb_client").exception(
+                "ISPyBClient: exception in store_beam_line_setup"
+            )
+        else:
+            if session is not None:
+                try:
+                    blSetupId = self._collection.service.storeOrUpdateBeamLineSetup(
+                        bl_config
+                    )
+                    session["beamLineSetupId"] = blSetupId
+                    self.update_session(session)
+                except Exception as e:
+                    logging.getLogger("ispyb_client").exception(str(e))
+        return blSetupId
+
+    def get_session(self, session_id):
+        """
+        Retrieves the session with id <session_id>.
+
+        :returns: Dictionary with session data.
+        :rtype: dict
+        """
+        try:
+            session = self._collection.service.findSession(session_id)
+            if session is not None:
+                session.startDate = datetime.strftime(
+                    session.startDate, "%Y-%m-%d %H:%M:%S"
+                )
+                session.endDate = datetime.strftime(
+                    session.endDate, "%Y-%m-%d %H:%M:%S"
+                )
+                return utf_encode(asdict(session))
+        except Exception as e:
+            logging.getLogger("ispyb_client").exception(e)
+
+        return {}
+
+    def store_energy_scan(self, energyscan_dict):
+        """
+        Store energyscan.
+
+        :param energyscan_dict: Energyscan data to store.
+        :type energyscan_dict: dict
+
+        :returns Dictonary with the energy scan id:
+        :rtype: dict
+        """
+
+        status = {"energyScanId": -1}
+
+        try:
+            energyscan_dict["startTime"] = datetime.strptime(
+                energyscan_dict["startTime"], "%Y-%m-%d %H:%M:%S"
+            )
+
+            energyscan_dict["endTime"] = datetime.strptime(
+                energyscan_dict["endTime"], "%Y-%m-%d %H:%M:%S"
+            )
+
+            try:
+                del energyscan_dict["remoteEnergy"]
+            except KeyError:
+                pass
+
+            status["energyScanId"] = self._collection.service.storeOrUpdateEnergyScan(
+                energyscan_dict
+            )
+
+        except Exception as e:
+            logging.getLogger("ispyb_client").exception(str(e))
+
+        return status
+
+    def store_xfe_spectrum(self, xfespectrum_dict):
+        """
+        Stores a xfe spectrum.
+
+        :returns: A dictionary with the xfe spectrum id.
+        :rtype: dict
+
+        """
+        status = {"xfeFluorescenceSpectrumId": -1}
+        try:
+            if isinstance(xfespectrum_dict["startTime"], string_types):
+                xfespectrum_dict["startTime"] = datetime.strptime(
+                    xfespectrum_dict["startTime"], "%Y-%m-%d %H:%M:%S"
+                )
+
+                xfespectrum_dict["endTime"] = datetime.strptime(
+                    xfespectrum_dict["endTime"], "%Y-%m-%d %H:%M:%S"
+                )
+            else:
+                xfespectrum_dict["startTime"] = xfespectrum_dict["startTime"]
+                xfespectrum_dict["endTime"] = xfespectrum_dict["endTime"]
+
+            status["xfeFluorescenceSpectrumId"] = (
+                self._collection.service.storeOrUpdateXFEFluorescenceSpectrum(
+                    xfespectrum_dict
+                )
+            )
+
+        except URLError as e:
+            logging.getLogger("ispyb_client").exception(str(e))
+
+        return status
+
+    def _store_workflow(self, info_dict):
+        workflow_id = None
+        workflow_mesh_id = None
+        grid_info_id = None
+
+        if self._collection:
+            workflow_vo = ISPyBValueFactory().workflow_from_workflow_info(info_dict)
+            workflow_id = self._collection.service.storeOrUpdateWorkflow(workflow_vo)
+
+            workflow_mesh_vo = ISPyBValueFactory().workflow_mesh_from_workflow_info(
+                info_dict
+            )
+            workflow_mesh_vo.workflowId = workflow_id
+
+            workflow_mesh_id = self._collection.service.storeOrUpdateWorkflowMesh(
+                workflow_mesh_vo
+            )
+
+            grid_info_vo = ISPyBValueFactory().grid_info_from_workflow_info(info_dict)
+            grid_info_vo.workflowMeshId = workflow_mesh_id
+
+            grid_info_id = self._collection.service.storeOrUpdateGridInfo(grid_info_vo)
+            return workflow_id, workflow_mesh_id, grid_info_id
+        else:
+            logging.getLogger("ispyb_client").exception(
+                "Error in store_workflow: could not connect" + " to server"
+            )
+        return workflow_id, workflow_mesh_id, grid_info_id
+
+    def _store_workflow_step(self, workflow_info_dict):
+        """
+        :param mx_collection: The data collection parameters.
+        :type mx_collection: dict
+        :returns: None
+        """
+
+        workflow_step_id = None
+        if self._collection:
+            workflow_step_dict = {}
+            workflow_step_dict["workflowId"] = workflow_info_dict.get("workflow_id")
+            workflow_step_dict["workflowStepType"] = workflow_info_dict.get(
+                "workflow_type", "MeshScan"
+            )
+            workflow_step_dict["status"] = workflow_info_dict.get("status", "")
+            workflow_step_dict["folderPath"] = workflow_info_dict.get(
+                "result_file_path"
+            )
+            workflow_step_dict["imageResultFilePath"] = workflow_info_dict[
+                "cartography_path"
+            ]
+            workflow_step_dict["htmlResultFilePath"] = workflow_info_dict[
+                "html_file_path"
+            ]
+            workflow_step_dict["resultFilePath"] = workflow_info_dict["json_file_path"]
+            workflow_step_dict["comments"] = workflow_info_dict.get("comments", "")
+            workflow_step_dict["crystalSizeX"] = workflow_info_dict.get(
+                "crystal_size_x"
+            )
+            workflow_step_dict["crystalSizeY"] = workflow_info_dict.get(
+                "crystal_size_y"
+            )
+            workflow_step_dict["crystalSizeZ"] = workflow_info_dict.get(
+                "crystal_size_z"
+            )
+            workflow_step_dict["maxDozorScore"] = workflow_info_dict.get(
+                "max_dozor_score"
+            )
+
+            workflow_step_id = self._collection.service.storeWorkflowStep(
+                json.dumps(workflow_step_dict)
+            )
+        else:
+            logging.getLogger("ispyb_client").exception(
+                "Error in store_workflow step: could not connect" + " to server"
+            )
+        return workflow_step_id
+
+    def update_session(self, session_dict):
+        """
+        Update the session with the data in <session_dict>, the attribute
+        sessionId in <session_dict> must be set.
+
+        Warning: Missing attibutes in <session_dict> will set to null,
+                 this could leed to loss of data.
+
+        :param session_dict: The session to update.
+        :type session_dict: dict
+
+        :returns: None
+        """
+        session_dict["startDate"] = datetime.strptime(
+            session_dict["startDate"], "%Y-%m-%d %H:%M:%S"
+        )
+        session_dict["endDate"] = datetime.strptime(
+            session_dict["endDate"], "%Y-%m-%d %H:%M:%S"
+        )
+
+        try:
+            session_dict["lastUpdate"] = datetime.strptime(
+                session_dict["lastUpdate"].split("+")[0], "%Y-%m-%d %H:%M:%S"
+            )
+            session_dict["timeStamp"] = datetime.strptime(
+                session_dict["timeStamp"].split("+")[0], "%Y-%m-%d %H:%M:%S"
+            )
+        except Exception:
+            pass
+
+        # return self.create_session(session_dict)
+        return self._collection.service.storeOrUpdateSession(utf_decode(session_dict))

@@ -1,6 +1,3 @@
-from suds.sudsobject import asdict
-from suds import WebFault
-from suds.client import Client
 from mxcubecore.utils.conversion import string_types
 from datetime import datetime
 
@@ -127,17 +124,17 @@ class ISPyBValueFactory:
 
             try:
                 group.blSampleId = mx_collect_dict["sample_reference"]["blSampleId"]
-            except KeyError as diag:
+            except KeyError:
                 pass
 
             try:
                 group.comments = mx_collect_dict["comments"]
-            except KeyError as diag:
+            except KeyError:
                 pass
 
             try:
                 group.workflowId = mx_collect_dict["workflow_id"]
-            except KeyError as diag:
+            except KeyError:
                 pass
 
             group.endTime = datetime.now()
@@ -160,7 +157,7 @@ class ISPyBValueFactory:
                 if experiment_type.lower() == "mesh":
                     experiment_type = "Mesh"
                 group.experimentType = experiment_type
-            except KeyError as diag:
+            except KeyError:
                 pass
 
             try:

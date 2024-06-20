@@ -6,7 +6,10 @@ from cookielib import CookieJar
 from suds.transport.http import HttpAuthenticated
 from suds.client import Client
 
-from ISPyBClient import ISPyBClient, _CONNECTION_ERROR_MSG
+from mxcubecore.mxcubecore.HardwareObjects.ProposalISPyBClient import (
+    ISPyBClient,
+    _CONNECTION_ERROR_MSG,
+)
 import traceback
 from collections import namedtuple
 from mxcubecore import HardwareRepository as HWR
