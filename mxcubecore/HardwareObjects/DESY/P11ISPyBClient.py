@@ -23,7 +23,7 @@ __license__ = "LGPLv3+"
 
 import logging
 import ssl
-from mxcubecore.mxcubecore.HardwareObjects.ProposalISPyBLims import ISPyBClient
+from mxcubecore.mxcubecore.HardwareObjects.ISPyBLims import ISPyBClient
 from mxcubecore import HardwareRepository as HWR
 from suds import WebFault
 from urllib.error import URLError
