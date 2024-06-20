@@ -11,7 +11,7 @@ A client for ISPyB Webservices.
 import logging
 
 
-class ProposalISPyBClient(ISPyBAbstractLIMS):
+class ProposalISPyBLims(ISPyBAbstractLIMS):
     """
     ISPyB proposal-based client
     """
