@@ -9,14 +9,11 @@ from mxcubecore.HardwareObjects.ESRF.queue_entry.ssx_base_queue_entry import (
     SsxBaseQueueEntry,
     SsxBaseQueueTaskParameters,
     BaseUserCollectionParameters,
-    SSXPathParameters,
 )
 
 
 from mxcubecore.model.common import (
-    CommonCollectionParamters,
     LegacyParameters,
-    StandardCollectionParameters,
 )
 
 from mxcubecore.model.queue_model_objects import (
@@ -35,9 +32,7 @@ class TestUserCollectionParameters(BaseUserCollectionParameters):
 
 
 class TestCollectionTaskParameters(SsxBaseQueueTaskParameters):
-    path_parameters: SSXPathParameters
-    common_parameters: CommonCollectionParamters
-    collection_parameters: StandardCollectionParameters
+
     user_collection_parameters: TestUserCollectionParameters
     legacy_parameters: LegacyParameters
 
