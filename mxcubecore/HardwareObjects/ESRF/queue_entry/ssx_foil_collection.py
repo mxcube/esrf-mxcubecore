@@ -9,19 +9,12 @@ from typing_extensions import Literal
 from pydantic import Field
 from devtools import debug
 
-from mxcubecore.model.common import (
-    CommonCollectionParamters,
-    LegacyParameters,
-    StandardCollectionParameters,
-)
-
 from mxcubecore import HardwareRepository as HWR
 
 from mxcubecore.HardwareObjects.ESRF.queue_entry.ssx_base_queue_entry import (
     SsxBaseQueueEntry,
     SsxBaseQueueTaskParameters,
     BaseUserCollectionParameters,
-    SSXPathParameters,
 )
 
 from mxcubecore.model.queue_model_objects import DataCollection
@@ -48,11 +41,7 @@ class SSXUserCollectionParameters(BaseUserCollectionParameters):
 
 
 class SsxFoilColletionTaskParameters(SsxBaseQueueTaskParameters):
-    path_parameters: SSXPathParameters
-    common_parameters: CommonCollectionParamters
-    collection_parameters: StandardCollectionParameters
     user_collection_parameters: SSXUserCollectionParameters
-    legacy_parameters: LegacyParameters
 
     @staticmethod
     def ui_schema():
@@ -163,6 +152,11 @@ class SsxFoilCollectionQueueEntry(SsxBaseQueueEntry):
         chip_data = HWR.beamline.diffractometer.get_head_configuration().available[
             params.chip_type
         ]
+
+        self._data_model._task_data.lims_parameters.number_of_rows = nb_lines
+        self._data_model._task_data.lims_parameters.number_of_columns = (
+            nb_samples_per_line
+        )
 
         fname_prefix = self._data_model._task_data.path_parameters.prefix
         data_root_path = self.get_data_path()

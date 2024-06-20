@@ -62,10 +62,12 @@ class BeamlineParameters(BaseModel):
     energy_bandwidth: float
 
 
-class ISPYBCollectionPrameters(BaseModel):
+class ISPYBCollectionParameters(BaseModel):
     flux_start: float
     flux_end: float
     start_time: datetime
     end_time: datetime
     chip_model: str
     mono_stripe: str
+    number_of_rows: int
+    number_of_columns: int
