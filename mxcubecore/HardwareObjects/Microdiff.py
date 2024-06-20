@@ -297,7 +297,6 @@ class Microdiff(MiniDiff.MiniDiff):
             "startSSXLineScan",
         )
 
-
         MiniDiff.MiniDiff.init(self)
         self.centringPhiy.direction = -1
         self.MOTOR_TO_EXPORTER_NAME = self.getMotorToExporterNames()
