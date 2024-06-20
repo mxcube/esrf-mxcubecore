@@ -6,7 +6,7 @@ from suds.sudsobject import asdict
 from suds import WebFault
 from suds.client import Client
 from mxcubecore.model.lims_session.ProposalTuple import ProposalTuple
-from mxcubecore.HardwareObjects.abstract.ISPyBAbstractLims import ISPyBAbstractLIMS
+from mxcubecore.mxcubecore.HardwareObjects.abstract.ISPyBLims import ISPyBAbstractLIMS
 
 try:
     from urlparse import urljoin
@@ -24,7 +24,7 @@ if sys.version_info > (3, 0):
 logging.getLogger("suds").setLevel(logging.INFO)
 
 
-class UserISPyBClient(ISPyBAbstractLIMS):
+class UserISPyBLims(ISPyBAbstractLIMS):
     """
     ISPyB proposal-based client
     """
