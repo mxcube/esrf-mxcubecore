@@ -43,7 +43,7 @@ class TestCollectionTaskParameters(SsxBaseQueueTaskParameters):
 
     @staticmethod
     def update_dependent_fields(field_data):
-        new_data = {"exp_time": field_data["sub_sampling"] * 2}
+        new_data = {}
         return new_data
 
 
