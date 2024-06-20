@@ -1,7 +1,7 @@
 import logging
 from mxcubecore import HardwareRepository as HWR
 
-from mxcubecore.mxcubecore.HardwareObjects.ProposalISPyBLims import (
+from mxcubecore.mxcubecore.HardwareObjects.ISPyBLims import (
     ProposalISPyBClient,
 )
 
