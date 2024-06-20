@@ -15,8 +15,12 @@ from mxcubecore.queue_entry.base_queue_entry import BaseQueueEntry
 from mxcubecore.model.common import (
     PathParameters,
     BeamlineParameters,
-    ISPYBCollectionPrameters,
+    CommonCollectionParamters,
+    StandardCollectionParameters,
+    ISPYBCollectionParameters,
+    LegacyParameters,
 )
+
 
 DEFAULT_MAX_FREQ = 925
 
@@ -40,6 +44,12 @@ class BaseUserCollectionParameters(BaseModel):
 
 
 class SsxBaseQueueTaskParameters(BaseModel):
+    path_parameters: SSXPathParameters
+    common_parameters: CommonCollectionParamters
+    collection_parameters: StandardCollectionParameters
+    legacy_parameters: LegacyParameters
+    lims_parameters: ISPYBCollectionParameters
+
     def update_dependent_fields(field_data):
         return {}
 
@@ -266,19 +276,19 @@ class SsxBaseQueueEntry(BaseQueueEntry):
         HWR.beamline.control.mtdsx.wait_move()
         HWR.beamline.control.mtdsx.move(0, wait=False)
         self._beamline_values = self.get_current_beamline_values()
-        self._additional_lims_values = self.get_additional_lims_values()
+        self._data_model._task_data.lims_parameters = self.get_additional_lims_values()
         self.emit_progress(0)
 
     def post_execute(self):
         super().post_execute()
         data_root_path = self.get_data_path()
-        self._additional_lims_values.end_time = datetime.datetime.now()
+        self._data_model._task_data.lims_parameters.end_time = datetime.datetime.now()
 
         HWR.beamline.lims.create_ssx_collection(
             data_root_path,
             self._data_model._task_data,
             self._beamline_values,
-            self._additional_lims_values,
+            self._data_model._task_data.lims_parameters,
         )
 
         logging.getLogger("user_level_log").info(f"Moving detector back")
@@ -378,7 +388,7 @@ class SsxBaseQueueEntry(BaseQueueEntry):
         )
 
     def get_additional_lims_values(self):
-        return ISPYBCollectionPrameters(
+        return ISPYBCollectionParameters(
             **{
                 "flux_start": 3e15,
                 "flux_end": 3e15,
