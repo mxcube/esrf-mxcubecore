@@ -12,14 +12,6 @@ from mxcubecore.HardwareObjects.ESRF.queue_entry.ssx_base_queue_entry import (
     BaseUserCollectionParameters,
 )
 
-
-from mxcubecore.model.common import (
-    CommonCollectionParamters,
-    PathParameters,
-    LegacyParameters,
-    StandardCollectionParameters,
-)
-
 from mxcubecore.model.queue_model_objects import (
     DataCollection,
 )
@@ -41,11 +33,7 @@ class SsxLineScanCollectionUserParameters(BaseUserCollectionParameters):
 
 
 class SsxLineScanCollectionTaskParameters(SsxBaseQueueTaskParameters):
-    path_parameters: PathParameters
-    common_parameters: CommonCollectionParamters
-    collection_parameters: StandardCollectionParameters
     user_collection_parameters: SsxLineScanCollectionUserParameters
-    legacy_parameters: LegacyParameters
 
     @staticmethod
     def update_dependent_fields(field_data):
