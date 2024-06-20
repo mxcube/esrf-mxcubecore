@@ -20,17 +20,17 @@
 """
 """
 import abc
+from datetime import datetime
 from typing import Union
 from mxcubecore.BaseHardwareObjects import HardwareObject
 from mxcubecore.model.lims_session import LIMSSession, ProposalTuple, Session
-from datetime import datetime, timedelta
 import time
 from mxcubecore import HardwareRepository as HWR
 
 __credits__ = ["MXCuBE collaboration"]
 
 
-class AbstractLims(HardwareObject):
+class AbstractLims(HardwareObject, abc.ABC):
     __metaclass__ = abc.ABCMeta
 
     def __init__(self, name):
@@ -43,7 +43,7 @@ class AbstractLims(HardwareObject):
 
     @abc.abstractmethod
     def echo(self) -> bool:
-        pass
+        raise Exception("Abstract class. Not implemented")
 
     @abc.abstractmethod
     def init(self) -> None:
@@ -51,53 +51,54 @@ class AbstractLims(HardwareObject):
 
     @abc.abstractmethod
     def get_proposals_by_user(self, login_id: str):
-        pass
+        raise Exception("Abstract class. Not implemented")
 
     @abc.abstractmethod
     def create_session(self, proposal_tuple: ProposalTuple) -> ProposalTuple:
+        raise Exception("Abstract class. Not implemented")
+
+    @abc.abstractmethod
+    def test(self):
         pass
 
     @abc.abstractmethod
     def dc_link(self, id: str) -> str:
-        pass
+        raise Exception("Abstract class. Not implemented")
 
     @abc.abstractmethod
     def get_dc(self, id: str) -> dict:
-        pass
+        raise Exception("Abstract class. Not implemented")
 
     @abc.abstractmethod
     def get_dc_thumbnail(self, id: str):
-        pass
+        raise Exception("Abstract class. Not implemented")
 
     @abc.abstractmethod
     def get_dc_image(self, id: str):
-        pass
+        raise Exception("Abstract class. Not implemented")
 
     @abc.abstractmethod
     def get_quality_indicator_plot(self, id: str):
-        pass
+        raise Exception("Abstract class. Not implemented")
 
     @abc.abstractmethod
     def get_samples(self, proposal_id: str):
-        pass
+        raise Exception("Abstract class. Not implemented")
 
     @abc.abstractmethod
     def get_rest_token(self, proposal_id: str):
-        pass
+        raise Exception("Abstract class. Not implemented")
 
     @abc.abstractmethod
     def store_robot_action(self, proposal_id: str):
-        pass
+        raise Exception("Abstract class. Not implemented")
 
-    @abc.abstractmethod
     def is_scheduled_on_host_beamline(self, beamline: str) -> bool:
         return beamline.strip().upper() == self.override_beamline_name.strip().upper()
 
-    @abc.abstractmethod
     def is_scheduled_now(self, startDate, endDate) -> bool:
         return self.is_time_between(startDate, endDate)
 
-    @abc.abstractmethod
     def is_time_between(self, start_date: str, end_date: str, check_time=None):
         if start_date is None or end_date is None:
             return False
@@ -112,7 +113,6 @@ class AbstractLims(HardwareObject):
         else:
             return False
 
-    @abc.abstractmethod
     def is_session_today(self, session: Session) -> Union[Session, None]:
         """
         Given a session it returns the session if it is scheduled for today in the beamline
@@ -124,12 +124,12 @@ class AbstractLims(HardwareObject):
         try:
             start_struct = time.strptime(start_date, "%Y-%m-%d %H:%M:%S")
         except ValueError:
-            pass
+            raise Exception("Abstract class. Not implemented")
         else:
             try:
                 end_struct = time.strptime(end_date, "%Y-%m-%d %H:%M:%S")
             except ValueError:
-                pass
+                raise Exception("Abstract class. Not implemented")
             else:
                 start_time = time.mktime(start_struct)
                 end_time = time.mktime(end_struct)
@@ -141,7 +141,6 @@ class AbstractLims(HardwareObject):
                         return session
         return None
 
-    @abc.abstractmethod
     def set_lims_session(self, session: LIMSSession):
         """
         Sets the curent lims session
@@ -150,7 +149,6 @@ class AbstractLims(HardwareObject):
         """
         self.session = session
 
-    @abc.abstractmethod
     def get_lims_session(self) -> LIMSSession:
         """
         Getter for the curent lims session
