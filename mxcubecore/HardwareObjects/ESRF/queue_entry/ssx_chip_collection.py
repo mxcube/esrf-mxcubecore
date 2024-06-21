@@ -214,6 +214,8 @@ class SsxChipCollectionQueueEntry(SsxBaseQueueEntry):
             logging.getLogger("user_level_log").info(f"Acquired {region}")
 
         HWR.beamline.detector.wait_ready()
+        HWR.beamline.diffractometer.set_phase("Transfer", wait=True, timeout=120)
+        logging.getLogger("user_level_log").info(f"set to transfer phase")
 
     def pre_execute(self):
         super().pre_execute()
