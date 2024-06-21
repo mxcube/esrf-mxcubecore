@@ -80,7 +80,11 @@ class ISPyBAbstractLIMS(AbstractLims):
             pass
 
         self.adapter = ISPyBDataAdapter(
-            self.ws_root.strip(), self.proxy, self.ws_username, self.ws_password
+            self.ws_root.strip(),
+            self.proxy,
+            self.ws_username,
+            self.ws_password,
+            self.beamline_name,
         )
         logging.getLogger("HWR").debug("[ISPYB] Proxy address: %s" % self.proxy)
 
@@ -285,7 +289,7 @@ class ISPyBAbstractLIMS(AbstractLims):
         return None
 
     def get_samples(self, proposal_id, session_id):
-        self.samples = self.get_samples(proposal_id, session_id)
+        self.samples = self.adapter.get_samples(proposal_id, session_id)
         return self.samples
 
     def create_session(self, proposal_tuple: ProposalTuple) -> ProposalTuple:
