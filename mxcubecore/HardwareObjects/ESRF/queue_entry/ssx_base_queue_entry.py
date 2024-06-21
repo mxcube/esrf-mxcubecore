@@ -262,8 +262,8 @@ class SsxBaseQueueEntry(BaseQueueEntry):
         super().pre_execute()
         self._current_data_path = self.get_data_model().get_path_template().directory
 
-        HWR.beamline.control.mtdsx.wait_move()
         logging.getLogger("user_level_log").info(f"Moving detector table")
+        HWR.beamline.control.mtdsx.wait_move()
         HWR.beamline.control.mtdsx.move(0, wait=False)
         self._beamline_values = self.get_current_beamline_values()
         self._additional_lims_values = self.get_additional_lims_values()
@@ -367,7 +367,7 @@ class SsxBaseQueueEntry(BaseQueueEntry):
                 "wavelength": HWR.beamline.energy.get_wavelength(),
                 "resolution": HWR.beamline.resolution.get_value(),
                 "transmission": HWR.beamline.transmission.get_value(),
-                "detector_distance": 177.70,
+                "detector_distance": 103.0,
                 "beam_x": HWR.beamline.detector.get_beam_position()[0],
                 "beam_y": HWR.beamline.detector.get_beam_position()[1],
                 "beam_size_x": 4,
