@@ -73,11 +73,19 @@ def utf_decode(res_d):
 
 class ISPyBDataAdapter:
 
-    def __init__(self, ws_root: str, proxy: dict, ws_username: str, ws_password: str):
+    def __init__(
+        self,
+        ws_root: str,
+        proxy: dict,
+        ws_username: str,
+        ws_password: str,
+        beamline_name: str,
+    ):
         self.ws_root = ws_root
         self.ws_username = ws_username
         self.ws_password = ws_password
         self.proxy = proxy  # type: ignore
+        self.beamline_name = beamline_name
 
         self.logger = logging.getLogger("ispyb_adapter")
 
