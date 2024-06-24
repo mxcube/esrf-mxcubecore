@@ -1,6 +1,6 @@
 import json
 
-from typing_extensions import Literal
+from typing_extensions import Literal, Union
 from pydantic import BaseModel, Field
 from devtools import debug
 
@@ -42,7 +42,7 @@ class MXBaseQueueTaskParameters(BaseModel):
     common_parameters: CommonCollectionParamters
     collection_parameters: StandardCollectionParameters
     legacy_parameters: LegacyParameters
-    lims_parameters: ISPYBCollectionParameters | None
+    lims_parameters: Union[ISPYBCollectionParameters, None]
 
     def update_dependent_fields(field_data):
         return {}
