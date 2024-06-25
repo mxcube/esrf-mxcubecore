@@ -30,6 +30,15 @@ class ICATLIMSClient(AbstractLims):
         self.url = self.get_property("ws_root")
         self.lims_rest = self.get_object_by_role("lims_rest")
 
+        try:
+            self.icatClient = IcatClient(
+                catalogue_url="https://icatplus.esrf.fr",
+                tracking_url="https://icatplus.esrf.fr",
+                metadata_urls=["bcu-mq-01:61613"],
+            )
+        except:
+            logging.getLogger("HWR").exception("")
+
     def _store_data_collection_group(self, group_data):
         pass
 
