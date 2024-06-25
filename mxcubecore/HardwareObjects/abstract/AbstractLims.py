@@ -21,11 +21,12 @@
 """
 import abc
 from datetime import datetime
-from typing import Union
+from typing import List, Union
 from mxcubecore.BaseHardwareObjects import HardwareObject
 from mxcubecore.model.lims_session import ProposalTuple, Session
 import time
 from mxcubecore import HardwareRepository as HWR
+import logging
 
 __credits__ = ["MXCuBE collaboration"]
 
@@ -40,6 +41,11 @@ class AbstractLims(HardwareObject, abc.ABC):
         self.session = Session()
 
         self.beamline_name = "unknown"
+        self.active_session = None
+
+    @abc.abstractmethod
+    def get_lims_name(self, login_id, password, create_session):
+        raise Exception("Abstract class. Not implemented")
 
     @abc.abstractmethod
     def get_user_name(self, login_id, password, create_session):
@@ -90,7 +96,7 @@ class AbstractLims(HardwareObject, abc.ABC):
         raise Exception("Abstract class. Not implemented")
 
     @abc.abstractmethod
-    def get_samples(self, proposal_id: str):
+    def get_samples(self):
         raise Exception("Abstract class. Not implemented")
 
     @abc.abstractmethod
@@ -149,13 +155,36 @@ class AbstractLims(HardwareObject, abc.ABC):
                         return session
         return None
 
-    def set_lims_session(self, session: Session):
+    def set_sessions(self, sessions: List[Session]):
         """
         Sets the curent lims session
         :param session: lims session value
         :return:
         """
-        self.session = session
+        logging.getLogger("HWR").debug(
+            "%s sessions avaliable for user %s" % (len(sessions), self.get_user_name())
+        )
+        self.sessions = sessions
+
+    def get_active_session(self) -> Session:
+        return self.session
+
+    def set_active_session_by_id(self, session_id: str) -> Session:
+        if self.sessions == 0:
+            logging.getLogger("HWR").error(
+                "Session list is empty. No session candidates"
+            )
+            raise "No sessions avaiable"
+
+        session_list = [obj for obj in self.sessions if obj.session_id == session_id]
+        if len(session_list) != 1:
+            raise "Session not found in the local list of sessions. session_id=" + session_id
+        self.session = session_list[0]
+        logging.getLogger("HWR").debug(
+            "Active session selected. session_id=%s proposal_code=%s proposal_number=%s"
+            % (session_id, self.session.code, self.session.number)
+        )
+        return self.session
 
     def get_lims_session(self) -> Session:
         """

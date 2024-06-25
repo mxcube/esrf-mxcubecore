@@ -25,6 +25,9 @@ class ISPyBLims(ISPyBAbstractLIMS):
     def get_proposals_by_user(self, login_id: str):
         raise Exception("Not implemented")
 
+    def get_lims_name(self):
+        return "ISPyB"
+
     def get_user_name(self):
         """
         Because it is a proposal based it returns the proposal plus the uuid4
