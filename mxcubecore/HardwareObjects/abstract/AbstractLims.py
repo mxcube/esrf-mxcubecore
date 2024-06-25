@@ -23,7 +23,7 @@ import abc
 from datetime import datetime
 from typing import Union
 from mxcubecore.BaseHardwareObjects import HardwareObject
-from mxcubecore.model.lims_session import LIMSSession, ProposalTuple, Session
+from mxcubecore.model.lims_session import ProposalTuple, Session
 import time
 from mxcubecore import HardwareRepository as HWR
 
@@ -37,9 +37,21 @@ class AbstractLims(HardwareObject, abc.ABC):
         super().__init__(name)
 
         # current lims session
-        self.session = LIMSSession()
+        self.session = Session()
 
         self.beamline_name = "unknown"
+
+    @abc.abstractmethod
+    def get_user_name(self, login_id, password, create_session):
+        raise Exception("Abstract class. Not implemented")
+
+    @abc.abstractmethod
+    def login(self, login_id, password, create_session):
+        raise Exception("Abstract class. Not implemented")
+
+    @abc.abstractmethod
+    def is_user_login_type(self) -> bool:
+        raise Exception("Abstract class. Not implemented")
 
     @abc.abstractmethod
     def echo(self) -> bool:
@@ -137,7 +149,7 @@ class AbstractLims(HardwareObject, abc.ABC):
                         return session
         return None
 
-    def set_lims_session(self, session: LIMSSession):
+    def set_lims_session(self, session: Session):
         """
         Sets the curent lims session
         :param session: lims session value
@@ -145,7 +157,7 @@ class AbstractLims(HardwareObject, abc.ABC):
         """
         self.session = session
 
-    def get_lims_session(self) -> LIMSSession:
+    def get_lims_session(self) -> Session:
         """
         Getter for the curent lims session
         :return: current lims session

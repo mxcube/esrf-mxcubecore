@@ -152,9 +152,9 @@ class Session(HardwareObject):
 
         if self.session_start_date:
             # start_time = self.session_start_date.split(" ")[0].replace("-", "")
-            start_time = self.session_start_date.strftime(
-                "%Y%m%d"
-            )  # .split(" ")[0].replace("-", "")
+            start_time = (
+                self.session_start_date
+            )  # .strftime("%Y%m%d")  # .split(" ")[0].replace("-", "")
         else:
             start_time = time.strftime("%Y%m%d")
 
