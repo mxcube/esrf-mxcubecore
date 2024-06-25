@@ -5,10 +5,15 @@ import json
 import shutil
 from mxcubecore.BaseHardwareObjects import HardwareObject
 from mxcubecore import HardwareRepository as HWR
-from mxcubecore.model.lims_session import LIMSSession
+from mxcubecore.model.lims_session import (
+    Proposal,
+    ProposalTuple,
+    Session,
+    Status,
+)
 from mxcubecore.HardwareObjects.abstract.AbstractLims import AbstractLims
 from pyicat_plus.client.main import IcatClient, IcatInvestigationClient
-from pyicat_plus.client.models.session import Session
+from pyicat_plus.client.models.session import Session as ICATSession
 
 
 class ICATLIMSRestClient(AbstractLims):
@@ -19,7 +24,6 @@ class ICATLIMSRestClient(AbstractLims):
     def __init__(self, name):
         super().__init__(name)
         HardwareObject.__init__(self, name)
-        self.beamline_name = HWR.beamline.session.beamline_name
         self.investigations = None
         self.icatClient = None
         self.catalogue = None
@@ -28,8 +32,6 @@ class ICATLIMSRestClient(AbstractLims):
         self.ingesters = None
 
     def init(self):
-        if HWR.beamline.session:
-            self.beamline_name = HWR.beamline.session.beamline_name
         self.url = self.get_property("ws_root")
         self.ingesters = self.get_property("queue_urls")
         self.investigations = []
@@ -39,6 +41,101 @@ class ICATLIMSRestClient(AbstractLims):
             tracking_url=self.url,
             metadata_urls=["bcu-mq-01:61613"],
         )
+
+    def login(self, login_id, password, create_session=False) -> ProposalTuple:
+        return self.authenticate(login_id, password)
+
+    def is_user_login_type(self) -> bool:
+        return True
+
+    def get_proposals_by_user(self, user_name):
+        logging.getLogger("MX3.HWR").debug("get_proposals_by_user %s" % user_name)
+
+        logging.getLogger("MX3.HWR").debug(
+            "[ICATCLient] Read %s investigations" % len(self.lims_rest.investigations)
+        )
+        return self.lims_rest.to_sessions(self.lims_rest.investigations)
+
+    # TODO: it seems that both proposal_id and session_id are eNone
+    def get_samples(self, proposal_id, session_id):
+        """
+        This returns the samples that are in the status processing
+
+        proposal_id : it is the identifier of the experimental session (in ICAT is the investigationId)
+        session_id: it does not seem to be used
+        """
+        try:
+            logging.getLogger("MX3.HWR").debug(
+                "[ICATClient] get_samples %s %s", proposal_id, session_id
+            )
+            import pdb
+
+            pdb.set_trace()
+            parcels = self.get_parcels_by_investigation_id()
+            queue_samples = []
+            for parcel in parcels:
+                pucks = parcel["content"]
+                logging.getLogger("MX3.HWR").debug(
+                    "[ICATClient] Reading parcel '%s' with '%s' pucks"
+                    % (parcel["name"], len(pucks))
+                )
+                # Parcels contains pucks: unipucks and spine pucks
+                for puck in pucks:
+                    tracking_samples = puck["content"]
+                    if "sampleChangerLocation" in puck:
+                        logging.getLogger("MX3.HWR").debug(
+                            "[ICATClient] Processing puck '%s' within parcel '%s' at position '%s'. Number of samples '%s'"
+                            % (
+                                puck["name"],
+                                parcel["name"],
+                                puck["sampleChangerLocation"],
+                                len(tracking_samples),
+                            )
+                        )
+                        for tracking_sample in tracking_samples:
+                            queue_samples.append(
+                                self.__to_sample(tracking_sample, puck)
+                            )
+
+        except Exception as e:
+            import pdb
+
+            pdb.set_trace()
+            logging.getLogger("MX3.HWR").error(e)
+            return []
+
+        logging.getLogger("MX3.HWR").debug(
+            "[ICATClient] Read %s samples" % (len(queue_samples))
+        )
+
+        return queue_samples
+
+    def create_session(self, session_dict):
+        pass
+
+    def _store_data_collection_group(self, group_data):
+        pass
+
+    def dc_link(self, id: str) -> str:
+        raise Exception("Not implemented")
+
+    def get_dc(self, id: str) -> dict:
+        raise Exception("Not implemented")
+
+    def get_dc_thumbnail(self, id: str):
+        raise Exception("Not implemented")
+
+    def get_dc_image(self, id: str):
+        raise Exception("Not implemented")
+
+    def get_quality_indicator_plot(self, id: str):
+        raise Exception("Not implemented")
+
+    def store_robot_action(self, proposal_id: str):
+        raise Exception("Not implemented")
+
+    def get_rest_token(self, proposal_id: str):
+        raise Exception("Not implemented")
 
     @property
     def filter(self):
@@ -141,6 +238,7 @@ class ICATLIMSRestClient(AbstractLims):
         """Returns all investigations by user. An investigation corresponds to
         one experimental session. It returns an empty array in case of error"""
         try:
+
             self.investigations = []
             logging.getLogger("MX3.HWR").debug(
                 "[ICATRestClient] __get_all_investigations before=%s after=%s beamline=%s isInstrumentScientist=%s isAdministrator=%s compatible_beamlines=%s"
@@ -233,7 +331,7 @@ class ICATLIMSRestClient(AbstractLims):
         except Exception:
             return ""
 
-    def __to_session(self, investigation):
+    def __to_session(self, investigation) -> Session:
         """This methods converts a ICAT investigation into a session"""
 
         actual_start_date = (
@@ -246,39 +344,46 @@ class ICATLIMSRestClient(AbstractLims):
             if "__actualEndDate" in investigation["parameters"]
             else investigation.get("endDate", None)
         )
-
         # If session has been rescheduled new date is overwritten
-        """
-        session = LIMSSession(
+        return Session(
             code=investigation["type"]["name"],
             number=self.__get_proposal_number_by_investigation(investigation),
             title=f'{investigation["title"]}',
-            proposalId=investigation["id"],
-            startDate=self._string_to_date(investigation.get("startDate", None)),
-            endDate=self._string_to_date(investigation.get("endDate", None)),
-            startTime=self._string_to_time(investigation.get("startDate", None)),
-            endTime=self._string_to_time(investigation.get("endDate", None)),
-            actualStartDate=self._string_to_date(actual_start_date),
-            actualStartTime=self._string_to_time(actual_start_date),
-            actualEndDate=self._string_to_date(actual_end_date),
-            actualEndTime=self._string_to_time(actual_end_date),
-            beamlineName=investigation["instrument"]["name"],
-            sessionId=investigation["id"],
-            isScheduledBeamline=self.is_scheduled_on_host_beamline(
+            session_id=investigation["id"],
+            proposal_id=investigation["id"],
+            proposal_name=investigation["name"],
+            beamline_name=investigation["instrument"]["name"],
+            comments="",
+            start_datetime=investigation.get(
+                "startDate", None
+            ),  # self._string_to_date(investigation.get("startDate", None)),
+            start_date=self._string_to_date(investigation.get("startDate", None)),
+            start_time=self._string_to_time(investigation.get("startDate", None)),
+            end_datetime=investigation.get("endDate", None),
+            end_date=self._string_to_date(
+                investigation.get("endDate", None)
+            ),  # self._string_to_time(investigation.get("endDate", None)),
+            end_time=self._string_to_time(investigation.get("endDate", None)),
+            actual_start_date=self._string_to_date(actual_start_date),
+            actual_start_time=self._string_to_time(actual_start_date),
+            actual_end_date=self._string_to_date(actual_end_date),
+            actual_end_time=self._string_to_time(actual_end_date),
+            nb_shifts=3,
+            scheduled=self.is_scheduled_on_host_beamline(
                 investigation["instrument"]["name"]
             ),
-            isScheduledTime=self.is_scheduled_now(actual_start_date, actual_end_date),
-            isRescheduled=(
-                True if "__actualEndDate" in investigation["parameters"] else False
+            is_scheduled_time=self.is_scheduled_now(actual_start_date, actual_end_date),
+            is_scheduled_beamline=self.is_scheduled_on_host_beamline(
+                investigation["instrument"]["name"]
             ),
-            dataPortalURL=self._get_data_portal_url(investigation),
-            userPortalURL=self._get_user_portal_url(investigation),
-            logbookURL=self._get_logbook_url(investigation),
+            data_portal_URL=self._get_data_portal_url(investigation),
+            user_portal_URL=self._get_user_portal_url(investigation),
+            logbook_URL=self._get_logbook_url(investigation),
         )
-        """
 
+        """
         session = {
-            "code": investigation["type"]["name"],
+            "code"= investigation["type"]["name"],
             "number": self.__get_proposal_number_by_investigation(investigation),
             "title": f'{investigation["title"]}',
             "proposalId": investigation["id"],
@@ -324,6 +429,10 @@ class ICATLIMSRestClient(AbstractLims):
             "Person": {"personId": 1, "laboratoryId": 1, "login": "test Login"},
             "Laboratory": {"laboratoryId": 1, "name": "TEST eh1"},
         }
+        """
+
+    def get_user_name(self):
+        return self.session["username"]
 
     def to_sessions(self, investigations):
         return [self.__to_session(investigation) for investigation in investigations]
@@ -331,6 +440,9 @@ class ICATLIMSRestClient(AbstractLims):
     def get_parcels_by_investigation_id(self):
         """Returns the parcels associated to an investigation"""
         try:
+            import pdb
+
+            pdb.set_trace()
             logging.getLogger("MX3.HWR").debug(
                 "[ICATRestClient] Retrieving parcels by investigation_id %s "
                 % (self.investigation["id"])
@@ -344,7 +456,7 @@ class ICATLIMSRestClient(AbstractLims):
             return parcels
         except Exception as e:
             logging.getLogger("MX3.HWR").error(
-                "[ICATRestClient] get_parcels_by_investigation_id %s " % (e)
+                "[ICATRestClient] get_parcels_by_investigation_id %s " % (str(e))
             )
         return []
 
@@ -358,8 +470,7 @@ class ICATLIMSRestClient(AbstractLims):
             tracking_url=self.url,
             catalogue_queues=["bcu-mq-01:61613"],
         )
-        self.session: Session = self.icatClient.do_log_in(password)
-
+        self.session: ICATSession = self.icatClient.do_log_in(password)
         # Catalogue client to retrieve investigations
         self.catalogue = self.icatClient.catalogue_client
 
@@ -389,14 +500,7 @@ class ICATLIMSRestClient(AbstractLims):
         # if no investigation then we refuse login(?) TODO: sure?
         # refuse Login
         if len(investigations) == 0:
-            return {
-                "status": {
-                    "code": "error",
-                    "msg": "No investigations associated with the user",
-                },
-                "Proposal": None,
-                "session": None,
-            }
+            return ProposalTuple()
 
         # Filter by investigation scheduled now
         self.investigations = investigations
@@ -407,11 +511,26 @@ class ICATLIMSRestClient(AbstractLims):
 
         try:
             response = self.__to_session(self.investigation)
+
         except Exception as e:
             logging.getLogger("MX3.HWR").error("[ICATRestClient] %s " % (str(e)))
             raise e
 
-        return response
+        proposal = Proposal(
+            proposal_id=self.investigation["id"],
+            type=self.investigation["type"]["name"],
+            code=self.investigation["type"]["name"],
+            number=self.__get_proposal_number_by_investigation(self.investigation),
+            title=f'{self.investigation["title"]}',
+        )
+        proposal_tuple = ProposalTuple(
+            proposal=proposal,
+            todays_session=response,
+            sessions=self.to_sessions(self.investigations),
+            status=Status(code="ok"),
+        )
+
+        return proposal_tuple
 
     def echo(self):
         """Mockup for the echo method."""
