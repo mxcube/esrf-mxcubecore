@@ -2030,6 +2030,9 @@ class ISPyBClient(HardwareObject):
 
         return action_id
 
+    def create_mx_collection(self, collection_parameters):
+        self.icat_client.create_mx_collection(collection_parameters)
+
     def create_ssx_collection(
         self, data_path, collection_parameters, beamline_parameters, extra_lims_values
     ):
