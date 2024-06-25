@@ -28,7 +28,6 @@ class ICATLIMSRestClient(AbstractLims):
         self.icatClient = None
         self.catalogue = None
         self.lims_rest = None
-        self.session = None  # ICAT's session
         self.ingesters = None
 
     def init(self):
@@ -41,6 +40,9 @@ class ICATLIMSRestClient(AbstractLims):
             tracking_url=self.url,
             metadata_urls=["bcu-mq-01:61613"],
         )
+
+    def get_lims_name(self):
+        return "ICAT"
 
     def login(self, login_id, password, create_session=False) -> ProposalTuple:
         return self.authenticate(login_id, password)
@@ -56,8 +58,7 @@ class ICATLIMSRestClient(AbstractLims):
         )
         return self.lims_rest.to_sessions(self.lims_rest.investigations)
 
-    # TODO: it seems that both proposal_id and session_id are eNone
-    def get_samples(self, proposal_id, session_id):
+    def get_samples(self):
         """
         This returns the samples that are in the status processing
 
@@ -66,11 +67,10 @@ class ICATLIMSRestClient(AbstractLims):
         """
         try:
             logging.getLogger("MX3.HWR").debug(
-                "[ICATClient] get_samples %s %s", proposal_id, session_id
+                "[ICATClient] get_samples %s %s",
+                self.session.session_id,
+                self.session.proposal_name,
             )
-            import pdb
-
-            pdb.set_trace()
             parcels = self.get_parcels_by_investigation_id()
             queue_samples = []
             for parcel in parcels:
@@ -98,9 +98,6 @@ class ICATLIMSRestClient(AbstractLims):
                             )
 
         except Exception as e:
-            import pdb
-
-            pdb.set_trace()
             logging.getLogger("MX3.HWR").error(e)
             return []
 
@@ -109,6 +106,51 @@ class ICATLIMSRestClient(AbstractLims):
         )
 
         return queue_samples
+
+    def find(self, arr, atribute_name):
+        for x in arr:
+            if x["key"] == atribute_name:
+                return x["value"]
+        return ""
+
+    def __to_sample(self, tracking_sample, puck):
+        """Converts the sample tracking into the expected sample data structure"""
+        experiment_plan = tracking_sample["experimentPlan"]
+        return {
+            "cellA": self.find(experiment_plan, "unit_cell_a"),
+            "cellAlpha": self.find(experiment_plan, "unit_cell_alpha"),
+            "cellB": self.find(experiment_plan, "unit_cell_b"),
+            "cellBeta": self.find(experiment_plan, "unit_cell_beta"),
+            "cellC": self.find(experiment_plan, "unit_cell_c"),
+            "cellGamma": self.find(experiment_plan, "unit_cell_gamma"),
+            "containerSampleChangerLocation": str(puck["sampleChangerLocation"]),
+            "crystalSpaceGroup": self.find(experiment_plan, "forceSpaceGroup"),
+            "diffractionPlan": {
+                # "diffractionPlanId": 457980, TODO: do we need this?
+                "experimentKind": self.find(experiment_plan, "experimentKind"),
+                "numberOfPositions": self.find(experiment_plan, "numberOfPositions"),
+                "observedResolution": self.find(experiment_plan, "observedResolution"),
+                "preferredBeamDiameter": self.find(
+                    experiment_plan, "preferredBeamDiameter"
+                ),
+                "radiationSensitivity": self.find(
+                    experiment_plan, "radiationSensitivity"
+                ),
+                "requiredCompleteness": self.find(
+                    experiment_plan, "requiredCompleteness"
+                ),
+                "requiredMultiplicity": self.find(
+                    experiment_plan, "requiredMultiplicity"
+                ),
+                "requiredResolution": self.find(experiment_plan, "requiredResolution"),
+            },
+            "experimentType": self.find(experiment_plan, "workflowType"),
+            "proteinAcronym": tracking_sample["name"],
+            "sampleId": tracking_sample["sampleId"],
+            "sampleLocation": tracking_sample["sampleContainerPosition"],
+            "sampleName": tracking_sample["name"],
+            "smiles": None,
+        }
 
     def create_session(self, session_dict):
         pass
@@ -172,12 +214,6 @@ class ICATLIMSRestClient(AbstractLims):
     @property
     def after_offset_days(self):
         return self.get_property("after_offset_days", "1")
-
-    def _select_current_investigation(self):
-        logging.getLogger("MX3.HWR").debug(
-            "[ICATRestClient] _select_current_investigation"
-        )
-        return self.investigation
 
     def _string_to_format_date(self, date: str, format: str) -> str:
         if date is not None:
@@ -440,16 +476,11 @@ class ICATLIMSRestClient(AbstractLims):
     def get_parcels_by_investigation_id(self):
         """Returns the parcels associated to an investigation"""
         try:
-            import pdb
-
-            pdb.set_trace()
             logging.getLogger("MX3.HWR").debug(
                 "[ICATRestClient] Retrieving parcels by investigation_id %s "
                 % (self.investigation["id"])
             )
-            parcels = self.tracking.get_parcels_by(
-                self._select_current_investigation()["id"]
-            )
+            parcels = self.tracking.get_parcels_by(self.session.session_id)
             logging.getLogger("MX3.HWR").debug(
                 "[ICATRestClient] Successfully retrieved %s parcels" % (len(parcels))
             )
@@ -503,18 +534,13 @@ class ICATLIMSRestClient(AbstractLims):
             return ProposalTuple()
 
         # Filter by investigation scheduled now
-        self.investigations = investigations
+        sessions = self.to_sessions(self.investigations)
+
         self.investigation = investigations[0]
         logging.getLogger("MX3.HWR").debug(
             "[ICATRestClient] Selected investigation %s " % (self.investigation["name"])
         )
-
-        try:
-            response = self.__to_session(self.investigation)
-
-        except Exception as e:
-            logging.getLogger("MX3.HWR").error("[ICATRestClient] %s " % (str(e)))
-            raise e
+        self.set_sessions(sessions)
 
         proposal = Proposal(
             proposal_id=self.investigation["id"],
@@ -525,8 +551,8 @@ class ICATLIMSRestClient(AbstractLims):
         )
         proposal_tuple = ProposalTuple(
             proposal=proposal,
-            todays_session=response,
-            sessions=self.to_sessions(self.investigations),
+            todays_session=self.__to_session(self.investigation),
+            sessions=self.sessions,
             status=Status(code="ok"),
         )
 
