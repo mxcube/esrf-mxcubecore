@@ -16,14 +16,11 @@ class ICATLIMSClient(AbstractLims):
 
     def __init__(self, name):
         super().__init__(name)
-        self.beamline_name = HWR.beamline.session.beamline_name
         self.icatClient = None
         self.catalogue = None
         self.lims_rest = None
 
     def init(self):
-        if HWR.beamline.session:
-            self.beamline_name = HWR.beamline.session.beamline_name
         self.url = self.get_property("ws_root")
         self.lims_rest = self.get_object_by_role("lims_rest")
 
@@ -38,6 +35,27 @@ class ICATLIMSClient(AbstractLims):
 
     def _store_data_collection_group(self, group_data):
         pass
+
+    def dc_link(self, id: str) -> str:
+        raise Exception("Not implemented")
+
+    def get_dc(self, id: str) -> dict:
+        raise Exception("Not implemented")
+
+    def get_dc_thumbnail(self, id: str):
+        raise Exception("Not implemented")
+
+    def get_dc_image(self, id: str):
+        raise Exception("Not implemented")
+
+    def get_quality_indicator_plot(self, id: str):
+        raise Exception("Not implemented")
+
+    def store_robot_action(self, proposal_id: str):
+        raise Exception("Not implemented")
+
+    def get_rest_token(self, proposal_id: str):
+        raise Exception("Not implemented")
 
     @property
     def loginType(self):
