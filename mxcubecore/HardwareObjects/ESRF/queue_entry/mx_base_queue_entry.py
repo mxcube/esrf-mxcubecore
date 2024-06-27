@@ -1,8 +1,10 @@
+import errno
 import json
 
 from typing_extensions import Literal, Union
 from pydantic import BaseModel, Field
 from devtools import debug
+import os
 
 from mxcubecore import HardwareRepository as HWR
 from mxcubecore.queue_entry.base_queue_entry import BaseQueueEntry
@@ -27,14 +29,6 @@ class MXPathParameters(PathParameters):
 
 class BaseUserCollectionParameters(BaseModel):
     exp_time: float = Field(95e-6, gt=0, lt=1, description="s")
-    sub_sampling: Literal[1, 2, 4, 6, 8] = Field(1)
-    take_pedestal: bool = Field(True)
-    reject_empty_frames: bool = Field(False)
-
-    frequency: float = Field(
-        float(HWR.beamline.diffractometer.get_property("max_freq", DEFAULT_MAX_FREQ)),
-        description="Hz",
-    )
 
 
 class MXBaseQueueTaskParameters(BaseModel):
@@ -76,10 +70,19 @@ class MXBaseQueueEntry(BaseQueueEntry):
     def __init__(self, view, data_model):
         super().__init__(view=view, data_model=data_model)
         self._beamline_values = None
-        self._current_data_path = None
+
+    def get_data_directory(self):
+        return self.get_data_model().get_path_template().directory
 
     def get_data_path(self):
-        return self._current_data_path
+        return self.get_data_model().get_path_template().get_image_path()
+
+    def create_directory(self):
+        try:
+            os.makedirs(self.get_data_directory())
+        except os.error as e:
+            if e.errno != errno.EEXIST:
+                raise
 
     def start_processing(self, exp_type):
         data_root_path = self.get_data_path()
@@ -93,6 +96,8 @@ class MXBaseQueueEntry(BaseQueueEntry):
 
     def pre_execute(self):
         super().pre_execute()
+        self.create_directory()
+
         self.emit_progress(0)
 
     def post_execute(self):

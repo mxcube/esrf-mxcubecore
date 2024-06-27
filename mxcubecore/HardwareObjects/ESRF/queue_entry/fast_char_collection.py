@@ -1,5 +1,4 @@
 import logging
-import os
 from devtools import debug
 
 from mxcubecore import HardwareRepository as HWR
@@ -56,16 +55,7 @@ class FastCharCollectionQueueEntry(MXBaseQueueEntry):
     def execute(self):
         super().execute()
         debug(self._data_model._task_data)
-
-        fname_prefix = self._data_model._task_data.path_parameters.prefix
-        data_root_path = self.get_data_path()
-        fname = os.path.join(data_root_path, fname_prefix)
-
-        try:
-            os.makedirs(data_root_path)
-        except os.error as e:
-            if e.errno != errno.EEXIST:
-                raise
+        data_path = self.get_data_path()
 
         number_of_images = 10
         number_of_scans = 4
@@ -89,10 +79,9 @@ class FastCharCollectionQueueEntry(MXBaseQueueEntry):
             0,
         )
 
-        logging.getLogger("user_level_log").info(f"Setting file path to {fname}")
-        HWR.beamline.detector.set_detector_filenames(1, 1, fname)
+        logging.getLogger("user_level_log").info(f"Setting file path to {data_path}")
+        HWR.beamline.detector.set_detector_filenames(1, 1, data_path)
 
-        # HWR.beamline.detector.wait_ready()
         HWR.beamline.diffractometer.wait_ready()
         logging.getLogger("user_level_log").info(f"Phase changed to data collection")
 
