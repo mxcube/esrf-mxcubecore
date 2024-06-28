@@ -38,10 +38,11 @@ class AbstractLims(HardwareObject, abc.ABC):
         super().__init__(name)
 
         # current lims session
-        self.session = Session()
+        self.active_session = None
 
         self.beamline_name = "unknown"
-        self.active_session = None
+
+        self.sessions = []
 
     @abc.abstractmethod
     def get_lims_name(self, login_id, password, create_session):
@@ -76,31 +77,7 @@ class AbstractLims(HardwareObject, abc.ABC):
         raise Exception("Abstract class. Not implemented")
 
     @abc.abstractmethod
-    def dc_link(self, id: str) -> str:
-        raise Exception("Abstract class. Not implemented")
-
-    @abc.abstractmethod
-    def get_dc(self, id: str) -> dict:
-        raise Exception("Abstract class. Not implemented")
-
-    @abc.abstractmethod
-    def get_dc_thumbnail(self, id: str):
-        raise Exception("Abstract class. Not implemented")
-
-    @abc.abstractmethod
-    def get_dc_image(self, id: str):
-        raise Exception("Abstract class. Not implemented")
-
-    @abc.abstractmethod
-    def get_quality_indicator_plot(self, id: str):
-        raise Exception("Abstract class. Not implemented")
-
-    @abc.abstractmethod
     def get_samples(self):
-        raise Exception("Abstract class. Not implemented")
-
-    @abc.abstractmethod
-    def get_rest_token(self, proposal_id: str):
         raise Exception("Abstract class. Not implemented")
 
     @abc.abstractmethod
@@ -167,28 +144,32 @@ class AbstractLims(HardwareObject, abc.ABC):
         self.sessions = sessions
 
     def get_active_session(self) -> Session:
-        return self.session
+        return self.active_session
 
     def set_active_session_by_id(self, session_id: str) -> Session:
-        if self.sessions == 0:
+        if len(self.sessions) == 0:
             logging.getLogger("HWR").error(
                 "Session list is empty. No session candidates"
             )
-            raise "No sessions avaiable"
+            raise BaseException("No sessions available")
+
+        if len(self.sessions) == 1:
+            self.active_session = self.sessions[0]
+            logging.getLogger("HWR").debug(
+                "Session list contains a single session. sesssion=%s",
+                self.active_session,
+            )
+            return self.active_session
 
         session_list = [obj for obj in self.sessions if obj.session_id == session_id]
         if len(session_list) != 1:
-            raise "Session not found in the local list of sessions. session_id=" + session_id
-        self.session = session_list[0]
+            raise BaseException(
+                "Session not found in the local list of sessions. session_id="
+                + session_id
+            )
+        self.active_session = session_list[0]
         logging.getLogger("HWR").debug(
             "Active session selected. session_id=%s proposal_code=%s proposal_number=%s"
-            % (session_id, self.session.code, self.session.number)
+            % (session_id, self.active_session.code, self.active_session.number)
         )
-        return self.session
-
-    def get_lims_session(self) -> Session:
-        """
-        Getter for the curent lims session
-        :return: current lims session
-        """
-        return self.session
+        return self.active_session
