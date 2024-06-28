@@ -36,7 +36,6 @@ class ISPyBAbstractLIMS(AbstractLims):
     def __init__(self, name):
         super().__init__(name)
         self.ldapConnection = None
-        self.lims_rest = None
         self.pyispyb = None
         self._translations = {}
         self.authServerType = None
@@ -49,7 +48,6 @@ class ISPyBAbstractLIMS(AbstractLims):
         Init method declared by HardwareObject.
         """
         super().init()
-        self.lims_rest = self.get_object_by_role("lims_rest")
         self.pyispyb = self.get_object_by_role("pyispyb")
         self.icat_client = self.get_object_by_role("icat_client")
 
@@ -131,21 +129,6 @@ class ISPyBAbstractLIMS(AbstractLims):
             + "/ispyb/user/viewResults.do?reqCode=display&dataCollectionId="
         )
 
-    def get_dc_thumbnail(self, id: str):
-        return self.lims_rest.get_dc_thumbnail(id)
-
-    def get_dc_image(self, id: str):
-        return self.lims_rest.get_dc_image(id)
-
-    def get_dc(self, dc_id: str):
-        return self.lims_rest.get_dc(dc_id)
-
-    def get_quality_indicator_plot(self, collection_id):
-        return self.lims_rest.get_quality_indicator_plot(collection_id)
-
-    def get_rest_token(self):
-        return self.lims_rest.get_rest_token()
-
     def echo(self):
         """
         Method to ensure the communication with the SOAP server.
@@ -167,7 +150,7 @@ class ISPyBAbstractLIMS(AbstractLims):
 
         return False
 
-    def ldap_login(self, login_name, psd, ldap_connection):
+    def ldap_login(self, login_name, psd):
         warnings.warn(
             (
                 "Using Authenticatior from ISPyBClient is deprecated,"
@@ -176,10 +159,7 @@ class ISPyBAbstractLIMS(AbstractLims):
             DeprecationWarning,
         )
 
-        if ldap_connection is None:
-            ldap_connection = self.ldapConnection
-
-        return ldap_connection.authenticate(login_name, psd)
+        return self.ldapConnection.authenticate(login_name, psd)
 
     def store_data_collection(self, *args, **kwargs):
         try:
@@ -288,8 +268,14 @@ class ISPyBAbstractLIMS(AbstractLims):
                 pass
         return None
 
-    def get_samples(self, proposal_id, session_id):
-        self.samples = self.adapter.get_samples(proposal_id, session_id)
+    def get_samples(self):
+        self.samples = []
+        if self.active_session is not None:
+            self.samples = self.adapter.get_samples(self.active_session.proposal_id)
+        logging.getLogger("HWR").debug(
+            "get_samples. %s samples retrieved. proposal_id=%s"
+            % (len(self.samples), self.active_session.proposal_id)
+        )
         return self.samples
 
     def create_session(self, proposal_tuple: ProposalTuple) -> ProposalTuple:
