@@ -32,9 +32,9 @@ class Status(BaseModel):
 class Session(BaseModel):
     session_id: str = ""
     beamline_name: str = ""
-    start_date: str = ""
+    start_date: str = ""  # YYYYMDD
     start_time: str = ""
-    end_date: str = ""
+    end_date: str = ""  # YYYYMDD
     end_time: str = ""
 
     # Proposal information
@@ -47,7 +47,7 @@ class Session(BaseModel):
     comments: str = ""
 
     start_datetime: datetime = Field(default_factory=datetime.now)
-    end_datetime: datetime = Field(
+    end_datetime: Optional[datetime] = Field(
         default_factory=lambda: datetime.now() + timedelta(days=1)
     )
 
@@ -61,7 +61,7 @@ class Session(BaseModel):
     scheduled: str = ""
 
     # status of the session depending on wether it has been rescheduled or moved
-    isRescheduled: bool = False
+    is_rescheduled: bool = False
     is_scheduled_time: bool = False
     is_scheduled_beamline: bool = False
 
