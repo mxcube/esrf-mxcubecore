@@ -58,7 +58,9 @@ class ProposalTypeISPyBLims(ISPyBAbstractLIMS):
             raise Exception("Authentication failed")
 
     def set_active_session_by_id(self, proposal_name: str) -> Session:
-
+        """
+        Given a proposal name it will select a session that is scheduled on this beamline in the current timeslot
+        """
         if len(self.sessions) == 0:
             logging.getLogger("HWR").error(
                 "Session list is empty. No session candidates"
