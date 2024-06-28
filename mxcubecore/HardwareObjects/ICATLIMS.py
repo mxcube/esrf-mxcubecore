@@ -16,7 +16,7 @@ from pyicat_plus.client.main import IcatClient, IcatInvestigationClient
 from pyicat_plus.client.models.session import Session as ICATSession
 
 
-class ICATLIMSRestClient(AbstractLims):
+class ICATLIMS(AbstractLims):
     """
     ICAT client.
     """
@@ -264,15 +264,16 @@ class ICATLIMSRestClient(AbstractLims):
                     self.before_offset_days,
                     self.after_offset_days,
                     self.override_beamline_name,
-                    self.session["isInstrumentScientist"],
-                    self.session["isAdministrator"],
+                    self.icat_session["isInstrumentScientist"],
+                    self.icat_session["isAdministrator"],
                     self.compatible_beamlines,
                 )
             )
 
             # TODO: This can be commented out when https://gitlab.esrf.fr/marcus.oscarsson/mxcube3/-/issues/985
-            if self.session is not None and (
-                self.session["isAdministrator"] or self.session["isInstrumentScientist"]
+            if self.icat_session is not None and (
+                self.icat_session["isAdministrator"]
+                or self.icat_session["isInstrumentScientist"]
             ):
                 self.investigations = self.catalogue.get_investigations_by(
                     start_date=datetime.today()
@@ -453,7 +454,7 @@ class ICATLIMSRestClient(AbstractLims):
         """
 
     def get_user_name(self):
-        return self.session["username"]
+        return self.icat_session["username"]
 
     def to_sessions(self, investigations):
         return [self.__to_session(investigation) for investigation in investigations]
@@ -486,7 +487,7 @@ class ICATLIMSRestClient(AbstractLims):
             tracking_url=self.url,
             catalogue_queues=["bcu-mq-01:61613"],
         )
-        self.session: ICATSession = self.icatClient.do_log_in(password)
+        self.icat_session: ICATSession = self.icatClient.do_log_in(password)
         # Catalogue client to retrieve investigations
         self.catalogue = self.icatClient.catalogue_client
 
@@ -503,7 +504,7 @@ class ICATLIMSRestClient(AbstractLims):
         # Connected to metadata catalogue
         logging.getLogger("MX3.HWR").debug(
             "[ICATRestClient] Connected succesfully to catalogue. fullName=%s url=%s"
-            % (self.session["fullName"], self.url)
+            % (self.icat_session["fullName"], self.url)
         )
 
         # Retrieving user's investigations

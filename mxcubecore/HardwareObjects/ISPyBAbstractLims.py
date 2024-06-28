@@ -122,13 +122,6 @@ class ISPyBAbstractLIMS(AbstractLims):
             translated = code
         return translated
 
-    def get_dc_display_link(self):
-        ws_root_base = ":".join(self.ws_root.split(":")[:2])
-        return (
-            ws_root_base
-            + "/ispyb/user/viewResults.do?reqCode=display&dataCollectionId="
-        )
-
     def echo(self):
         """
         Method to ensure the communication with the SOAP server.
@@ -189,35 +182,6 @@ class ISPyBAbstractLIMS(AbstractLims):
         """
         return self.adapter.store_data_collection(mx_collection, bl_config)
 
-    def dc_link(self, cid):
-        """
-        Get the LIMS link the data collection with id <id>.
-
-        :param str did: Data collection ID
-        :returns: The link to the data collection
-        """
-        dc_url = "ispyb/user/viewResults.do?reqCode=display&dataCollectionId=%s" % cid
-        url = None
-        if self.base_result_url is not None:
-            url = urljoin(self.base_result_url, dc_url)
-        return url
-
-    def store_beamline_setup(self, session_id, bl_config):
-        """
-        Stores the beamline setup dict <bl_config>.
-
-        :param session_id: The session id that the beamline_setup
-                           should be associated with.
-        :type session_id: int
-
-        :param bl_config: The dictonary with beamline settings.
-        :type bl_config: dict
-
-        :returns beamline_setup_id: The database id of the beamline setup.
-        :rtype: str
-        """
-        self.adapter.store_beamline_setup(session_id, bl_config)
-
     @in_greenlet
     def update_data_collection(self, mx_collection, wait=False):
         """
@@ -249,7 +213,7 @@ class ISPyBAbstractLIMS(AbstractLims):
 
         :returns: None
         """
-        self.adapter(image_dict)
+        self.adapter.store_image(image_dict)
 
     def find_sample_by_sample_id(self, sample_id):
         """
@@ -283,21 +247,6 @@ class ISPyBAbstractLIMS(AbstractLims):
         proposal_tuple = self.adapter.create_session(proposal_tuple, self.beamline_name)
         logging.getLogger("HWR").debug("Session created %s" % proposal_tuple)
         return proposal_tuple
-
-    def update_session(self, session_dict):
-        """
-        Update the session with the data in <session_dict>, the attribute
-        sessionId in <session_dict> must be set.
-
-        Warning: Missing attibutes in <session_dict> will set to null,
-                 this could leed to loss of data.
-
-        :param session_dict: The session to update.
-        :type session_dict: dict
-
-        :returns: None
-        """
-        return self.adapter.update_session(session_dict)
 
     def store_energy_scan(self, energyscan_dict):
         """
@@ -378,17 +327,10 @@ class ISPyBAbstractLIMS(AbstractLims):
             logging.exception("Could not store workflow")
             return None, None, None
 
-    def store_workflow_step(self, *args, **kwargs):
-        try:
-            return self.adapter._store_workflow_step(*args, **kwargs)
-        except gevent.GreenletExit:
-            raise
-        except Exception:
-            logging.exception("Could not store workflow step")
-            return None
-
     def store_robot_action(self, robot_action_dict):
-        """Stores robot action"""
+        """Stores robot action
+        dict: {'actionType': 'LOAD', 'containerLocation': 2, 'dewarLocation': 3, 'sampleBarcode': '', 'sampleId': '993763', 'sessionId': '86652', 'startTime': '2024-06-28 03:04:18', 'endTime': '2024-06-28 03:04:52', 'status': 'SUCCESS'}
+        """
         return self.adapter.store_robot_action(robot_action_dict)
 
     def create_mx_collection(self, collection_parameters):
@@ -406,7 +348,6 @@ class ISPyBAbstractLIMS(AbstractLims):
     createSession = create_session
     getSession = get_session
     storeDataCollection = store_data_collection
-    storeBeamLineSetup = store_beamline_setup
     getDataCollection = get_data_collection
     updateBLSample = update_bl_sample
     associateBLSampleAndEnergyScan = associate_bl_sample_and_energy_scan
