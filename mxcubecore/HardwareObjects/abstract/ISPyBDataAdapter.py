@@ -1,4 +1,5 @@
 from __future__ import print_function
+import itertools
 import time
 from datetime import datetime, timedelta
 from typing import List
@@ -163,19 +164,56 @@ class ISPyBDataAdapter:
         except Exception:
             raise
 
+    def __is_scheduled_now(self, startDate: datetime, endDate: datetime) -> bool:
+        return self.__is_time_between(startDate, endDate)
+
+    def __is_time_between(
+        self, start_date: datetime, end_date: datetime, check_time=None
+    ):
+        if start_date is None or end_date is None:
+            return False
+
+        begin_time = start_date.date()
+        end_time = end_date.date()
+
+        # If check time is not given, default to current UTC time
+        check_time = check_time or datetime.utcnow().date()
+        if begin_time <= check_time <= end_time:
+            return True
+        else:
+            return False
+
     def __to_session(self, session: dict[str, str]) -> Session:
         """
         Converts a dictionary composed by the person entries to the object proposal
         """
+        proposal_name = session.get("proposalName")
+        proposal_code = "".join(
+            itertools.takewhile(lambda c: not c.isdigit(), proposal_name)
+        )
+        proposal_number = proposal_name[len(proposal_code) :]
         return Session(
+            code=proposal_code,
+            number=proposal_number,
+            proposal_name=proposal_name,
             session_id=session.get("sessionId"),
             proposal_id=session.get("proposalId"),
             beamline_name=session.get("beamlineName"),
             comments=session.get("comments"),
-            end_date=session.get("endDate"),
+            end_date=datetime.strftime(
+                session.get("endDate"), "%Y%m%d"
+            ),  # session.get("endDate"),
             nb_shifts=session.get("nbShifts"),
             scheduled=session.get("scheduled"),
-            start_date=session.get("startDate"),
+            start_date=datetime.strftime(
+                session.get("startDate"), "%Y%m%d"
+            ),  # session.get("startDate"),
+            start_datetime=session.get("startDate"),
+            end_datetime=session.get("endDate"),
+            is_scheduled_time=self.__is_scheduled_now(
+                session.get("startDate"), session.get("endDate")
+            ),
+            is_scheduled_beamline=True,
         )
 
     def __to_proposal(self, proposal: dict[str, str]) -> Proposal:
@@ -286,7 +324,7 @@ class ISPyBDataAdapter:
 
     def _is_session_scheduled_today(self, session: Session) -> bool:
         now = datetime.now()
-        if session.start_date.date() <= now.date() <= session.end_date.date():
+        if session.start_datetime.date() <= now.date() <= session.end_datetime.date():
             return True
         return False
 
@@ -436,7 +474,7 @@ class ISPyBDataAdapter:
                 "Error in store_image: could not connect to server"
             )
 
-    def get_samples(self, proposal_id, session_id):
+    def get_samples(self, proposal_id):
         response_samples = []
 
         if self._tools_ws:

@@ -68,8 +68,8 @@ class ICATLIMSRestClient(AbstractLims):
         try:
             logging.getLogger("MX3.HWR").debug(
                 "[ICATClient] get_samples %s %s",
-                self.session.session_id,
-                self.session.proposal_name,
+                self.active_session.session_id,
+                self.active_session.proposal_name,
             )
             parcels = self.get_parcels_by_investigation_id()
             queue_samples = []
@@ -158,25 +158,7 @@ class ICATLIMSRestClient(AbstractLims):
     def _store_data_collection_group(self, group_data):
         pass
 
-    def dc_link(self, id: str) -> str:
-        raise Exception("Not implemented")
-
-    def get_dc(self, id: str) -> dict:
-        raise Exception("Not implemented")
-
-    def get_dc_thumbnail(self, id: str):
-        raise Exception("Not implemented")
-
-    def get_dc_image(self, id: str):
-        raise Exception("Not implemented")
-
-    def get_quality_indicator_plot(self, id: str):
-        raise Exception("Not implemented")
-
     def store_robot_action(self, proposal_id: str):
-        raise Exception("Not implemented")
-
-    def get_rest_token(self, proposal_id: str):
         raise Exception("Not implemented")
 
     @property
@@ -234,12 +216,12 @@ class ICATLIMSRestClient(AbstractLims):
         except Exception:
             return None
 
-    def allow_session(self, session):
+    def allow_session(self, session: Session):
+        self.active_session = session
         logging.getLogger("MX3.HWR").debug(
-            "[ICATRestClient] allow_session investigationId=%s",
-            session["sessionId"],
+            "[ICATRestClient] allow_session investigationId=%s", session.session_id
         )
-        self.catalogue.reschedule_investigation(session["sessionId"])
+        self.catalogue.reschedule_investigation(session.session_id)
 
     def get_session_by_id(self, id: str):
         logging.getLogger("MX3.HWR").debug(
@@ -415,6 +397,9 @@ class ICATLIMSRestClient(AbstractLims):
             data_portal_URL=self._get_data_portal_url(investigation),
             user_portal_URL=self._get_user_portal_url(investigation),
             logbook_URL=self._get_logbook_url(investigation),
+            is_rescheduled=(
+                True if "__actualEndDate" in investigation["parameters"] else False
+            ),
         )
 
         """
@@ -480,7 +465,7 @@ class ICATLIMSRestClient(AbstractLims):
                 "[ICATRestClient] Retrieving parcels by investigation_id %s "
                 % (self.investigation["id"])
             )
-            parcels = self.tracking.get_parcels_by(self.session.session_id)
+            parcels = self.tracking.get_parcels_by(self.active_session.session_id)
             logging.getLogger("MX3.HWR").debug(
                 "[ICATRestClient] Successfully retrieved %s parcels" % (len(parcels))
             )
