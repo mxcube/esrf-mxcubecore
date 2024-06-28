@@ -24,7 +24,7 @@ if sys.version_info > (3, 0):
 logging.getLogger("suds").setLevel(logging.INFO)
 
 
-class UserISPyBLims(ISPyBAbstractLIMS):
+class UserTypeISPyBLims(ISPyBAbstractLIMS):
     """
     ISPyB proposal-based client
     """
