@@ -1,10 +1,13 @@
+import time
 import errno
 import json
+import logging
 
 from typing_extensions import Literal, Union
 from pydantic import BaseModel, Field
 from devtools import debug
 import os
+import gevent
 
 from mxcubecore import HardwareRepository as HWR
 from mxcubecore.queue_entry.base_queue_entry import BaseQueueEntry
@@ -76,6 +79,46 @@ class MXBaseQueueEntry(BaseQueueEntry):
 
     def get_data_path(self):
         return self.get_data_model().get_path_template().get_image_path()
+
+    def _check_file(self, fname, wait_time=60):
+        if not os.path.isfile(fname):
+            logging.getLogger("HWR").info("File {fname} not yet written")
+            logging.getLogger("HWR").info("Checking for file {fname}...")
+
+            for i in range(1, 3):
+                time.sleep(60)
+
+                if os.path.isfile(fname):
+                    break
+
+                logging.getLogger("HWR").info(
+                    "{fname} still not found after {3-i} retries"
+                )
+
+            logging.getLogger("HWR").warning("File {fname} not found")
+
+    def monitor_progress(self):
+        num_images = self._data_model._task_data.collection_parameters.num_images
+        exp_time = self._data_model._task_data.collection_parameters.exp_time
+        images_per_file = HWR.beamline.detector.images_per_file
+        num_files = num_images // images_per_file
+        dp = 100 / num_files
+        total_progress = 0
+
+        pt = self.get_data_model().get_path_template()
+        h5_master_path = pt.get_image_file_name()
+
+        for i in range(1, num_files):
+            time.sleep(images_per_file * exp_time)
+
+            current_file = pt.get_actual_file_path(
+                h5_master_path, i * images_per_file - 1
+            )
+
+            gevent.spwan(self._check_file, current_file)
+
+            total_progress += dp
+            self.emit_progress(total_progress)
 
     def create_directory(self):
         try:
