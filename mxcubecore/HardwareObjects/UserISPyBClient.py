@@ -124,7 +124,7 @@ class UserISPyBLims(ISPyBAbstractLIMS):
         if self.loginType == "proposal":
             # get the proposal ID
             _code = self._translate(proposal_code, "ispyb")
-            return self.adapter.get_proposal_tuple_by_code_and_number(
+            return self.adapter.get_sessions_by_code_and_number(
                 _code, proposal_number, self.beamline_name
             )
         elif self.loginType == "user":

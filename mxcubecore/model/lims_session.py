@@ -1,5 +1,5 @@
 from datetime import timedelta, datetime
-from typing import Optional, List
+from typing import Optional, List, Union
 from pydantic import BaseModel, Field
 
 
@@ -10,23 +10,6 @@ class Proposal(BaseModel):
     code: str = ""
     number: str = ""
     title: str = ""
-
-
-class Person(BaseModel):
-    person_id: str = ""
-    site_id: Optional[str] = ""
-    email_address: Optional[str] = ""
-    family_name: Optional[str] = ""
-    # faxNumber: str = ""
-    given_name: Optional[str] = ""
-    login: Optional[str] = ""
-    # phoneNumber: str = ""
-    title: Optional[str] = ""
-
-
-class Status(BaseModel):
-    code: str = "error"
-    msg: Optional[str] = ""
 
 
 class Session(BaseModel):
@@ -71,15 +54,6 @@ class Session(BaseModel):
     logbook_URL: Optional[str] = None
 
 
-class ProposalTuple(BaseModel):
-    """
-    Kept for legacy purposes and used by ISPyBClient
-    It is a tuple containning information about Proposal, Person, Laboratory
-    Sessions, Status
-    """
-
-    proposal: Proposal = None
-    person: Person = None
-    status: Status = None
+class LimsSessionManager(BaseModel):
+    active_session: Union[Session, None]
     sessions: Optional[List[Session]] = []
-    todays_session: Optional[Session] = None

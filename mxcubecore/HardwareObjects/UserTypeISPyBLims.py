@@ -2,11 +2,12 @@ from __future__ import print_function
 import sys
 import itertools
 import logging
+from mxcubecore.mxcubecore.model.lims_session import LimsSessionManager
 from suds.sudsobject import asdict
 from suds import WebFault
 from suds.client import Client
-from mxcubecore.model.lims_session.ProposalTuple import ProposalTuple
-from mxcubecore.mxcubecore.HardwareObjects.abstract.ISPyBLims import ISPyBAbstractLIMS
+
+from mxcubecore.HardwareObjects.abstract.ISPyBLims import ISPyBAbstractLIMS
 
 try:
     from urlparse import urljoin
@@ -83,7 +84,7 @@ class UserTypeISPyBLims(ISPyBAbstractLIMS):
             logging.getLogger("ispyb_client").exception(str(e))
             return
 
-    def login(self, loginID, psd, ldap_connection=None) -> ProposalTuple:
+    def login(self, loginID, psd, ldap_connection=None) -> LimsSessionManager:
         login_name = loginID
         proposal_code = ""
         proposal_number = ""
@@ -118,17 +119,18 @@ class UserTypeISPyBLims(ISPyBAbstractLIMS):
             msg = "%s." % msg.capitalize()
             # refuse Login
             logging.getLogger("HWR").error("ISPyB login not ok")
-            return ProposalTuple(Status(code="error", msg=msg))
+            raise "Error lims authentication"
+            # return ProposalTuple(Status(code="error", msg=msg))
 
         # login succeed, get proposal and sessions
         if self.loginType == "proposal":
             # get the proposal ID
             _code = self._translate(proposal_code, "ispyb")
-            return self.adapter.get_proposal_tuple_by_code_and_number(
+            return self.adapter.get_sessions_by_code_and_number(
                 _code, proposal_number, self.beamline_name
             )
         elif self.loginType == "user":
-            return self.adapter.get_proposal_tuple_by_username(
+            return self.adapter.get_sessions_by_username(
                 loginID, self.beamline_name
             )  # get_proposal_by_username(loginID)
 

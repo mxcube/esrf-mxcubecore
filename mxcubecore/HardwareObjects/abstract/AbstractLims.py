@@ -23,7 +23,7 @@ import abc
 from datetime import datetime
 from typing import List, Union
 from mxcubecore.BaseHardwareObjects import HardwareObject
-from mxcubecore.model.lims_session import ProposalTuple, Session
+from mxcubecore.model.lims_session import LimsSessionManager, Session
 import time
 from mxcubecore import HardwareRepository as HWR
 import logging
@@ -44,6 +44,8 @@ class AbstractLims(HardwareObject, abc.ABC):
 
         self.sessions = []
 
+        self.session_manager = LimsSessionManager()
+
     @abc.abstractmethod
     def get_lims_name(self, login_id, password, create_session):
         raise Exception("Abstract class. Not implemented")
@@ -53,7 +55,9 @@ class AbstractLims(HardwareObject, abc.ABC):
         raise Exception("Abstract class. Not implemented")
 
     @abc.abstractmethod
-    def login(self, login_id, password, create_session):
+    def login(
+        self, login_id: str, password: str, create_session: bool
+    ) -> List[Session]:
         raise Exception("Abstract class. Not implemented")
 
     @abc.abstractmethod
@@ -73,7 +77,7 @@ class AbstractLims(HardwareObject, abc.ABC):
         raise Exception("Abstract class. Not implemented")
 
     @abc.abstractmethod
-    def create_session(self, proposal_tuple: ProposalTuple) -> ProposalTuple:
+    def create_session(self, proposal_tuple: LimsSessionManager) -> LimsSessionManager:
         raise Exception("Abstract class. Not implemented")
 
     @abc.abstractmethod
@@ -83,6 +87,9 @@ class AbstractLims(HardwareObject, abc.ABC):
     @abc.abstractmethod
     def store_robot_action(self, proposal_id: str):
         raise Exception("Abstract class. Not implemented")
+
+    def get_dc_link(self):
+        pass
 
     def is_scheduled_on_host_beamline(self, beamline: str) -> bool:
         return beamline.strip().upper() == self.override_beamline_name.strip().upper()
@@ -141,35 +148,10 @@ class AbstractLims(HardwareObject, abc.ABC):
         logging.getLogger("HWR").debug(
             "%s sessions avaliable for user %s" % (len(sessions), self.get_user_name())
         )
-        self.sessions = sessions
+        self.session_manager.sessions = sessions
 
     def get_active_session(self) -> Session:
-        return self.active_session
+        return self.session_manager.active_session
 
     def set_active_session_by_id(self, session_id: str) -> Session:
-        if len(self.sessions) == 0:
-            logging.getLogger("HWR").error(
-                "Session list is empty. No session candidates"
-            )
-            raise BaseException("No sessions available")
-
-        if len(self.sessions) == 1:
-            self.active_session = self.sessions[0]
-            logging.getLogger("HWR").debug(
-                "Session list contains a single session. sesssion=%s",
-                self.active_session,
-            )
-            return self.active_session
-
-        session_list = [obj for obj in self.sessions if obj.session_id == session_id]
-        if len(session_list) != 1:
-            raise BaseException(
-                "Session not found in the local list of sessions. session_id="
-                + session_id
-            )
-        self.active_session = session_list[0]
-        logging.getLogger("HWR").debug(
-            "Active session selected. session_id=%s proposal_code=%s proposal_number=%s"
-            % (session_id, self.active_session.code, self.active_session.number)
-        )
-        return self.active_session
+        raise Exception("Abstract class. Not implemented")

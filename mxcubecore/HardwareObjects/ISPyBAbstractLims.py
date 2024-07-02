@@ -4,7 +4,7 @@ import warnings
 from pprint import pformat
 from mxcubecore.HardwareObjects.abstract.AbstractLims import AbstractLims
 from mxcubecore.HardwareObjects.abstract.ISPyBDataAdapter import ISPyBDataAdapter
-from mxcubecore.model.lims_session import ProposalTuple
+from mxcubecore.model.lims_session import LimsSessionManager
 from mxcubecore import HardwareRepository as HWR
 import logging
 import gevent
@@ -110,6 +110,22 @@ class ISPyBAbstractLIMS(AbstractLims):
 
     def is_user_login_type(self):
         raise Exception("Abstract class. Not implemented")
+
+    def store_beamline_setup(self, session_id, bl_config):
+        """
+        Stores the beamline setup dict <bl_config>.
+
+        :param session_id: The session id that the beamline_setup
+                           should be associated with.
+        :type session_id: int
+
+        :param bl_config: The dictonary with beamline settings.
+        :type bl_config: dict
+
+        :returns beamline_setup_id: The database id of the beamline setup.
+        :rtype: str
+        """
+        self.adapter.store_beamline_setup(session_id, bl_config)
 
     def _translate(self, code, what):
         """
@@ -234,19 +250,21 @@ class ISPyBAbstractLIMS(AbstractLims):
 
     def get_samples(self):
         self.samples = []
-        if self.active_session is not None:
-            self.samples = self.adapter.get_samples(self.active_session.proposal_id)
+        if self.session_manager.active_session is not None:
+            self.samples = self.adapter.get_samples(
+                self.session_manager.active_session.proposal_id
+            )
         logging.getLogger("HWR").debug(
             "get_samples. %s samples retrieved. proposal_id=%s"
-            % (len(self.samples), self.active_session.proposal_id)
+            % (len(self.samples), self.session_manager.active_session.proposal_id)
         )
         return self.samples
 
-    def create_session(self, proposal_tuple: ProposalTuple) -> ProposalTuple:
-        logging.getLogger("HWR").debug("create_session %s" % proposal_tuple)
-        proposal_tuple = self.adapter.create_session(proposal_tuple, self.beamline_name)
-        logging.getLogger("HWR").debug("Session created %s" % proposal_tuple)
-        return proposal_tuple
+    def create_session(self, proposal_id: str):
+        logging.getLogger("HWR").debug("create_session. proposal_id=%s" % proposal_id)
+        session_manager = self.adapter.create_session(proposal_id, self.beamline_name)
+        logging.getLogger("HWR").debug("Session created. proposal_id=%s" % proposal_id)
+        return session_manager
 
     def store_energy_scan(self, energyscan_dict):
         """
