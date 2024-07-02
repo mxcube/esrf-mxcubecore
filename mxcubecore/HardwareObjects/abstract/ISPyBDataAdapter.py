@@ -3,7 +3,6 @@ import itertools
 import time
 from datetime import datetime, timedelta
 from typing import List
-from typing import Union
 from mxcubecore.HardwareObjects.abstract.ISPyBValueFactory import (
     ISPyBValueFactory,
 )
@@ -19,11 +18,9 @@ except Exception:
 
 
 from mxcubecore.model.lims_session import (
-    Person,
+    LimsSessionManager,
     Proposal,
-    ProposalTuple,
     Session,
-    Status,
 )
 from suds.sudsobject import asdict
 from suds import WebFault
@@ -127,10 +124,12 @@ class ISPyBDataAdapter:
         return self._shipping  # type: ignore
 
     def create_session(
-        self, proposal_tuple: ProposalTuple, beamline_name: str
-    ) -> ProposalTuple:
+        self, proposal_id: str, beamline_name: str
+    ) -> LimsSessionManager:
 
         try:
+
+            # proposal = self.find_proposal_by_login_and_beamline(self.get_user_, beamline_name)  # type: ignore
             current_time = time.localtime()
             start_time = time.strftime("%Y-%m-%d 00:00:00", current_time)
             end_time = time.mktime(current_time) + 60 * 60 * 24
@@ -138,7 +137,7 @@ class ISPyBDataAdapter:
             end_time = time.strftime("%Y-%m-%d 07:59:59", tomorrow)
 
             session = {}
-            session["proposalId"] = proposal_tuple.proposal.proposal_id
+            session["proposalId"] = proposal_id
             session["beamlineName"] = beamline_name
             session["scheduled"] = 0
             session["nbShifts"] = 3
@@ -156,7 +155,7 @@ class ISPyBDataAdapter:
                 "Session created. session_id=%s" % session_id
             )
 
-            return self.get_proposal_tuple_by_code_and_number(
+            return self.get_sessions_by_code_and_number(
                 proposal_tuple.proposal.code,
                 proposal_tuple.proposal.number,
                 beamline_name,
@@ -228,47 +227,11 @@ class ISPyBDataAdapter:
             type=proposal.get("type"),
         )
 
-    def __to_person(self, person: dict[str, str]) -> Person:  # type: ignore
-        """
-        Converts a dictionary composed by the person entries to the object Person
-        """
-        return Person(
-            email_address=person.get("emailAddress"),
-            family_name=person.get("familyName"),
-            given_name=person.get("givenName"),
-            login=person.get("login"),
-            person_id=person.get("personId"),
-            phone_number=person.get("phoneNumber"),
-            site_id=person.get("siteId"),
-            title=person.get("title"),
-        )
-
     def _get_log(self):
         return self.logger
 
     def _info(self, msg: str):
         return self._get_log().info(msg)
-
-    def find_person_by_proposal(self, code: str, number: str) -> Person:
-        try:
-            self._info("find_person_by_proposal. code=%s number=%s" % (code, number))
-            response = self._shipping.service.findPersonByProposal(code, number)  # type: ignore
-            return self.__to_person(asdict(response))  # type: ignore
-        except Exception as e:
-            self._get_log().exception(str(e))
-            raise e
-
-    def find_person_by_login(self, username: str, beamline_name: str) -> Person:
-        try:
-            self._info(
-                "find_person_by_login. username=%s beamline_name=%s"
-                % (username, beamline_name)
-            )
-            response = self._shipping.service.findPersonByLogin(username, beamline_name)  # type: ignore
-            return self.__to_person(asdict(response))  # type: ignore
-        except Exception as e:
-            self._get_log().exception(str(e))
-            raise e
 
     def find_session(self, session_id: str) -> Session:
         try:
@@ -295,7 +258,13 @@ class ISPyBDataAdapter:
                 "find_proposal_by_login_and_beamline. username=%s beamline_name=%s"
                 % (username, beamline_name)
             )
-            response = self._shipping.service.findProposalByLoginAndBeamline(username, beamline_name)  # type: ignore
+            response = self._shipping.service.findProposalByLoginAndBeamline(
+                username, beamline_name
+            )
+            print(response)
+            if response is None:
+                return []
+
             return self.__to_proposal(asdict(response))  # type: ignore
         except Exception as e:
             self._get_log().exception(str(e))
@@ -328,66 +297,41 @@ class ISPyBDataAdapter:
             return True
         return False
 
-    def _get_todays_session(self, sessions: List[Session]) -> Union[Session, None]:
-        try:
-            for session in sessions:
-                if self._is_session_scheduled_today(session):
-                    return session
-        except Exception as e:
-            self._get_log().exception(str(e))
-        return None
-
-    def get_proposal_tuple_by_code_and_number(
+    def get_sessions_by_code_and_number(
         self, code: str, number: str, beamline_name: str
-    ) -> ProposalTuple:
+    ) -> LimsSessionManager:
         try:
             self._info(
-                "get_proposal_tuple_by_code_and_number. code=%s number=%s beamline_name=%s"
+                "get_sessions_by_code_and_number. code=%s number=%s beamline_name=%s"
                 % (code, number, beamline_name)
             )
-
-            person = self.find_person_by_proposal(code, number)  # type: ignore
-            proposal = self.find_proposal(code, number)  # type: ignore
             sessions = self.find_sessions_by_proposal_and_beamLine(
                 code, number, beamline_name
             )
-
-            return ProposalTuple(
-                person=person,
-                proposal=proposal,
-                sessions=sessions,
-                status=Status(code="ok"),
-                todays_session=self._get_todays_session(sessions),
-            )
+            return LimsSessionManager(sessions=sessions)
         except WebFault as e:
             self._get_log().exception(str(e))
-        return ProposalTuple(
-            status=Status(code="error"),
-        )
+            raise e
 
-    def get_proposal_tuple_by_username(
+    def get_sessions_by_username(
         self, username: str, beamline_name: str
-    ) -> ProposalTuple:
+    ) -> LimsSessionManager:
         try:
             self._info(
-                "get_proposal_tuple_by_username. username=%s beamline_name=%s"
+                "get_sessions_by_username. username=%s beamline_name=%s"
                 % (username, beamline_name)
             )
-            person = self.find_person_by_login(username, beamline_name)  # type: ignore
+
             proposal = self.find_proposal_by_login_and_beamline(username, beamline_name)  # type: ignore
             sessions = self.find_sessions_by_proposal_and_beamLine(
                 proposal.code, proposal.number, beamline_name
             )
-            return ProposalTuple(
-                person=person,
-                proposal=proposal,
+            return LimsSessionManager(
                 sessions=sessions,
-                status=Status(code="ok"),
-                todays_session=self._get_todays_session(sessions),
             )
         except WebFault as e:
             self._get_log().exception(str(e))
-        return ProposalTuple()
+        return LimsSessionManager()
 
     ############# Legacy methods #####################
     def _store_data_collection_group(self, group_data):
@@ -414,10 +358,10 @@ class ISPyBDataAdapter:
             group = ISPyBValueFactory().dcg_from_dc_params(
                 self._collection, mx_collection
             )
-            self.group_id = self._collection.service.storeOrUpdateDataCollectionGroup(
+            group_id = self._collection.service.storeOrUpdateDataCollectionGroup(
                 group
             )
-        mx_collection["group_id"] = self.group_id
+        mx_collection["group_id"] = group_id
 
     def update_data_collection(self, mx_collection, wait=False):
         if "collection_id" in mx_collection:
@@ -566,7 +510,141 @@ class ISPyBDataAdapter:
             logging.getLogger("ispyb_client").exception(str(e))
             return {}
 
-    def _store_data_collection(self, mx_collection, bl_config=None):
+    def find_detector(self, type, manufacturer, model, mode):
+        """
+        Returns the Detector3VO object with the characteristics
+        matching the ones given.
+        """
+
+        if self._collection:
+            try:
+                res = self._collection.service.findDetectorByParam(
+                    "", manufacturer, model, mode
+                )
+                return res
+            except WebFault:
+                logging.getLogger("ispyb_client").exception(
+                    "ISPyBClient: exception in find_detector"
+                )
+        else:
+            logging.getLogger("ispyb_client").exception(
+                "Error find_detector: could not connect to" + " server")
+
+
+    def update_session(self, session_dict):
+        """
+        Updates a  session for "current proposal", the attribute
+        porposalId in <session_dict> has to be set (and exist in ISPyB).
+
+        :param session_dict: Dictonary with session parameters.
+        :type session_dict: dict
+
+        :returns: The session id of the created session.
+        :rtype: int
+        """
+        if self._collection:
+
+            try:
+                # The old API used date formated strings and the new
+                # one uses DateTime objects.
+                session_dict["startDate"] = datetime.strptime(
+                    session_dict["startDate"], "%Y-%m-%d %H:%M:%S"
+                )
+                session_dict["endDate"] = datetime.strptime(
+                    session_dict["endDate"], "%Y-%m-%d %H:%M:%S"
+                )
+
+                try:
+                    session_dict["lastUpdate"] = datetime.strptime(
+                        session_dict["lastUpdate"].split("+")[0], "%Y-%m-%d %H:%M:%S"
+                    )
+                    session_dict["timeStamp"] = datetime.strptime(
+                        session_dict["timeStamp"].split("+")[0], "%Y-%m-%d %H:%M:%S"
+                    )
+                except Exception:
+                    pass
+
+                # return data to original codification
+                decoded_dict = utf_decode(session_dict)
+                session = self._collection.service.storeOrUpdateSession(decoded_dict)
+
+                # changing back to string representation of the dates,
+                # since the session_dict is used after this method is called,
+                session_dict["startDate"] = datetime.strftime(
+                    session_dict["startDate"], "%Y-%m-%d %H:%M:%S"
+                )
+                session_dict["endDate"] = datetime.strftime(
+                    session_dict["endDate"], "%Y-%m-%d %H:%M:%S"
+                )
+
+            except WebFault as e:
+                session = {}
+                logging.getLogger("ispyb_client").exception(str(e))
+            except URLError:
+                logging.getLogger("ispyb_client").exception(_CONNECTION_ERROR_MSG)
+
+            logging.getLogger("ispyb_client").info(
+                "[ISPYB] Session goona be created: session_dict %s" % session_dict
+            )
+            logging.getLogger("ispyb_client").info(
+                "[ISPYB] Session created: %s" % session
+            )
+            return session
+        else:
+            logging.getLogger("ispyb_client").exception(
+                "Error in create_session: could not connect to server"
+            )
+
+    def store_beamline_setup(self, session_id, bl_config):
+        """
+        Stores the beamline setup dict <bl_config>.
+
+        :param session_id: The session id that the beamline_setup
+                           should be associated with.
+        :type session_id: int
+
+        :param bl_config: The dictonary with beamline settings.
+        :type bl_config: dict
+
+        :returns beamline_setup_id: The database id of the beamline setup.
+        :rtype: str
+        """
+        blSetupId = None
+        if self._collection:
+
+            session = {}
+
+            try:
+                session = self.get_session(session_id)
+            except Exception:
+                logging.getLogger("ispyb_client").exception(
+                    "ISPyBClient: exception in store_beam_line_setup"
+                )
+            else:
+                if session is not None:
+                    try:
+                        blSetupId = self._collection.service.storeOrUpdateBeamLineSetup(
+                            bl_config
+                        )
+
+                        session["beamLineSetupId"] = blSetupId
+                        self.update_session(session)
+
+                    except WebFault as e:
+                        logging.getLogger("ispyb_client").exception(str(e))
+                    except URLError:
+                        logging.getLogger("ispyb_client").exception(
+                            _CONNECTION_ERROR_MSG
+                        )
+        else:
+            logging.getLogger("ispyb_client").exception(
+                "Error in store_beamline_setup: could not connect" + " to server"
+            )
+
+        return blSetupId
+
+
+    def store_data_collection(self, mx_collection, bl_config=None):
         """
         Stores the data collection mx_collection, and the beamline setup
         if provided.

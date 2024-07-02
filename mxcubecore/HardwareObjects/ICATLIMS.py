@@ -3,13 +3,12 @@ import logging
 import pathlib
 import json
 import shutil
+from typing import List
 from mxcubecore.BaseHardwareObjects import HardwareObject
 from mxcubecore import HardwareRepository as HWR
 from mxcubecore.model.lims_session import (
-    Proposal,
-    ProposalTuple,
+    LimsSessionManager,
     Session,
-    Status,
 )
 from mxcubecore.HardwareObjects.abstract.AbstractLims import AbstractLims
 from pyicat_plus.client.main import IcatClient, IcatInvestigationClient
@@ -44,7 +43,7 @@ class ICATLIMS(AbstractLims):
     def get_lims_name(self):
         return "ICAT"
 
-    def login(self, login_id, password, create_session=False) -> ProposalTuple:
+    def login(self, login_id, password, create_session=False) -> LimsSessionManager:
         return self.authenticate(login_id, password)
 
     def is_user_login_type(self) -> bool:
@@ -68,8 +67,8 @@ class ICATLIMS(AbstractLims):
         try:
             logging.getLogger("MX3.HWR").debug(
                 "[ICATClient] get_samples %s %s",
-                self.active_session.session_id,
-                self.active_session.proposal_name,
+                self.session_manager.active_session.session_id,
+                self.session_manager.active_session.proposal_name,
             )
             parcels = self.get_parcels_by_investigation_id()
             queue_samples = []
@@ -216,6 +215,40 @@ class ICATLIMS(AbstractLims):
         except Exception:
             return None
 
+    def set_active_session_by_id(self, session_id: str) -> Session:
+        sessions = self.session_manager.sessions
+
+        if len(sessions) == 0:
+            logging.getLogger("HWR").error(
+                "Session list is empty. No session candidates"
+            )
+            raise BaseException("No sessions available")
+
+        if len(sessions) == 1:
+            self.session_manager.active_session = sessions[0]
+            logging.getLogger("HWR").debug(
+                "Session list contains a single session. sesssion=%s",
+                self.session_manager.active_session,
+            )
+            return self.session_manager.active_session
+
+        session_list = [obj for obj in sessions if obj.session_id == session_id]
+        if len(session_list) != 1:
+            raise BaseException(
+                "Session not found in the local list of sessions. session_id="
+                + session_id
+            )
+        self.session_manager.active_session = session_list[0]
+        logging.getLogger("HWR").debug(
+            "Active session selected. session_id=%s proposal_code=%s proposal_number=%s"
+            % (
+                session_id,
+                self.session_manager.active_session.code,
+                self.session_manager.active_session.number,
+            )
+        )
+        return self.session_manager.active_session
+
     def allow_session(self, session: Session):
         self.active_session = session
         logging.getLogger("MX3.HWR").debug(
@@ -240,18 +273,6 @@ class ICATLIMS(AbstractLims):
         )
         return None
 
-    def get_todays_session(self, prop, create_session=True):
-        logging.getLogger("MX3.HWR").debug(
-            "[ICATRestClient] get_todays_session investigationId=%s",
-            prop["Proposal"]["proposalId"],
-        )
-        session = self.get_session_by_id(prop["Proposal"]["proposalId"])
-        return {
-            "session": session["Session"]["session"],
-            "new_session_flag": False,
-            "is_inhouse": False,
-        }
-
     def __get_all_investigations(self):
         """Returns all investigations by user. An investigation corresponds to
         one experimental session. It returns an empty array in case of error"""
@@ -270,7 +291,6 @@ class ICATLIMS(AbstractLims):
                 )
             )
 
-            # TODO: This can be commented out when https://gitlab.esrf.fr/marcus.oscarsson/mxcube3/-/issues/985
             if self.icat_session is not None and (
                 self.icat_session["isAdministrator"]
                 or self.icat_session["isInstrumentScientist"]
@@ -403,56 +423,6 @@ class ICATLIMS(AbstractLims):
             ),
         )
 
-        """
-        session = {
-            "code"= investigation["type"]["name"],
-            "number": self.__get_proposal_number_by_investigation(investigation),
-            "title": f'{investigation["title"]}',
-            "proposalId": investigation["id"],
-            "person": "",
-            "startDate": self._string_to_date(investigation.get("startDate", None)),
-            "endDate": self._string_to_date(investigation.get("endDate", None)),
-            "startTime": self._string_to_time(investigation.get("startDate", None)),
-            "endTime": self._string_to_time(investigation.get("endDate", None)),
-            "actualStartDate": self._string_to_date(actual_start_date),
-            "actualStartTime": self._string_to_time(actual_start_date),
-            "actualEndDate": self._string_to_date(actual_end_date),
-            "actualEndTime": self._string_to_time(actual_end_date),
-            "beamlineName": investigation["instrument"]["name"],
-            "sessionId": investigation["id"],
-            "isScheduledBeamline": self.is_scheduled_on_host_beamline(
-                investigation["instrument"]["name"]
-            ),
-            "isScheduledTime": self.is_scheduled_now(
-                actual_start_date, actual_end_date
-            ),
-            "isRescheduled": (
-                True if "__actualEndDate" in investigation["parameters"] else False
-            ),
-            "dataPortalURL": self._get_data_portal_url(investigation),
-            "userPortalURL": self._get_user_portal_url(investigation),
-            "logbookURL": self._get_logbook_url(investigation),
-        }
-
-        return {
-            "status": {"code": "ok", "msg": "Successful login"},
-            "Proposal": {
-                "code": investigation["type"]["name"],
-                "number": self.__get_proposal_number_by_investigation(investigation),
-                "title": f'{investigation["title"]}',
-                "proposalId": investigation["id"],
-            },
-            "Session": {
-                "session": session,
-                "new_session_flag": False,
-                "is_inhouse": False,
-            },
-            # "local_contact": "BL Scientist", TODO: unused
-            "Person": {"personId": 1, "laboratoryId": 1, "login": "test Login"},
-            "Laboratory": {"laboratoryId": 1, "name": "TEST eh1"},
-        }
-        """
-
     def get_user_name(self):
         return self.icat_session["username"]
 
@@ -464,9 +434,11 @@ class ICATLIMS(AbstractLims):
         try:
             logging.getLogger("MX3.HWR").debug(
                 "[ICATRestClient] Retrieving parcels by investigation_id %s "
-                % (self.investigation["id"])
+                % (self.session_manager.active_session.session_id)
             )
-            parcels = self.tracking.get_parcels_by(self.active_session.session_id)
+            parcels = self.tracking.get_parcels_by(
+                self.session_manager.active_session.session_id
+            )
             logging.getLogger("MX3.HWR").debug(
                 "[ICATRestClient] Successfully retrieved %s parcels" % (len(parcels))
             )
@@ -477,7 +449,7 @@ class ICATLIMS(AbstractLims):
             )
         return []
 
-    def authenticate(self, login_id, password):
+    def authenticate(self, login_id: str, password: str) -> LimsSessionManager:
         logging.getLogger("MX3.HWR").debug(
             "[ICATRestClient] authenticate %s" % (login_id)
         )
@@ -508,41 +480,12 @@ class ICATLIMS(AbstractLims):
         )
 
         # Retrieving user's investigations
-        investigations = self.__get_all_investigations()
+        sessions = self.to_sessions(self.__get_all_investigations())
         logging.getLogger("MX3.HWR").debug(
-            "[ICATRestClient] Successfully retrieved %s investigations"
-            % (len(investigations))
-        )
-
-        # if no investigation then we refuse login(?) TODO: sure?
-        # refuse Login
-        if len(investigations) == 0:
-            return ProposalTuple()
-
-        # Filter by investigation scheduled now
-        sessions = self.to_sessions(self.investigations)
-
-        self.investigation = investigations[0]
-        logging.getLogger("MX3.HWR").debug(
-            "[ICATRestClient] Selected investigation %s " % (self.investigation["name"])
+            "[ICATRestClient] Successfully retrieved %s sessions" % (len(sessions))
         )
         self.set_sessions(sessions)
-
-        proposal = Proposal(
-            proposal_id=self.investigation["id"],
-            type=self.investigation["type"]["name"],
-            code=self.investigation["type"]["name"],
-            number=self.__get_proposal_number_by_investigation(self.investigation),
-            title=f'{self.investigation["title"]}',
-        )
-        proposal_tuple = ProposalTuple(
-            proposal=proposal,
-            todays_session=self.__to_session(self.investigation),
-            sessions=self.sessions,
-            status=Status(code="ok"),
-        )
-
-        return proposal_tuple
+        return self.session_manager
 
     def echo(self):
         """Mockup for the echo method."""
