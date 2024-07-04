@@ -1,8 +1,9 @@
 from __future__ import print_function
 import itertools
+from typing import List
 import uuid
 from mxcubecore.HardwareObjects.ISPyBAbstractLims import ISPyBAbstractLIMS
-from mxcubecore.model.lims_session import LimsSessionManager, Proposal, Session
+from mxcubecore.model.lims_session import Lims, LimsSessionManager, Proposal, Session
 
 """
 A client for ISPyB Webservices.
@@ -25,8 +26,13 @@ class ProposalTypeISPyBLims(ISPyBAbstractLIMS):
     def get_proposals_by_user(self, login_id: str):
         raise Exception("Not implemented")
 
-    def get_lims_name(self):
-        return "ISPyB"
+    def get_lims_name(self) -> List[Lims]:
+        return [
+            Lims(
+                name="ISPyB",
+                description="Information System for protein Crystalographic Beamlines",
+            )
+        ]
 
     def get_user_name(self):
         """
@@ -70,8 +76,8 @@ class ProposalTypeISPyBLims(ISPyBAbstractLIMS):
         if len(self.session_manager.sessions) == 1:
             self.session_manager.active_session = self.session_manager.sessions[0]
             logging.getLogger("HWR").debug(
-                "Session list contains a single session. sesssion=%s",
-                self.session_manager.active_session,
+                "Session list contains a single session. proposal_name=%s",
+                self.session_manager.active_session.proposal_name,
             )
             return self.session_manager.active_session
         session_list = [
@@ -83,20 +89,58 @@ class ProposalTypeISPyBLims(ISPyBAbstractLIMS):
                 and obj.is_scheduled_time
             )
         ]
-        if len(session_list) != 1:
-            raise BaseException(
+        if len(session_list) > 1:
+            logging.getLogger("HWR").warning(
                 "Session not found in the local list of sessions. Found %s sessions. proposal_name=%s"
                 % (len(session_list), proposal_name)
             )
         self.session_manager.active_session = session_list[0]
-        logging.getLogger("HWR").debug(
-            "Active session selected. proposal_name=%s%s"
-            % (
-                self.session_manager.active_session.code,
-                self.session_manager.active_session.number,
-            )
-        )
         return self.session_manager.active_session
+
+    def _get_proposal_code_and_number_by_proposal_name(self, proposal_name):
+        code = "".join(itertools.takewhile(lambda c: not c.isdigit(), proposal_name))
+        number = proposal_name[len(code) :]
+        return [code, number]
+
+    def get_session_manager_by_code_number(
+        self, code: str, number: str, is_local_host: bool
+    ) -> LimsSessionManager:
+        self.session_manager = self.adapter.get_sessions_by_code_and_number(
+            code, number, self.beamline_name
+        )
+        proposal_name = code + number
+        # If there is no session then a session is created
+        if len(self.session_manager.sessions) == 0 and is_local_host:
+            logging.getLogger("HRW").debug(
+                "No sessions found for proposal=%s" % proposal_name
+            )
+            logging.getLogger("HRW").debug(
+                "Creating session for proposal=%s" % proposal_name
+            )
+            proposal: Proposal = self.adapter.find_proposal(code, number)
+            self.create_session(proposal.proposal_id)
+            self.session_manager = self.adapter.get_sessions_by_code_and_number(
+                code, number, self.beamline_name
+            )
+            logging.getLogger("HRW").debug(
+                "Sessions count=%s" % len(self.session_manager.sessions)
+            )
+
+        self.set_active_session_by_id(proposal_name)
+
+        return self.session_manager
+
+    def get_session_manager_by_proposal_name(
+        self, proposal_name: str, is_local_host: bool
+    ) -> LimsSessionManager:
+        code_number = self._get_proposal_code_and_number_by_proposal_name(proposal_name)
+        code = self._translate(
+            code_number[0],
+            "ispyb",
+        )
+        number = code_number[1]
+
+        return self.get_session_manager_by_code_number(code, number, is_local_host)
 
     def login(
         self, user_name: str, password: str, is_local_host: bool
@@ -108,14 +152,12 @@ class ProposalTypeISPyBLims(ISPyBAbstractLIMS):
         )
         self.session_manager = LimsSessionManager()
         # For porposal login, split the loginID to code and numbers
-        proposal_code = "".join(
-            itertools.takewhile(lambda c: not c.isdigit(), user_name)
-        )
-        proposal_number = user_name[len(proposal_code) :]
+        code = self._get_proposal_code_and_number_by_proposal_name(user_name)[0]
+        number = self._get_proposal_code_and_number_by_proposal_name(user_name)[1]
 
         # if translation of the loginID is needed, need to be tested by ESRF
         if self.loginTranslate is True:
-            user_name = self._translate(proposal_code, "ldap") + str(proposal_number)
+            user_name = self._translate(code, "ldap") + str(number)
 
         # Authentication
         try:
@@ -124,30 +166,4 @@ class ProposalTypeISPyBLims(ISPyBAbstractLIMS):
         except BaseException as e:
             raise e
 
-        # login succeed, get proposal and sessions
-        # get the proposal ID
-        _code = self._translate(proposal_code, "ispyb")
-        self.session_manager = self.adapter.get_sessions_by_code_and_number(
-            _code, proposal_number, self.beamline_name
-        )
-
-        # If there is no session then a session is created
-        if len(self.session_manager.sessions) == 0 and is_local_host:
-            logging.getLogger("HRW").debug(
-                "No sessions found for proposal=%s" % user_name
-            )
-            logging.getLogger("HRW").debug(
-                "Creating session for proposal=%s" % user_name
-            )
-            proposal: Proposal = self.adapter.find_proposal(_code, proposal_number)
-            self.create_session(proposal.proposal_id)
-            self.session_manager = self.adapter.get_sessions_by_code_and_number(
-                _code, proposal_number, self.beamline_name
-            )
-            logging.getLogger("HRW").debug(
-                "Sessions count=%s" % len(self.session_manager.sessions)
-            )
-
-        self.set_active_session_by_id(user_name)
-
-        return self.session_manager
+        return self.get_session_manager_by_proposal_name(user_name)
