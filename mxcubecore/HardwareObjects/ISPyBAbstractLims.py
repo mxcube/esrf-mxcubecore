@@ -248,15 +248,19 @@ class ISPyBAbstractLIMS(AbstractLims):
                 pass
         return None
 
-    def get_samples(self):
+    def get_samples(self, lims_name):
         self.samples = []
         if self.session_manager.active_session is not None:
             self.samples = self.adapter.get_samples(
                 self.session_manager.active_session.proposal_id
             )
         logging.getLogger("HWR").debug(
-            "get_samples. %s samples retrieved. proposal_id=%s"
-            % (len(self.samples), self.session_manager.active_session.proposal_id)
+            "get_samples. %s samples retrieved. proposal_id=%s lims_name=%s"
+            % (
+                len(self.samples),
+                self.session_manager.active_session.proposal_id,
+                lims_name,
+            )
         )
         return self.samples
 

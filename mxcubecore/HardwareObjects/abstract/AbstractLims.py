@@ -23,7 +23,7 @@ import abc
 from datetime import datetime
 from typing import List, Union
 from mxcubecore.BaseHardwareObjects import HardwareObject
-from mxcubecore.model.lims_session import LimsSessionManager, Session
+from mxcubecore.model.lims_session import Lims, LimsSessionManager, Session
 import time
 from mxcubecore import HardwareRepository as HWR
 import logging
@@ -47,7 +47,7 @@ class AbstractLims(HardwareObject, abc.ABC):
         self.session_manager = LimsSessionManager()
 
     @abc.abstractmethod
-    def get_lims_name(self, login_id, password, create_session):
+    def get_lims_name(self) -> List[Lims]:
         raise Exception("Abstract class. Not implemented")
 
     @abc.abstractmethod
@@ -110,34 +110,6 @@ class AbstractLims(HardwareObject, abc.ABC):
             return True
         else:
             return False
-
-    def is_session_today(self, session: Session) -> Union[Session, None]:
-        """
-        Given a session it returns the session if it is scheduled for today in the beamline
-        otherwise it returns None
-        """
-        beamline = session.get("beamlineName")  # session["beamlineName"]
-        start_date = "%s 00:00:00" % session.startDate.split()[0]
-        end_date = "%s 23:59:59" % session.endDate.split()[0]
-        try:
-            start_struct = time.strptime(start_date, "%Y-%m-%d %H:%M:%S")
-        except ValueError:
-            raise Exception("Abstract class. Not implemented")
-        else:
-            try:
-                end_struct = time.strptime(end_date, "%Y-%m-%d %H:%M:%S")
-            except ValueError:
-                raise Exception("Abstract class. Not implemented")
-            else:
-                start_time = time.mktime(start_struct)
-                end_time = time.mktime(end_struct)
-                current_time = time.time()
-                # Check beamline name
-                if beamline == self.beamline_name:
-                    # Check date
-                    if current_time >= start_time and current_time <= end_time:
-                        return session
-        return None
 
     def set_sessions(self, sessions: List[Session]):
         """
