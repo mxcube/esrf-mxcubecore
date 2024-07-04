@@ -12,6 +12,11 @@ class Proposal(BaseModel):
     title: str = ""
 
 
+class Lims(BaseModel):
+    name: str = ""
+    description: str = ""
+
+
 class Session(BaseModel):
     session_id: str = ""
     beamline_name: str = ""
@@ -27,7 +32,7 @@ class Session(BaseModel):
     proposal_id: str = ""
     proposal_name: str = ""
 
-    comments: str = ""
+    comments: Optional[str] = ""
 
     start_datetime: datetime = Field(default_factory=datetime.now)
     end_datetime: Optional[datetime] = Field(
