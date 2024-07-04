@@ -7,6 +7,7 @@ from typing import List
 from mxcubecore.BaseHardwareObjects import HardwareObject
 from mxcubecore import HardwareRepository as HWR
 from mxcubecore.model.lims_session import (
+    Lims,
     LimsSessionManager,
     Session,
 )
@@ -40,11 +41,49 @@ class ICATLIMS(AbstractLims):
             metadata_urls=["bcu-mq-01:61613"],
         )
 
-    def get_lims_name(self):
-        return "ICAT"
+    def get_lims_name(self) -> List[Lims]:
+        return [
+            Lims(name="DRAC", description="Data Repository for Advancing open sCience"),
+        ]
 
-    def login(self, login_id, password, create_session=False) -> LimsSessionManager:
-        return self.authenticate(login_id, password)
+    def login(
+        self, user_name: str, password: str, is_local_host: bool
+    ) -> LimsSessionManager:
+
+        logging.getLogger("MX3.HWR").debug("[ICAT] authenticate %s" % (user_name))
+        # Initialize ICAT client and catalogue
+        self.icatClient = IcatClient(
+            catalogue_url=self.url,
+            tracking_url=self.url,
+            catalogue_queues=["bcu-mq-01:61613"],
+        )
+        self.icat_session: ICATSession = self.icatClient.do_log_in(password)
+        # Catalogue client to retrieve investigations
+        self.catalogue = self.icatClient.catalogue_client
+
+        # Catalogue client to retrieve parcels and samples
+        self.tracking = self.icatClient.tracking_client
+
+        if self.catalogue is None or self.tracking is None:
+            logging.getLogger("MX3.HWR").error(
+                "[ICAT] Error initializing catalogue/tracking. catalogue=%s tracking=%s"
+                % (self.url, self.url)
+            )
+            raise RuntimeError("Could not initialize catalogue/tracking")
+
+        # Connected to metadata catalogue
+        logging.getLogger("MX3.HWR").debug(
+            "[ICAT] Connected succesfully to catalogue. fullName=%s url=%s"
+            % (self.icat_session["fullName"], self.url)
+        )
+
+        # Retrieving user's investigations
+        sessions = self.to_sessions(self.__get_all_investigations())
+        logging.getLogger("MX3.HWR").debug(
+            "[ICAT] Successfully retrieved %s sessions" % (len(sessions))
+        )
+        self.set_sessions(sessions)
+        return self.session_manager
 
     def is_user_login_type(self) -> bool:
         return True
@@ -57,18 +96,13 @@ class ICATLIMS(AbstractLims):
         )
         return self.lims_rest.to_sessions(self.lims_rest.investigations)
 
-    def get_samples(self):
-        """
-        This returns the samples that are in the status processing
-
-        proposal_id : it is the identifier of the experimental session (in ICAT is the investigationId)
-        session_id: it does not seem to be used
-        """
+    def get_samples(self, lims_name):
         try:
             logging.getLogger("MX3.HWR").debug(
-                "[ICATClient] get_samples %s %s",
+                "[ICATClient] get_samples %s %s lims_name=%s",
                 self.session_manager.active_session.session_id,
                 self.session_manager.active_session.proposal_name,
+                lims_name,
             )
             parcels = self.get_parcels_by_investigation_id()
             queue_samples = []
@@ -227,8 +261,8 @@ class ICATLIMS(AbstractLims):
         if len(sessions) == 1:
             self.session_manager.active_session = sessions[0]
             logging.getLogger("HWR").debug(
-                "Session list contains a single session. sesssion=%s",
-                self.session_manager.active_session,
+                "Session list contains a single session. proposal_name=%s",
+                self.session_manager.active_session.proposal_name,
             )
             return self.session_manager.active_session
 
@@ -239,26 +273,18 @@ class ICATLIMS(AbstractLims):
                 + session_id
             )
         self.session_manager.active_session = session_list[0]
-        logging.getLogger("HWR").debug(
-            "Active session selected. session_id=%s proposal_code=%s proposal_number=%s"
-            % (
-                session_id,
-                self.session_manager.active_session.code,
-                self.session_manager.active_session.number,
-            )
-        )
         return self.session_manager.active_session
 
     def allow_session(self, session: Session):
         self.active_session = session
         logging.getLogger("MX3.HWR").debug(
-            "[ICATRestClient] allow_session investigationId=%s", session.session_id
+            "[ICAT] allow_session investigationId=%s", session.session_id
         )
         self.catalogue.reschedule_investigation(session.session_id)
 
     def get_session_by_id(self, id: str):
         logging.getLogger("MX3.HWR").debug(
-            "[ICATRestClient] get_session_by_id investigationId=%s investigations=%s",
+            "[ICAT] get_session_by_id investigationId=%s investigations=%s",
             id,
             str(len(self.investigations)),
         )
@@ -267,7 +293,7 @@ class ICATLIMS(AbstractLims):
             self.investigation = investigation_list[0]
             return self.__to_session(investigation_list[0])
         logging.getLogger("MX3.HWR").warn(
-            "[ICATRestClient] No investigation found. get_session_by_id investigationId=%s investigations=%s",
+            "[ICAT] No investigation found. get_session_by_id investigationId=%s investigations=%s",
             id,
             str(len(self.investigations)),
         )
@@ -280,7 +306,7 @@ class ICATLIMS(AbstractLims):
 
             self.investigations = []
             logging.getLogger("MX3.HWR").debug(
-                "[ICATRestClient] __get_all_investigations before=%s after=%s beamline=%s isInstrumentScientist=%s isAdministrator=%s compatible_beamlines=%s"
+                "[ICAT] __get_all_investigations before=%s after=%s beamline=%s isInstrumentScientist=%s isAdministrator=%s compatible_beamlines=%s"
                 % (
                     self.before_offset_days,
                     self.after_offset_days,
@@ -312,14 +338,14 @@ class ICATLIMS(AbstractLims):
                     + timedelta(days=float(self.after_offset_days)),
                 )
             logging.getLogger("MX3.HWR").debug(
-                "[ICATRestClient] __get_all_investigations retrieved %s investigations"
+                "[ICAT] __get_all_investigations retrieved %s investigations"
                 % len(self.investigations)
             )
             return self.investigations
         except Exception as e:
             self.investigations = []
             logging.getLogger("MX3.HWR").error(
-                "[ICATRestClient] __get_all_investigations %s " % e
+                "[ICAT] __get_all_investigations %s " % e
             )
         return self.investigations
 
@@ -433,59 +459,21 @@ class ICATLIMS(AbstractLims):
         """Returns the parcels associated to an investigation"""
         try:
             logging.getLogger("MX3.HWR").debug(
-                "[ICATRestClient] Retrieving parcels by investigation_id %s "
+                "[ICAT] Retrieving parcels by investigation_id %s "
                 % (self.session_manager.active_session.session_id)
             )
             parcels = self.tracking.get_parcels_by(
                 self.session_manager.active_session.session_id
             )
             logging.getLogger("MX3.HWR").debug(
-                "[ICATRestClient] Successfully retrieved %s parcels" % (len(parcels))
+                "[ICAT] Successfully retrieved %s parcels" % (len(parcels))
             )
             return parcels
         except Exception as e:
             logging.getLogger("MX3.HWR").error(
-                "[ICATRestClient] get_parcels_by_investigation_id %s " % (str(e))
+                "[ICAT] get_parcels_by_investigation_id %s " % (str(e))
             )
         return []
-
-    def authenticate(self, login_id: str, password: str) -> LimsSessionManager:
-        logging.getLogger("MX3.HWR").debug(
-            "[ICATRestClient] authenticate %s" % (login_id)
-        )
-        # Initialize ICAT client and catalogue
-        self.icatClient = IcatClient(
-            catalogue_url=self.url,
-            tracking_url=self.url,
-            catalogue_queues=["bcu-mq-01:61613"],
-        )
-        self.icat_session: ICATSession = self.icatClient.do_log_in(password)
-        # Catalogue client to retrieve investigations
-        self.catalogue = self.icatClient.catalogue_client
-
-        # Catalogue client to retrieve parcels and samples
-        self.tracking = self.icatClient.tracking_client
-
-        if self.catalogue is None or self.tracking is None:
-            logging.getLogger("MX3.HWR").error(
-                "[ICATRestClient] Error initializing catalogue/tracking. catalogue=%s tracking=%s"
-                % (self.url, self.url)
-            )
-            raise RuntimeError("Could not initialize catalogue/tracking")
-
-        # Connected to metadata catalogue
-        logging.getLogger("MX3.HWR").debug(
-            "[ICATRestClient] Connected succesfully to catalogue. fullName=%s url=%s"
-            % (self.icat_session["fullName"], self.url)
-        )
-
-        # Retrieving user's investigations
-        sessions = self.to_sessions(self.__get_all_investigations())
-        logging.getLogger("MX3.HWR").debug(
-            "[ICATRestClient] Successfully retrieved %s sessions" % (len(sessions))
-        )
-        self.set_sessions(sessions)
-        return self.session_manager
 
     def echo(self):
         """Mockup for the echo method."""
