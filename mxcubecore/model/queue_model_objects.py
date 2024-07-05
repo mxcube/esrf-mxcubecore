@@ -487,6 +487,7 @@ class Sample(TaskNode):
         self.free_pin_mode = p.get("freePinMode", False)
         self.loc_str = p.get("locStr", "")
         self.diffraction_plan = p.get("diffractionPlan")
+        self.name = p.get("sampleName", self.name)
 
         self.crystals[0].space_group = p.get("spaceGroup") or p.get(
             "crystalSpaceGroup", ""
