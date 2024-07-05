@@ -604,18 +604,33 @@ class MiniDiff(HardwareObject):
                 self.wait_ready(30)
                 fun = self.centringMethods[method]
             else:
-                logging.getLogger("HWR").info(
-                    "Using change phase for centering in Java script (DN) for MiniDiff"
-                )
-                self.run_script("ChangePhase_centring")
                 time.sleep(0.5)
                 self.wait_ready(60)
-                logging.getLogger("HWR").info(
-                    "Using centering in Java script (DN) for MiniDiff"
-                )
+                logging.getLogger("HWR").info("Using MD script for sample centring")
                 self.run_script("sample_centering")
                 time.sleep(0.5)
                 self.wait_ready(120)
+
+                # if the centering fails move to the next sample
+                try:
+                    res_centering = self.get_last_task_info()
+                    if (
+                        res_centering[0].endswith("sample_centering.java")
+                        and res_centering[6] == "-1"
+                    ):
+                        logging.getLogger("HWR").exception(
+                            "MiniDiff: problem while centring"
+                        )
+                        self.emitCentringFailed()
+                    else:
+                        logging.getLogger("HWR").info(
+                            "MiniDiff: centring went fine with %s" % str(res_centering)
+                        )
+                except:
+                    logging.getLogger("HWR").exception(
+                        "MD script for sample centring had a problem"
+                    )
+
         except KeyError as diag:
             logging.getLogger("HWR").error(
                 "MiniDiff: unknown centring method (%s)" % str(diag)
