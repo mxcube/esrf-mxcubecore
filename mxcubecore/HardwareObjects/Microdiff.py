@@ -448,7 +448,12 @@ class Microdiff(MiniDiff.MiniDiff):
             logging.getLogger("HWR").exception("MD not ready - phase not set.")
             return
 
-        if phase in self.phases:
+        current_phase = self.get_current_phase()
+
+        if current_phase == phase:
+            msg = f"Don't need to change phase already in {phase}"
+            logging.getLogger("user_level_log").info(msg)
+        elif phase in self.phases:
             if phase in ["BeamLocation", "Transfer"]:
                 self.close_detector_cover()
             self.phase_prepare(phase)
