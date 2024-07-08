@@ -444,9 +444,7 @@ class EMBLXrayImaging(QtGraphicsManager, AbstractCollect):
 
         self.set_osc_start(acq_params.osc_start)
 
-        self.current_dc_parameters = qmo.to_collect_dict(
-            data_model, HWR.beamline.session, qmo.Sample()
-        )[0]
+        self.current_dc_parameters = qmo.to_collect_dict(data_model, qmo.Sample())[0]
         self.current_dc_parameters["status"] = "Running"
         self.current_dc_parameters["comments"] = ""
 
