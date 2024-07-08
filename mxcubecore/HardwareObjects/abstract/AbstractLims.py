@@ -46,9 +46,21 @@ class AbstractLims(HardwareObject, abc.ABC):
 
         self.session_manager = LimsSessionManager()
 
+    def is_session_already_active(self, session_id: str) -> bool:
+        # If curent selected session is already selected no need to do
+        # anything else
+        active_session = self.session_manager.active_session
+        if active_session is not None:
+            if active_session.session_id == session_id:
+                return True
+        return False
+
     @abc.abstractmethod
     def get_lims_name(self) -> List[Lims]:
         raise Exception("Abstract class. Not implemented")
+
+    def get_session_id(self) -> str:
+        return self.session_manager.active_session.session_id
 
     @abc.abstractmethod
     def get_user_name(self, login_id, password, create_session):
@@ -86,6 +98,16 @@ class AbstractLims(HardwareObject, abc.ABC):
 
     @abc.abstractmethod
     def store_robot_action(self, proposal_id: str):
+        raise Exception("Abstract class. Not implemented")
+
+    @abc.abstractmethod
+    def update_bl_sample(self, bl_sample: str):
+        """
+        Creates or stos a BLSample entry.
+        # NBNB update doc string
+        :param sample_dict: A dictonary with the properties for the entry.
+        :type sample_dict: dict
+        """
         raise Exception("Abstract class. Not implemented")
 
     def get_dc_link(self):
