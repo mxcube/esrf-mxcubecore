@@ -154,10 +154,11 @@ class ISPyBDataAdapter:
             logging.getLogger("ispyb_client").info(
                 "Session created. session_id=%s" % session_id
             )
-
-            return self.get_proposal_tuple_by_code_and_number(
-                proposal_tuple.proposal.code,
-                proposal_tuple.proposal.number,
+            response = self._collection.service.findSession(session_id)
+            session: Session = self.__to_session(asdict(response))
+            return self.get_sessions_by_code_and_number(
+                session.code,
+                session.number,
                 beamline_name,
             )
         except Exception:
@@ -302,7 +303,7 @@ class ISPyBDataAdapter:
     ) -> LimsSessionManager:
         try:
             self._debug(
-                "get_proposal_tuple_by_code_and_number. code=%s number=%s beamline_name=%s"
+                "get_sessions_by_code_and_number. code=%s number=%s beamline_name=%s"
                 % (code, number, beamline_name)
             )
             sessions = self.find_sessions_by_proposal_and_beamLine(
@@ -510,7 +511,142 @@ class ISPyBDataAdapter:
             logging.getLogger("ispyb_client").exception(str(e))
             return {}
 
-    def _store_data_collection(self, mx_collection, bl_config=None):
+    def find_detector(self, type, manufacturer, model, mode):
+        """
+        Returns the Detector3VO object with the characteristics
+        matching the ones given.
+        """
+
+        if self._collection:
+            try:
+                res = self._collection.service.findDetectorByParam(
+                    "", manufacturer, model, mode
+                )
+                return res
+            except WebFault:
+                logging.getLogger("ispyb_client").exception(
+                    "ISPyBClient: exception in find_detector"
+                )
+        else:
+            logging.getLogger("ispyb_client").exception(
+                "Error find_detector: could not connect to" + " server")
+
+
+    def update_session(self, session_dict):
+        """
+        Updates a  session for "current proposal", the attribute
+        porposalId in <session_dict> has to be set (and exist in ISPyB).
+
+        :param session_dict: Dictonary with session parameters.
+        :type session_dict: dict
+
+        :returns: The session id of the created session.
+        :rtype: int
+        """
+        if self._collection:
+
+            try:
+                print(session_dict)
+                # The old API used date formated strings and the new
+                # one uses DateTime objects.
+                session_dict["startDate"] = datetime.strptime(
+                    session_dict["startDate"], "%Y-%m-%d %H:%M:%S"
+                )
+                session_dict["endDate"] = datetime.strptime(
+                    session_dict["endDate"], "%Y-%m-%d %H:%M:%S"
+                )
+
+                try:
+                    session_dict["lastUpdate"] = datetime.strptime(
+                        session_dict["lastUpdate"].split("+")[0], "%Y-%m-%d %H:%M:%S"
+                    )
+                    session_dict["timeStamp"] = datetime.strptime(
+                        session_dict["timeStamp"].split("+")[0], "%Y-%m-%d %H:%M:%S"
+                    )
+                except Exception:
+                    pass
+
+                # return data to original codification
+                decoded_dict = utf_decode(session_dict)
+                session = self._collection.service.storeOrUpdateSession(decoded_dict)
+
+                # changing back to string representation of the dates,
+                # since the session_dict is used after this method is called,
+                session_dict["startDate"] = datetime.strftime(
+                    session_dict["startDate"], "%Y-%m-%d %H:%M:%S"
+                )
+                session_dict["endDate"] = datetime.strftime(
+                    session_dict["endDate"], "%Y-%m-%d %H:%M:%S"
+                )
+
+            except WebFault as e:
+                session = {}
+                logging.getLogger("ispyb_client").exception(str(e))
+            except URLError:
+                logging.getLogger("ispyb_client").exception(_CONNECTION_ERROR_MSG)
+
+            logging.getLogger("ispyb_client").info(
+                "[ISPYB] Session goona be created: session_dict %s" % session_dict
+            )
+            logging.getLogger("ispyb_client").info(
+                "[ISPYB] Session created: %s" % session
+            )
+            return session
+        else:
+            logging.getLogger("ispyb_client").exception(
+                "Error in create_session: could not connect to server"
+            )
+
+    def store_beamline_setup(self, session_id, bl_config):
+        """
+        Stores the beamline setup dict <bl_config>.
+
+        :param session_id: The session id that the beamline_setup
+                           should be associated with.
+        :type session_id: int
+
+        :param bl_config: The dictonary with beamline settings.
+        :type bl_config: dict
+
+        :returns beamline_setup_id: The database id of the beamline setup.
+        :rtype: str
+        """
+        blSetupId = None
+        if self._collection:
+
+            session = {}
+
+            try:
+                session = self.get_session(session_id)
+            except Exception:
+                logging.getLogger("ispyb_client").exception(
+                    "ISPyBClient: exception in store_beam_line_setup"
+                )
+            else:
+                if session is not None:
+                    try:
+                        blSetupId = self._collection.service.storeOrUpdateBeamLineSetup(
+                            bl_config
+                        )
+
+                        session["beamLineSetupId"] = blSetupId
+                        self.update_session(session)
+
+                    except WebFault as e:
+                        logging.getLogger("ispyb_client").exception(str(e))
+                    except URLError:
+                        logging.getLogger("ispyb_client").exception(
+                            _CONNECTION_ERROR_MSG
+                        )
+        else:
+            logging.getLogger("ispyb_client").exception(
+                "Error in store_beamline_setup: could not connect" + " to server"
+            )
+
+        return blSetupId
+
+
+    def store_data_collection(self, mx_collection, bl_config=None):
         """
         Stores the data collection mx_collection, and the beamline setup
         if provided.
@@ -524,9 +660,7 @@ class ISPyBDataAdapter:
         :returns: None
 
         """
-        logging.getLogger("HWR").debug(
-            "Storing data collection in lims. data to store: %s" % str(mx_collection)
-        )
+        logging.getLogger("HWR").debug("store_data_collection. mx_collection=%s bl_config=%s" % (str(mx_collection), str(bl_config)))
 
         data_collection = ISPyBValueFactory().from_data_collect_parameters(
             self._collection, mx_collection
@@ -570,7 +704,9 @@ class ISPyBDataAdapter:
         :rtype: dict
         """
         try:
+            logging.getLogger("HWR").debug("get_session. session_id=%s" % session_id)
             session = self._collection.service.findSession(session_id)
+            logging.getLogger("HWR").debug("get_session. session=%s" % session)
             if session is not None:
                 session.startDate = datetime.strftime(
                     session.startDate, "%Y-%m-%d %H:%M:%S"
@@ -652,3 +788,30 @@ class ISPyBDataAdapter:
             logging.getLogger("ispyb_client").exception(str(e))
 
         return status
+
+    def update_bl_sample(self, bl_sample):
+        """
+        Creates or stos a BLSample entry.
+        # NBNB update doc string
+        :param sample_dict: A dictonary with the properties for the entry.
+        :type sample_dict: dict
+        """
+        if self._disabled:
+            return {}
+
+        if self._tools_ws:
+            try:
+                status = self._tools_ws.service.storeOrUpdateBLSample(bl_sample)
+            except WebFault as e:
+                logging.getLogger("ispyb_client").exception(str(e))
+                status = {}
+            except URLError:
+                logging.getLogger("ispyb_client").exception(
+                    "Could not connect to ISPyB, URLerror"
+                )
+
+            return status
+        else:
+            logging.getLogger("ispyb_client").exception(
+                "Error in update_bl_sample: could not connect to server"
+            )

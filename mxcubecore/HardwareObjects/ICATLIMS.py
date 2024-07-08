@@ -35,10 +35,12 @@ class ICATLIMS(AbstractLims):
         self.ingesters = self.get_property("queue_urls")
         self.investigations = []
 
+        # Initialize ICAT client and catalogue
         self.icatClient = IcatClient(
             catalogue_url=self.url,
             tracking_url=self.url,
             metadata_urls=["bcu-mq-01:61613"],
+            catalogue_queues=["bcu-mq-01:61613"],
         )
 
     def get_lims_name(self) -> List[Lims]:
@@ -51,12 +53,7 @@ class ICATLIMS(AbstractLims):
     ) -> LimsSessionManager:
 
         logging.getLogger("MX3.HWR").debug("[ICAT] authenticate %s" % (user_name))
-        # Initialize ICAT client and catalogue
-        self.icatClient = IcatClient(
-            catalogue_url=self.url,
-            tracking_url=self.url,
-            catalogue_queues=["bcu-mq-01:61613"],
-        )
+
         self.icat_session: ICATSession = self.icatClient.do_log_in(password)
         # Catalogue client to retrieve investigations
         self.catalogue = self.icatClient.catalogue_client
@@ -181,7 +178,7 @@ class ICATLIMS(AbstractLims):
             "proteinAcronym": tracking_sample["name"],
             "sampleId": tracking_sample["sampleId"],
             "sampleLocation": tracking_sample["sampleContainerPosition"],
-            "sampleName": tracking_sample["name"],
+            "sampleName": str(tracking_sample["name"]),
             "smiles": None,
         }
 
@@ -250,6 +247,10 @@ class ICATLIMS(AbstractLims):
             return None
 
     def set_active_session_by_id(self, session_id: str) -> Session:
+
+        if self.is_session_already_active(self.session_manager.active_session):
+            return self.session_manager.active_session
+
         sessions = self.session_manager.sessions
 
         if len(sessions) == 0:
@@ -303,7 +304,6 @@ class ICATLIMS(AbstractLims):
         """Returns all investigations by user. An investigation corresponds to
         one experimental session. It returns an empty array in case of error"""
         try:
-
             self.investigations = []
             logging.getLogger("MX3.HWR").debug(
                 "[ICAT] __get_all_investigations before=%s after=%s beamline=%s isInstrumentScientist=%s isAdministrator=%s compatible_beamlines=%s"
@@ -521,7 +521,15 @@ class ICATLIMS(AbstractLims):
             queue_entry = HWR.beamline.queue_manager.get_current_entry()
             sample_node = queue_entry.get_data_model().get_sample_node()
             # sample_node.name this is name of the sample
-            (cell, puck, sample_position) = sample_node.location  # Example: (8,2,5)
+            
+            location = sample_node.location  # Example: (8,2,5)
+
+            if len(location) == 3:
+                (cell, puck, sample_position) = location
+            else:
+                cell = 1
+                (puck, sample_position) = location
+
             self.__add_sample_changer_position(cell, puck, metadata)
             metadata["SampleTrackingContainer_position"] = sample_position
             metadata["SampleTrackingContainer_type"] = (
@@ -695,3 +703,13 @@ class ICATLIMS(AbstractLims):
 
         except Exception:
             logging.getLogger("HWR").exception("")
+
+
+    def update_bl_sample(self, bl_sample: str):
+        """
+        Creates or stos a BLSample entry.
+        # NBNB update doc string
+        :param sample_dict: A dictonary with the properties for the entry.
+        :type sample_dict: dict
+        """
+        pass
