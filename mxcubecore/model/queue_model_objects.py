@@ -2604,7 +2604,7 @@ def addXrayCentring(parent_node, **centring_parameters):
 #
 # Collect hardware object utility function.
 #
-def to_collect_dict(data_collection, session, sample, centred_pos=None):
+def to_collect_dict(data_collection, sample, centred_pos=None):
     """ return [{'comment': '',
           'helical': 0,
           'motors': {},
@@ -2666,7 +2666,7 @@ def to_collect_dict(data_collection, session, sample, centred_pos=None):
             "detector_binning_mode": acq_params.detector_binning_mode,
             "detector_roi_mode": acq_params.detector_roi_mode,
             "shutterless": acq_params.shutterless,
-            "sessionId": session.session_id,
+            "sessionId": data_collection.lims_session_id,
             "do_inducedraddam": acq_params.induce_burn,
             "sample_reference": {
                 "spacegroup": proc_params.space_group,
