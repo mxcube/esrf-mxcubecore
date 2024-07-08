@@ -10,24 +10,6 @@ import logging
 import gevent
 
 
-def in_greenlet(fun):
-    def _in_greenlet(*args, **kwargs):
-        log_msg = "lims client " + fun.__name__ + " called with: "
-
-        for arg in args[1:]:
-            try:
-                log_msg += pformat(arg, indent=4, width=80) + ", "
-            except Exception:
-                pass
-
-        logging.getLogger("ispyb_client").debug(log_msg)
-        task = gevent.spawn(fun, *args)
-        if kwargs.get("wait", False):
-            task.get()
-
-    return _in_greenlet
-
-
 class ISPyBAbstractLIMS(AbstractLims):
     """
     Web-service client for ISPyB.
@@ -176,7 +158,8 @@ class ISPyBAbstractLIMS(AbstractLims):
         except gevent.GreenletExit:
             # aborted by user ('kill')
             raise
-        except Exception:
+        except Exception as e:
+            
             # if anything else happens, let upper level process continue
             # (not a fatal error), but display exception still
             logging.exception("Could not store data collection")
@@ -198,7 +181,6 @@ class ISPyBAbstractLIMS(AbstractLims):
         """
         return self.adapter.store_data_collection(mx_collection, bl_config)
 
-    @in_greenlet
     def update_data_collection(self, mx_collection, wait=False):
         """
         Updates the datacollction mx_collection, this requires that the

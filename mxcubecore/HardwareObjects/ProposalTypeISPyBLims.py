@@ -63,10 +63,26 @@ class ProposalTypeISPyBLims(ISPyBAbstractLIMS):
             logging.getLogger("HWR").error("ISPyB login not ok")
             raise Exception("Authentication failed")
 
+    def is_session_already_active_by_code(self, code: str, number: str) -> bool:
+        # If curent selected session is already selected no need to do
+        # anything else
+        active_session = self.session_manager.active_session
+        if active_session is not None:
+            if (
+                code.upper() == active_session.code.upper()
+                and number.upper() == active_session.number.upper()
+            ):
+                return True
+        return False
+
     def set_active_session_by_id(self, proposal_name: str) -> Session:
         """
         Given a proposal name it will select a session that is scheduled on this beamline in the current timeslot
         """
+        if self.is_session_already_active(self.session_manager.active_session):
+            logging.getLogger("HWR").debug("[ISPYB] is_session_already_active")
+            return self.session_manager.active_session
+
         if len(self.session_manager.sessions) == 0:
             logging.getLogger("HWR").error(
                 "Session list is empty. No session candidates"
@@ -80,11 +96,12 @@ class ProposalTypeISPyBLims(ISPyBAbstractLIMS):
                 self.session_manager.active_session.proposal_name,
             )
             return self.session_manager.active_session
+
         session_list = [
             obj
             for obj in self.session_manager.sessions
             if (
-                obj.proposal_name == proposal_name
+                obj.proposal_name.upper() == proposal_name.upper()
                 and obj.is_scheduled_beamline
                 and obj.is_scheduled_time
             )
@@ -105,6 +122,9 @@ class ProposalTypeISPyBLims(ISPyBAbstractLIMS):
     def get_session_manager_by_code_number(
         self, code: str, number: str, is_local_host: bool
     ) -> LimsSessionManager:
+
+        logging.getLogger("HRW").debug("[ISPyB] get_session_manager_by_code_number")
+
         self.session_manager = self.adapter.get_sessions_by_code_and_number(
             code, number, self.beamline_name
         )

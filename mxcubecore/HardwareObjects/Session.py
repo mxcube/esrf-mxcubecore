@@ -349,7 +349,7 @@ class Session(HardwareObject):
 
             proposal = "%s%s" % (self.proposal_code, self.proposal_number)
 
-        return proposal
+        return proposal.lower().replace("-", "")
 
     def is_inhouse(self, proposal_code=None, proposal_number=None):
         """
