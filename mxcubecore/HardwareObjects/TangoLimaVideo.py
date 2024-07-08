@@ -107,7 +107,7 @@ class TangoLimaVideo(BaseHardwareObjects.HardwareObject):
             else:
                 logging.getLogger("HWR").info("MXCuBE NOT controlling video")
 
-        self.set_is_ready(True)
+        #self.set_is_ready(True)
 
     def get_last_image(self):
         return self._last_image
