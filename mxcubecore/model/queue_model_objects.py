@@ -2700,7 +2700,7 @@ def to_collect_dict(data_collection, session, sample, centred_pos=None):
             "workflow_type": data_collection.workflow_type,
             "workflow_uid": data_collection.workflow_uid,
             "workflow_kappa_settings_id": data_collection.workflow_kappa_settings_id,
-            "workflow_charactersiation_id": data_collection.workflow_characterisation_id,
+            "workflow_characterisation_id": data_collection.workflow_characterisation_id,
             "workflow_position_id": data_collection.workflow_position_id,
             "workflow_group_by": data_collection.workflow_group_by,
         }
