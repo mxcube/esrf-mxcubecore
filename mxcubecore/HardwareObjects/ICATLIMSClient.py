@@ -423,6 +423,7 @@ class ICATLIMSClient(AbstractLims):
                 "MX_exposureTime": oscillation_sequence["exposure_time"],
                 "MX_flux": collection_parameters["flux"],
                 "MX_fluxEnd": collection_parameters["flux_end"],
+                "MX_positionName": collection_parameters["position_name"],
                 "MX_numberOfImages": oscillation_sequence["number_of_images"],
                 "MX_oscillationRange": oscillation_sequence["range"],
                 "MX_oscillationStart": oscillation_sequence["start"],
@@ -441,6 +442,16 @@ class ICATLIMSClient(AbstractLims):
                 "Workflow_name": collection_parameters.get("workflow_name", None),
                 "Workflow_type": collection_parameters.get("workflow_type", None),
                 "Workflow_id": collection_parameters.get("workflow_uid", None),
+                "MX_kappa_settings_id": collection_parameters.get(
+                    "workflow_kappa_settings_id", None
+                ),
+                "MX_characterisation_id": collection_parameters.get(
+                    "workflow_characterisation_id", None
+                ),
+                "MX_position_id": collection_parameters.get(
+                    "workflow_position_id", None
+                ),
+                "group_by": collection_parameters.get("workflow_group_by", None),
             }
             # Store metadata on disk
             self.add_sample_metadata(metadata, collection_parameters)
