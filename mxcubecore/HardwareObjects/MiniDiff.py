@@ -327,6 +327,45 @@ class MiniDiff(HardwareObject):
         # Agree on a correct method name, inconsistent arguments for move_to_beam, disabled temporarily
         # self.move_to_coord = self.move_to_beam()
 
+    def set_rotation_axis_position(self, value: float, motor_name="phiz"):
+        self._set_rotation_axis_position(value)
+
+    def _set_rotation_axis_position(self, value: float, motor_name="phiz"):
+        logging.getLogger("HWR").info(
+            f"Setting rotation axis ({motor_name}) position to {value}"
+        )
+
+        try:
+            self["centringReferencePosition"].set_property(motor_name)
+            self.commit_changes()
+        except:
+            logging.getLogger("HWR").exception(
+                f"Setting rotation axis position Failed while writing XML file"
+            )
+            raise
+
+        ref = self["centringReferencePosition"].get_property(motor_name, None)
+
+        if motor_name == "phiz":
+            self.centringPhiz = sample_centring.CentringMotor(
+                self.phizMotor, reference_position=ref
+            )
+        elif motor_name == "phiy":
+            self.centringPhiy = sample_centring.CentringMotor(
+                self.phiyMotor, reference_position=ref
+            )
+
+        try:
+            logging.getLogger("HWR").exception(
+                f"Setting MD AlignmentZ reference position"
+            )
+            self.run_script("Change_AlignmentZ, " + str(value))
+        except:
+            logging.getLogger("HWR").exception(
+                f"Setting MD AlignmentZ reference position failed"
+            )
+            raise
+
     # Contained Objects
     # NBNB Temp[orary hack - should be cleaned up together with configuration
     @property
