@@ -55,7 +55,7 @@ class XMLRPCServer(HardwareObject):
         self.xmlrpc_prefixes = set()
         self.current_entry_task = None
         self.host = None
-        self.use_token = None
+        self.use_token = True
 
         atexit.register(self.close)
         self.gphl_workflow_status = None
@@ -75,7 +75,7 @@ class XMLRPCServer(HardwareObject):
         self.host = host
         self.port = self.get_property("port")
 
-        self.use_token = self.get_property("use_token", False)
+        self.use_token = self.get_property("use_token", True)
 
         try:
             self.open()
@@ -135,7 +135,7 @@ class XMLRPCServer(HardwareObject):
         self._server.register_function(self.move_diffractometer)
         self._server.register_function(self.save_snapshot)
         self._server.register_function(self.save_multiple_snapshots)
-        self._server.register_function(self.save_twelve_snapshots_new_script)
+        self._server.register_function(self.save_twelve_snapshots_script)
         self._server.register_function(self.cryo_temperature)
         self._server.register_function(self.flux)
         self._server.register_function(self.check_for_beam)
@@ -452,7 +452,7 @@ class XMLRPCServer(HardwareObject):
         HWR.beamline.diffractometer.move_motors(roles_positions_dict)
         return True
 
-    def save_twelve_snapshots_new_script(self, path):
+    def save_twelve_snapshots_script(self, path):
         path = path[14:]
         logging.getLogger("HWR").info(
             "Taking 6 snapshots to be saved in  %s " % str(path)
