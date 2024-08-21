@@ -667,7 +667,7 @@ class MiniDiff(HardwareObject):
                         )
                 except:
                     logging.getLogger("HWR").exception(
-                        "MD script for sample centring had a problem"
+                        "MD script for sample centering had a problem"
                     )
 
         except KeyError as diag:
