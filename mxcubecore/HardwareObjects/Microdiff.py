@@ -449,6 +449,8 @@ class Microdiff(MiniDiff.MiniDiff):
             return
 
         current_phase = self.get_current_phase()
+        msg = f"Microdiff.py -- Current phase is {current_phase} and move to {phase}"
+        logging.getLogger("user_level_log").info(msg)
 
         if current_phase == phase:
             msg = f"Don't need to change phase already in {phase}"
@@ -533,8 +535,7 @@ class Microdiff(MiniDiff.MiniDiff):
         scan(scan_params)
         print("oscil scan started at ----------->", time.time())
         if wait:
-            self._wait_ready(20 * 60)  # Timeout of 20 min
-            print("finished at ---------->", time.time())
+            self._wait_ready(40 * 60)  # Timeout of 40 min
 
     def oscilScan4d(
         self, start, end, exptime, number_of_images, motors_pos, wait=False
