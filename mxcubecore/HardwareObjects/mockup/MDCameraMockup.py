@@ -5,12 +5,39 @@ import subprocess
 import logging
 import time
 import gevent
+import base64
+from io import BytesIO
+from PIL import Image
 
 from mxcubecore import BaseHardwareObjects
 from mxcubecore import HardwareRepository as HWR
 
 MAX_TRIES = 3
 SLOW_INTERVAL = 1000
+
+
+def combine_images(img1, img2):
+    if img1.size != img2.size:
+        raise ValueError("Images must be the same size")
+
+    combined_img = Image.new("RGB", img1.size)
+
+    pixels1 = img1.load()
+    pixels2 = img2.load()
+    combined_pixels = combined_img.load()
+
+    width, height = img1.size
+    for x in range(width):
+        for y in range(height):
+            pixel1 = pixels1[x, y]
+            pixel2 = pixels2[x, y]
+
+            if pixel2[0] <= 200 and pixel2[1] <= 60 and pixel2[2] <= 140:
+                combined_pixels[x, y] = pixel1
+            else:
+                combined_pixels[x, y] = pixel2
+
+    return combined_img
 
 
 class MDCameraMockup(BaseHardwareObjects.HardwareObject):
@@ -91,10 +118,25 @@ class MDCameraMockup(BaseHardwareObjects.HardwareObject):
     def imageType(self):
         return None
 
-    def takeSnapshot(self, snapshot_filename, bw=True):
-        return True
+    def take_snapshot(self, path=None, overlay_data=None, bw=True):
+        img = Image.open(self.image, "r")
 
-    take_snapshot = takeSnapshot
+        if overlay_data:
+            overlay_data = base64.b64decode(overlay_data)
+            overlay_image = Image.open(BytesIO(overlay_data))
+            overlay_image = overlay_image.resize(img.size, Image.Resampling.LANCZOS)
+            img = combine_images(img, overlay_image.convert("RGB"))
+
+        if bw:
+            img.convert("1")
+
+        if path:
+            img.save(path)
+
+        buffered = BytesIO()
+        img.save(buffered, format="JPEG")
+
+        return buffered
 
     def get_available_stream_sizes(self):
         try:

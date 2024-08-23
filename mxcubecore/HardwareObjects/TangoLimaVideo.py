@@ -21,6 +21,8 @@ import PyTango
 from PIL import Image
 import io
 import gipc
+import base64
+from io import BytesIO
 
 from PyTango.gevent import DeviceProxy
 
@@ -51,9 +53,33 @@ def poll_image(lima_tango_device, video_mode, FORMATS):
     return img, width, height
 
 
+def combine_images(img1, img2):
+    if img1.size != img2.size:
+        raise ValueError("Images must be the same size")
+
+    combined_img = Image.new("RGB", img1.size)
+
+    pixels1 = img1.load()
+    pixels2 = img2.load()
+    combined_pixels = combined_img.load()
+
+    width, height = img1.size
+    for x in range(width):
+        for y in range(height):
+            pixel1 = pixels1[x, y]
+            pixel2 = pixels2[x, y]
+
+            if pixel2[0] <= 200 and pixel2[1] <= 60 and pixel2[2] <= 140:
+                combined_pixels[x, y] = pixel1
+            else:
+                combined_pixels[x, y] = pixel2
+
+    return combined_img
+
+
 class TangoLimaVideo(BaseHardwareObjects.HardwareObject):
     def __init__(self, name):
-        super().__init__(name)
+        super().__init__(self, name)
         self.__brightnessExists = False
         self.__contrastExists = False
         self.__gainExists = False
@@ -137,10 +163,18 @@ class TangoLimaVideo(BaseHardwareObjects.HardwareObject):
     def get_height(self):
         return self.device.image_height
 
-    def take_snapshot(self, path=None, bw=False):
+    def take_snapshot(self, path=None, overlay_data=None, bw=False):
         data, width, height = poll_image(self.device, self.video_mode, self._FORMATS)
 
         img = Image.frombytes("RGB", (width, height), data)
+
+        if overlay_data:
+            overlay_data = base64.b64decode(overlay_data)
+            overlay_image = Image.open(BytesIO(overlay_data))
+            overlay_image = overlay_image.resize(
+                (width, height), Image.Resampling.LANCZOS
+            )
+            img = combine_images(img, overlay_image.convert("RGB"))
 
         if bw:
             img.convert("1")
@@ -148,7 +182,10 @@ class TangoLimaVideo(BaseHardwareObjects.HardwareObject):
         if path:
             img.save(path)
 
-        return img
+        buffered = BytesIO()
+        img.save(buffered, format="JPEG")
+
+        return buffered
 
     def set_live(self, mode):
         curr_state = self.device.video_live

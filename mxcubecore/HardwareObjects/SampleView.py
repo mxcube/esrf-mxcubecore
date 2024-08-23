@@ -103,6 +103,18 @@ class SampleView(AbstractSampleView):
 
         self._last_oav_image = path
 
+    def take_snapshot(self, overlay_data=None, bw=False):
+        """Save a snapshot to file.
+        Args:
+            path (str): The filename.
+            overlay_data (str): base64 encoded image to lay over camera image
+            bw (bool): return grayscale image
+
+        Returns:
+            (BytesIO) overlayed camera image
+        """
+        return self.camera.take_snapshot(path=None, overlay_data=overlay_data, bw=bw)
+
     def get_last_image_path(self):
         return self._last_oav_image
 
