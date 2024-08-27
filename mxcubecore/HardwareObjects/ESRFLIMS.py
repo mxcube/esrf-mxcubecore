@@ -221,7 +221,10 @@ class ESRFLIMS(AbstractLims):
         return self.drac.get_session_by_id(id)
 
     def get_user_name(self):
-        return self.drac.icat_session["username"]
+        return self.drac.get_user_name()
+
+    def get_full_user_name(self):
+        return self.drac.get_full_user_name()
 
     def authenticate(self, login_id: str, password: str) -> LimsSessionManager:
         return self.drac.authenticate(login_id, password)
