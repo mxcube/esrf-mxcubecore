@@ -565,20 +565,20 @@ class EMBLFlexHCD(SampleChanger):
                     "use_custom_phase_script", False
                 )
 
-                if _use_custom and loaded_sample == (
+                if loaded_sample == (
                     sample.get_cell_no(),
                     sample.get_basket_no(),
                     sample.get_vial_no(),
                 ):
-
-                    logging.getLogger("user_level_log").info(
-                        "Sample is Loaded from EMBLFlexHCD.py "
-                    )
-                    HWR.beamline.diffractometer.wait_ready(100)
-                    HWR.beamline.diffractometer.run_script("ChangePhase_centring")
-                    HWR.beamline.diffractometer.run_script(
-                        "sample_centering", wait=False
-                    )
+                    if _use_custom:
+                        logging.getLogger("user_level_log").info(
+                            "Sample is Loaded from EMBLFlexHCD.py "
+                        )
+                        HWR.beamline.diffractometer.wait_ready(100)
+                        HWR.beamline.diffractometer.run_script("ChangePhase_centring")
+                        HWR.beamline.diffractometer.run_script(
+                            "sample_centering", wait=False
+                        )
                     break
 
                 gevent.sleep(1)
