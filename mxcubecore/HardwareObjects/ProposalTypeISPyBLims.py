@@ -34,6 +34,9 @@ class ProposalTypeISPyBLims(ISPyBAbstractLIMS):
             )
         ]
 
+    def get_full_user_name(self):
+        raise self.get_user_name()
+
     def get_user_name(self):
         """
         Because it is a proposal based it returns the proposal plus the uuid4

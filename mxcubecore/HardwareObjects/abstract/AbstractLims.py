@@ -63,7 +63,11 @@ class AbstractLims(HardwareObject, abc.ABC):
         return self.session_manager.active_session.session_id
 
     @abc.abstractmethod
-    def get_user_name(self, login_id, password, create_session):
+    def get_user_name(self):
+        raise Exception("Abstract class. Not implemented")
+
+    @abc.abstractmethod
+    def get_full_user_name(self):
         raise Exception("Abstract class. Not implemented")
 
     @abc.abstractmethod
