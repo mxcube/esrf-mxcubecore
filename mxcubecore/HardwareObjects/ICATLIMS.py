@@ -449,6 +449,9 @@ class ICATLIMS(AbstractLims):
             ),
         )
 
+    def get_full_user_name(self):
+        return self.icat_session["fullName"]
+
     def get_user_name(self):
         return self.icat_session["username"]
 

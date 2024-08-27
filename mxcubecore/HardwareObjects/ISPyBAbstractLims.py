@@ -90,6 +90,9 @@ class ISPyBAbstractLIMS(AbstractLims):
     def get_user_name(self):
         raise Exception("Abstract class. Not implemented")
 
+    def get_full_user_name(self):
+        raise Exception("Abstract class. Not implemented")
+
     def is_user_login_type(self):
         raise Exception("Abstract class. Not implemented")
 
