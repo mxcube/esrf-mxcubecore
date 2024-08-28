@@ -15,12 +15,10 @@ If video mode is not specified, BAYER_RG16 is used by default.
 import logging
 import time
 import struct
-import numpy
 import gevent
 import PyTango
 from PIL import Image
 import io
-import gipc
 
 from PyTango.gevent import DeviceProxy
 
@@ -107,10 +105,10 @@ class TangoLimaVideo(BaseHardwareObjects.HardwareObject):
             else:
                 logging.getLogger("HWR").info("MXCuBE NOT controlling video")
 
-        #self.set_is_ready(True)
+        # self.set_is_ready(True)
 
     def get_last_image(self):
-        return self._last_image
+        return poll_image(self.device, self.video_mode, self._FORMATS)
 
     def _do_polling(self, sleep_time):
         lima_tango_device = self.device
@@ -136,19 +134,6 @@ class TangoLimaVideo(BaseHardwareObjects.HardwareObject):
 
     def get_height(self):
         return self.device.image_height
-
-    def take_snapshot(self, path=None, bw=False):
-        data, width, height = poll_image(self.device, self.video_mode, self._FORMATS)
-
-        img = Image.frombytes("RGB", (width, height), data)
-
-        if bw:
-            img.convert("1")
-
-        if path:
-            img.save(path)
-
-        return img
 
     def set_live(self, mode):
         curr_state = self.device.video_live
