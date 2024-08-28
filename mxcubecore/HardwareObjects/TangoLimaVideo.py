@@ -79,7 +79,7 @@ def combine_images(img1, img2):
 
 class TangoLimaVideo(BaseHardwareObjects.HardwareObject):
     def __init__(self, name):
-        super().__init__(self, name)
+        super().__init__(name)
         self.__brightnessExists = False
         self.__contrastExists = False
         self.__gainExists = False
