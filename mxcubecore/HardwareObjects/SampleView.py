@@ -99,7 +99,7 @@ class SampleView(AbstractSampleView):
         if overlay:
             self._ui_snapshot_cb(path, bw)
         else:
-            self.camera.take_snapshot(path, bw)
+            self.camera.take_snapshot(path, bw=bw)
 
         self._last_oav_image = path
 

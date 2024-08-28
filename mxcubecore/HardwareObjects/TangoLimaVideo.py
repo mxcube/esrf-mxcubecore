@@ -163,7 +163,7 @@ class TangoLimaVideo(BaseHardwareObjects.HardwareObject):
     def get_height(self):
         return self.device.image_height
 
-    def take_snapshot(self, path=None, overlay_data=None, bw=False):
+    def take_snapshot(self, path=None, bw=False, overlay_data=None):
         data, width, height = poll_image(self.device, self.video_mode, self._FORMATS)
 
         img = Image.frombytes("RGB", (width, height), data)
