@@ -248,4 +248,5 @@ class AbstractXRFSpectrum(HardwareObject):
                 self.spectrum_info_dict.pop("spectrum_directory")
             if self.spectrum_info_dict.get("archive_directory"):
                 self.spectrum_info_dict.pop("archive_directory")
-            self.lims.storeXfeSpectrum(self.spectrum_info_dict)
+
+            self.lims.store_xfe_spectrum(self.spectrum_info_dict)
