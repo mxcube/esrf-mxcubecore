@@ -85,6 +85,9 @@ class ISPyBDataAdapter:
         self.proxy = proxy  # type: ignore
         self.beamline_name = beamline_name
 
+        # the duration of the session in days for the ones that are created by MXCuBE
+        self.new_sesssion_duration_days = 2
+
         self.logger = logging.getLogger("ispyb_adapter")
 
         self._shipping = self.__create_client(
@@ -132,7 +135,7 @@ class ISPyBDataAdapter:
             # proposal = self.find_proposal_by_login_and_beamline(self.get_user_, beamline_name)  # type: ignore
             current_time = time.localtime()
             start_time = time.strftime("%Y-%m-%d 00:00:00", current_time)
-            end_time = time.mktime(current_time) + 60 * 60 * 24
+            end_time = time.mktime(current_time) + 60 * 60 * 24 * self.new_sesssion_duration_days
             tomorrow = time.localtime(end_time)
             end_time = time.strftime("%Y-%m-%d 07:59:59", tomorrow)
 
