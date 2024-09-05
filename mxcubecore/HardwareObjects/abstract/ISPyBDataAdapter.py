@@ -70,7 +70,6 @@ def utf_decode(res_d):
 
 
 class ISPyBDataAdapter:
-
     def __init__(
         self,
         ws_root: str,
@@ -355,16 +354,21 @@ class ISPyBDataAdapter:
         :rtype: int
         """
         group_id = None
+        logging.getLogger("HWR").debug(
+            "ispyb_group_data_collections: %s"
+            % mx_collection["ispyb_group_data_collections"]
+        )
+
         if mx_collection["ispyb_group_data_collections"]:
             group_id = mx_collection.get("group_id", None)
-        if group_id is None:
-            # Create a new group id
-            group = ISPyBValueFactory().dcg_from_dc_params(
-                self._collection, mx_collection
-            )
-            group_id = self._collection.service.storeOrUpdateDataCollectionGroup(
-                group
-            )
+        logging.getLogger("HWR").debug(
+            "Storing data collection group in lims. data to store. group_id: %s mx_collection: %s"
+            % (str(group_id), str(mx_collection))
+        )
+        # Create a new group id
+        group = ISPyBValueFactory().dcg_from_dc_params(self._collection, mx_collection)
+        # if group_id is None:
+        group_id = self._collection.service.storeOrUpdateDataCollectionGroup(group)
         mx_collection["group_id"] = group_id
 
     def update_data_collection(self, mx_collection, wait=False):
@@ -532,8 +536,8 @@ class ISPyBDataAdapter:
                 )
         else:
             logging.getLogger("ispyb_client").exception(
-                "Error find_detector: could not connect to" + " server")
-
+                "Error find_detector: could not connect to" + " server"
+            )
 
     def update_session(self, session_dict):
         """
@@ -648,7 +652,6 @@ class ISPyBDataAdapter:
 
         return blSetupId
 
-
     def store_data_collection(self, mx_collection, bl_config=None):
         """
         Stores the data collection mx_collection, and the beamline setup
@@ -663,7 +666,13 @@ class ISPyBDataAdapter:
         :returns: None
 
         """
-        logging.getLogger("HWR").debug("store_data_collection. mx_collection=%s bl_config=%s" % (str(mx_collection), str(bl_config)))
+        logging.getLogger("HWR").debug(
+            "store_data_collection. mx_collection=%s bl_config=%s"
+            % (str(mx_collection), str(bl_config))
+        )
+
+        # mx_collection["blSampleId"] = 1003538
+        # mx_collection["sample_reference"]["blSampleId"]
 
         data_collection = ISPyBValueFactory().from_data_collect_parameters(
             self._collection, mx_collection
@@ -781,10 +790,10 @@ class ISPyBDataAdapter:
                 xfespectrum_dict["startTime"] = xfespectrum_dict["startTime"]
                 xfespectrum_dict["endTime"] = xfespectrum_dict["endTime"]
 
-            status["xfeFluorescenceSpectrumId"] = (
-                self._collection.service.storeOrUpdateXFEFluorescenceSpectrum(
-                    xfespectrum_dict
-                )
+            status[
+                "xfeFluorescenceSpectrumId"
+            ] = self._collection.service.storeOrUpdateXFEFluorescenceSpectrum(
+                xfespectrum_dict
             )
 
         except URLError as e:
