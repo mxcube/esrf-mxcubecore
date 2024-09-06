@@ -3,17 +3,16 @@ A client for ISPyB Webservices.
 """
 
 import logging
-import time
 import warnings
-from datetime import datetime
 from mxcubecore import HardwareRepository as HWR
 from mxcubecore.HardwareObjects.ProposalTypeISPyBLims import ProposalTypeISPyBLims
 from mxcubecore.model.lims_session import LimsSessionManager, Session
+
 try:
     from urlparse import urljoin
 except Exception:
     # Python3
-    from urllib.parse import urljoin
+    pass
 
 # to simulate wrong loginID, use anything else than idtest
 # to simulate wrong psd, use "wrong" for password
@@ -28,6 +27,7 @@ class ISPyBClientMockup(ProposalTypeISPyBLims):
     """
     Web-service client for ISPyB.
     """
+
     def __init__(self, name):
         super().__init__(name)
 
@@ -53,7 +53,7 @@ class ISPyBClientMockup(ProposalTypeISPyBLims):
                 "proposalId": 1,
                 "type": "MX",
             },
-            "Session":[
+            "Session": [
                 {
                     "scheduled": 0,
                     "startDate": "2013-06-11 00:00:00",
@@ -64,8 +64,8 @@ class ISPyBClientMockup(ProposalTypeISPyBLims):
                     "sessionId": 34591,
                     "proposalId": 1,
                     "nbShifts": 3,
-                }]
-            ,
+                }
+            ],
             "Laboratory": {"laboratoryId": 1, "name": "TEST eh1"},
         }
 
@@ -84,7 +84,7 @@ class ISPyBClientMockup(ProposalTypeISPyBLims):
         if user_name != "idtest0":
             raise BaseException(f"{user_name} does not exist")
 
-        if password != "password":
+        if password == "wrong":
             raise BaseException("Wrong password")
 
         if password == "ispybDown":
@@ -106,11 +106,33 @@ class ISPyBClientMockup(ProposalTypeISPyBLims):
         except BaseException as e:
             raise e
 
-        session_dict = {'session_id': '1565334143', 'beamline_name': 'ID23-1', 'start_date': '20240615', 'start_time': '14:50:34', 'end_date': '20240925', 'end_time': '14:50:34', 'title': 'MXCuBE Sample tracking Development ', 'code': 'ID23-1', 'number': '0424', 'proposal_id': '1565334143', 'proposal_name': 'ID23-1-0424', 'comments': '', 'nb_shifts': '3', 'scheduled': 'True', 'is_rescheduled': False, 'is_scheduled_time': True, 'is_scheduled_beamline': True, 'user_portal_URL': '', 'data_portal_URL': 'https://data2.esrf.fr/investigation/1565334143/datasets', 'logbook_URL': 'https://data2.esrf.fr/investigation/1565334143/logbook'}
+        session_dict = {
+            "session_id": "1565334143",
+            "beamline_name": "ID23-1",
+            "start_date": "20240615",
+            "start_time": "14:50:34",
+            "end_date": "20240925",
+            "end_time": "14:50:34",
+            "title": "MXCuBE Sample tracking Development ",
+            "code": "ID23-1",
+            "number": "0424",
+            "proposal_id": "1565334143",
+            "proposal_name": "ID23-1-0424",
+            "comments": "",
+            "nb_shifts": "3",
+            "scheduled": "True",
+            "is_rescheduled": False,
+            "is_scheduled_time": True,
+            "is_scheduled_beamline": True,
+            "user_portal_URL": "",
+            "data_portal_URL": "https://data2.esrf.fr/investigation/1565334143/datasets",
+            "logbook_URL": "https://data2.esrf.fr/investigation/1565334143/logbook",
+        }
         session: Session = Session(**session_dict)
-        self.session_manager = LimsSessionManager(sessions=[session], active_session=session)
+        self.session_manager = LimsSessionManager(
+            sessions=[session], active_session=session
+        )
         return self.session_manager
-
 
     def get_proposal(self, proposal_code, proposal_number):
         """
@@ -456,10 +478,6 @@ class ISPyBClientMockup(ProposalTypeISPyBLims):
             },
         ]
 
-
-
-
-
     # Bindings to methods called from older bricks.
     getProposal = get_proposal
     getSessionLocalContact = get_session_local_contact
@@ -468,5 +486,3 @@ class ISPyBClientMockup(ProposalTypeISPyBLims):
     updateBLSample = update_bl_sample
     updateDataCollection = update_data_collection
     storeImage = store_image
-
-
