@@ -35,7 +35,7 @@ class ProposalTypeISPyBLims(ISPyBAbstractLIMS):
         ]
 
     def get_full_user_name(self):
-        raise self.get_user_name()
+        return self.get_user_name()
 
     def get_user_name(self):
         """
