@@ -53,18 +53,22 @@ class ProposalTypeISPyBLims(ISPyBAbstractLIMS):
                 "Starting LDAP authentication %s" % user_name
             )
             ok = self.ldap_login(user_name, psd)
-            logging.getLogger("HWR").debug("User %s logged in LDAP" % user_name)
         elif self.authServerType == "ispyb":
             logging.getLogger("HWR").debug("ISPyB login")
-            ok, msg = self._ispybLogin(user_name, psd)
+            ok, _ = self._ispybLogin(user_name, psd)
         else:
             raise Exception("Authentication server type is not defined")
 
         if not ok:
-            msg = "%s." % msg.capitalize()
             # refuse Login
-            logging.getLogger("HWR").error("ISPyB login not ok")
+            logging.getLogger("HWR").error(
+                "Authentication with %s failed" % self.authServerType
+            )
             raise Exception("Authentication failed")
+
+        logging.getLogger("HWR").debug(
+            "User %s logged in %s" % (user_name, self.authServerType)
+        )
 
     def is_session_already_active_by_code(self, code: str, number: str) -> bool:
         # If curent selected session is already selected no need to do
@@ -189,4 +193,4 @@ class ProposalTypeISPyBLims(ISPyBAbstractLIMS):
         except BaseException as e:
             raise e
 
-        return self.get_session_manager_by_proposal_name(user_name)
+        return self.get_session_manager_by_proposal_name(user_name, is_local_host)
