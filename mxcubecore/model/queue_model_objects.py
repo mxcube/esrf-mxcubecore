@@ -618,13 +618,7 @@ class DataCollection(TaskNode):
         self.workflow_id = None
         self.center_before_collect = False
         self.ispyb_group_data_collections = False
-        self.workflow_name = None
-        self.workflow_type = None
-        self.workflow_uid = None
-        self.workflow_kappa_settings_id = None
-        self.workflow_characterisation_id = None
-        self.workflow_position_id = None
-        self.workflow_group_by = None
+        self.workflow_params = {}
 
     @staticmethod
     def set_processing_methods(processing_methods):
@@ -2696,13 +2690,7 @@ def to_collect_dict(data_collection, sample, centred_pos=None):
             "position_name": centred_pos.get_index(),
             "motors": centred_pos.as_dict() if centred_pos is not None else {},
             "ispyb_group_data_collections": data_collection.ispyb_group_data_collections,
-            "workflow_name": data_collection.workflow_name,
-            "workflow_type": data_collection.workflow_type,
-            "workflow_uid": data_collection.workflow_uid,
-            "workflow_kappa_settings_id": data_collection.workflow_kappa_settings_id,
-            "workflow_characterisation_id": data_collection.workflow_characterisation_id,
-            "workflow_position_id": data_collection.workflow_position_id,
-            "workflow_group_by": data_collection.workflow_group_by,
+            "workflow_params": data_collection.workflow_params
         }
     ]
 
