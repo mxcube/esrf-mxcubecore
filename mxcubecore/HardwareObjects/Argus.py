@@ -18,6 +18,9 @@ class Argus(HardwareObject):
         self.available_classes = {}
         self.last_response = {}
         self.server_communication_error = False
+        self.closable_running = (
+            False  # keep track if there are any closable processes are running
+        )
         gevent.spawn(self.emit_process_change)
 
     def init(self):
@@ -49,12 +52,24 @@ class Argus(HardwareObject):
             ):
                 self.running_processes = current_running
                 self.available_classes = classes
+
+                # check if any process started by user is running
+                self.closable_running = False
+                for process in current_running:
+                    if current_running[process]["type"] in classes:
+                        self.closable_running = True
+                        break
+
                 self.emit("processesChanged")
                 self.emit("lastResponseChanged")
             gevent.sleep(2)
 
     def get_processes(self) -> dict:
-        return {"running": self.running_processes, "available": self.available_classes}
+        return {
+            "running": self.running_processes,
+            "available": self.available_classes,
+            "closable_running": self.closable_running,
+        }
 
     def get_last_response(self) -> dict:
         return self.last_response
