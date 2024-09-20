@@ -314,7 +314,7 @@ class AbstractMultiCollect(object):
             pass
 
     def new_take_snapshots(self, dc_params):
-        #number_of_snapshots = dc_params.get("take_snapshots", 0)
+        # number_of_snapshots = dc_params.get("take_snapshots", 0)
         snapshot_directory = dc_params["fileinfo"]["archive_directory"]
 
         if HWR.beamline.diffractometer.in_plate_mode():
@@ -595,10 +595,12 @@ class AbstractMultiCollect(object):
 
         # take snapshots, then assign centring status (which contains images) to
         # centring_info variable
-        #take_snapshots = data_collect_parameters.get("take_snapshots", False)
+        # take_snapshots = data_collect_parameters.get("take_snapshots", False)
 
         if self.number_of_snapshots:
-            logging.getLogger("user_level_log").info(f"Taking sample ({self.number_of_snapshots}) snapshosts")
+            logging.getLogger("user_level_log").info(
+                f"Taking sample ({self.number_of_snapshots}) snapshosts"
+            )
             # self._take_crystal_snapshots(take_snapshots)
             self.new_take_snapshots(data_collect_parameters)
         centring_info = HWR.beamline.diffractometer.get_centring_status()

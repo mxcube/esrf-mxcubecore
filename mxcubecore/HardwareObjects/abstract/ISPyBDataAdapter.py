@@ -1,7 +1,7 @@
 from __future__ import print_function
 import itertools
 import time
-from datetime import datetime, timedelta
+from datetime import datetime
 from typing import List
 from mxcubecore.HardwareObjects.abstract.ISPyBValueFactory import (
     ISPyBValueFactory,
@@ -13,7 +13,6 @@ try:
     from urllib2 import URLError
 except Exception:
     # Python3
-    from urllib.parse import urljoin
     from urllib.error import URLError
 
 
@@ -134,7 +133,10 @@ class ISPyBDataAdapter:
             # proposal = self.find_proposal_by_login_and_beamline(self.get_user_, beamline_name)  # type: ignore
             current_time = time.localtime()
             start_time = time.strftime("%Y-%m-%d 00:00:00", current_time)
-            end_time = time.mktime(current_time) + 60 * 60 * 24 * self.new_sesssion_duration_days
+            end_time = (
+                time.mktime(current_time)
+                + 60 * 60 * 24 * self.new_sesssion_duration_days
+            )
             tomorrow = time.localtime(end_time)
             end_time = time.strftime("%Y-%m-%d 07:59:59", tomorrow)
 
