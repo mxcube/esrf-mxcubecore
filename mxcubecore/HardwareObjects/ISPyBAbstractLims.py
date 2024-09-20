@@ -1,7 +1,5 @@
 from __future__ import print_function
-from urllib.parse import urljoin
 import warnings
-from pprint import pformat
 from mxcubecore.HardwareObjects.abstract.AbstractLims import AbstractLims
 from mxcubecore.HardwareObjects.abstract.ISPyBDataAdapter import ISPyBDataAdapter
 from mxcubecore.model.lims_session import LimsSessionManager
@@ -162,7 +160,7 @@ class ISPyBAbstractLIMS(AbstractLims):
             # aborted by user ('kill')
             raise
         except Exception as e:
-            
+
             # if anything else happens, let upper level process continue
             # (not a fatal error), but display exception still
             logging.exception("Could not store data collection")

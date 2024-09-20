@@ -238,4 +238,3 @@ class ESRFLIMS(AbstractLims):
 
     def update_bl_sample(self, bl_sample):
         self.ispyb.update_bl_sample(bl_sample)
-

@@ -13,7 +13,6 @@ try:
     from urllib2 import URLError
 except Exception:
     # Python3
-    from urllib.parse import urljoin
     from urllib.error import URLError
 
 suds_encode = str.encode

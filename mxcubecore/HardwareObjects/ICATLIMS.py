@@ -524,7 +524,7 @@ class ICATLIMS(AbstractLims):
             queue_entry = HWR.beamline.queue_manager.get_current_entry()
             sample_node = queue_entry.get_data_model().get_sample_node()
             # sample_node.name this is name of the sample
-            
+
             location = sample_node.location  # Example: (8,2,5)
 
             if len(location) == 3:
@@ -535,12 +535,12 @@ class ICATLIMS(AbstractLims):
 
             self.__add_sample_changer_position(cell, puck, metadata)
             metadata["SampleTrackingContainer_position"] = sample_position
-            metadata["SampleTrackingContainer_type"] = (
-                "UNIPUCK"  # this could be read from the configuration file somehow
-            )
-            metadata["SampleTrackingContainer_capaticy"] = (
-                "16"  # this could be read from the configuration file somehow
-            )
+            metadata[
+                "SampleTrackingContainer_type"
+            ] = "UNIPUCK"  # this could be read from the configuration file somehow
+            metadata[
+                "SampleTrackingContainer_capaticy"
+            ] = "16"  # this could be read from the configuration file somehow
 
             self.__add_protein_acronym(sample_node, metadata)
 
@@ -618,8 +618,12 @@ class ICATLIMS(AbstractLims):
                 "Workflow_name": workflow_params.get("workflow_name"),
                 "Workflow_type": workflow_params.get("workflow_type"),
                 "Workflow_id": workflow_params.get("workflow_uid"),
-                "MX_kappa_settings_id": workflow_params.get( "workflow_kappa_settings_id"),
-                "MX_characterisation_id": workflow_params.get("workflow_characterisation_id"),
+                "MX_kappa_settings_id": workflow_params.get(
+                    "workflow_kappa_settings_id"
+                ),
+                "MX_characterisation_id": workflow_params.get(
+                    "workflow_characterisation_id"
+                ),
                 "MX_position_id": workflow_params.get("workflow_position_id"),
                 "group_by": workflow_params.get("workflow_group_by"),
             }
@@ -701,7 +705,6 @@ class ICATLIMS(AbstractLims):
 
         except Exception:
             logging.getLogger("HWR").exception("")
-
 
     def update_bl_sample(self, bl_sample: str):
         """
