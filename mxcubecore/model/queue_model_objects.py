@@ -2684,7 +2684,7 @@ def to_collect_dict(data_collection, sample, centred_pos=None):
             "position_name": centred_pos.get_index(),
             "motors": centred_pos.as_dict() if centred_pos is not None else {},
             "ispyb_group_data_collections": data_collection.ispyb_group_data_collections,
-            "workflow_params": data_collection.workflow_params
+            "workflow_params": data_collection.workflow_params,
         }
     ]
 

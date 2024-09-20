@@ -21,10 +21,9 @@
 """
 import abc
 from datetime import datetime
-from typing import List, Union
+from typing import List
 from mxcubecore.BaseHardwareObjects import HardwareObject
 from mxcubecore.model.lims_session import Lims, LimsSessionManager, Session
-import time
 from mxcubecore import HardwareRepository as HWR
 import logging
 
