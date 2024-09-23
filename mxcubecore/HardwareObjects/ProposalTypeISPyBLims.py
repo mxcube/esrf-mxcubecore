@@ -194,3 +194,13 @@ class ProposalTypeISPyBLims(ISPyBAbstractLIMS):
             raise e
 
         return self.get_session_manager_by_proposal_name(user_name, is_local_host)
+
+    def create_mx_collection(self, collection_parameters):
+        self.icat_client.create_mx_collection(collection_parameters)
+
+    def create_ssx_collection(
+        self, data_path, collection_parameters, beamline_parameters, extra_lims_values
+    ):
+        self.icat_client.create_mx_collection(
+            data_path, collection_parameters, beamline_parameters, extra_lims_values
+        )
