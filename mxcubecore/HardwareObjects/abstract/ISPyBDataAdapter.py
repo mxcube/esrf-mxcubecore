@@ -3,6 +3,7 @@ import itertools
 import time
 from datetime import datetime
 from typing import List
+from mxcubecore import HardwareRepository as HWR
 from mxcubecore.HardwareObjects.abstract.ISPyBValueFactory import (
     ISPyBValueFactory,
 )
@@ -313,6 +314,17 @@ class ISPyBDataAdapter:
             sessions = self.find_sessions_by_proposal_and_beamLine(
                 code, number, beamline_name
             )
+
+            inhouse_users = HWR.beamline.session.in_house_users
+
+            for code, number in inhouse_users:
+                try:
+                    sessions = sessions + self.find_sessions_by_proposal_and_beamLine(
+                        code, number, beamline_name
+                    )
+                except Exception as e:
+                    pass
+
             return LimsSessionManager(sessions=sessions)
         except WebFault as e:
             self._error(str(e))
