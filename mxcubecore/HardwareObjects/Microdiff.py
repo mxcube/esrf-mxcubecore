@@ -449,7 +449,7 @@ class Microdiff(MiniDiff.MiniDiff):
             return
 
         current_phase = self.get_current_phase()
-        msg = f"Microdiff.py -- Current phase is {current_phase} and move to {phase}"
+        msg = f"Current phase is {current_phase} and moving to {phase}"
         logging.getLogger("user_level_log").info(msg)
 
         if current_phase == phase:
