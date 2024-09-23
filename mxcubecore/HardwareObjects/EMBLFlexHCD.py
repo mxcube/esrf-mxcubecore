@@ -526,6 +526,7 @@ class EMBLFlexHCD(SampleChanger):
         previous_sample = tuple(
             self._execute_cmd_exporter("getMountedSamplePosition", attribute=True)
         )
+        loaded_sample = previous_sample
 
         # We wait for the sample changer if its already doing something, like defreezing
         # wait for 10 minutes then timeout !
