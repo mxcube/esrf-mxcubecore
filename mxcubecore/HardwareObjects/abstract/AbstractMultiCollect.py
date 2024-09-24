@@ -484,7 +484,7 @@ class AbstractMultiCollect(object):
 
             logging.getLogger("user_level_log").info("Storing data collection in LIMS")
             (self.collection_id, detector_id) = HWR.beamline.lims.store_data_collection(
-                data_collect_parameters, self.bl_config
+                data_collect_parameters, self.bl_config, event="CREATE"
             )
 
             data_collect_parameters["collection_id"] = self.collection_id
@@ -679,7 +679,9 @@ class AbstractMultiCollect(object):
                     data_collect_parameters["oscillation_sequence"][0][
                         "phiStart"
                     ] = current_diffractometer_position["kappa_phi"]
-                HWR.beamline.lims.update_data_collection(data_collect_parameters)
+                HWR.beamline.lims.store_data_collection(
+                    data_collect_parameters, event="UPDATE"
+                )
             except Exception:
                 logging.getLogger("HWR").exception(
                     "Could not update data collection in LIMS"
@@ -876,8 +878,8 @@ class AbstractMultiCollect(object):
                     logging.getLogger("user_level_log").info(
                         "Updating data collection in LIMS"
                     )
-                    HWR.beamline.lims.update_data_collection(
-                        data_collect_parameters, wait=True
+                    HWR.beamline.lims.store_data_collection(
+                        data_collect_parameters, event="UPDATE"
                     )
                     logging.getLogger("user_level_log").info(
                         "Done updating data collection in LIMS"
@@ -1180,8 +1182,8 @@ class AbstractMultiCollect(object):
                 if HWR.beamline.lims:
                     data_collect_parameters["flux_end"] = HWR.beamline.flux.get_value()
                     try:
-                        HWR.beamline.lims.update_data_collection(
-                            data_collect_parameters
+                        HWR.beamline.lims.store_data_collection(
+                            data_collect_parameters, event="END"
                         )
                     except Exception:
                         logging.getLogger("HWR").exception(

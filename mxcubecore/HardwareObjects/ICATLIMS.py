@@ -559,26 +559,40 @@ class ICATLIMS(AbstractLims):
         except Exception as e:
             logging.getLogger("HWR").exception(e)
 
-    def create_mx_collection(self, collection_parameters):
-        try:
-            fileinfo = collection_parameters["fileinfo"]
-            directory = pathlib.Path(fileinfo["directory"])
-            dataset_name = directory.name
-            # Determine the scan type
-            if dataset_name.endswith("mesh"):
-                scanType = "mesh"
-            elif dataset_name.endswith("line"):
-                scanType = "line"
-            elif dataset_name.endswith("characterisation"):
-                scanType = "characterisation"
-            elif dataset_name.endswith("datacollection"):
-                scanType = "datacollection"
-            else:
-                scanType = collection_parameters["experiment_type"]
-            workflow_parameters = collection_parameters.get("workflow_parameters", {})
-            sample_name = workflow_parameters.get("sample_name")
-            workflow_type = workflow_parameters.get("workflow_type")
-            if not sample_name:
+    def store_beamline_setup(self, session_id: str, bl_config_dict: dict):
+        pass
+
+    def store_image(self, image_dict: dict):
+        pass
+
+    def store_energy_scan(self, energyscan_dict: dict):
+        pass
+
+    def store_xfe_spectrum(self, xfespectrum_dict: dict):
+        pass
+
+    def store_workflow(self, workflow_dict: dict):
+        pass
+
+    def store_data_collection(self, collection_parameters, blconfig=None, event=None):
+        if event == "END":
+            try:
+                fileinfo = collection_parameters["fileinfo"]
+                directory = pathlib.Path(fileinfo["directory"])
+                dataset_name = directory.name
+                # Determine the scan type
+                if dataset_name.endswith("mesh"):
+                    scanType = "mesh"
+                elif dataset_name.endswith("line"):
+                    scanType = "line"
+                elif dataset_name.endswith("characterisation"):
+                    scanType = "characterisation"
+                elif dataset_name.endswith("datacollection"):
+                    scanType = "datacollection"
+                else:
+                    scanType = collection_parameters["experiment_type"]
+                workflow_params = collection_parameters.get("workflow_params", {})
+                workflow_type = workflow_params.get("workflow_type")
                 if workflow_type is None:
                     if directory.name.startswith("run"):
                         sample_name = directory.parent.name
@@ -587,78 +601,78 @@ class ICATLIMS(AbstractLims):
                         dataset_name = fileinfo["prefix"]
                 else:
                     sample_name = directory.parent.parent.name
-            oscillation_sequence = collection_parameters["oscillation_sequence"][0]
-            beamline = HWR.beamline.session.beamline_name.lower()
-            distance = HWR.beamline.detector.distance.get_value()
-            proposal = f"{HWR.beamline.session.proposal_code}{HWR.beamline.session.proposal_number}"
-            metadata = {
-                "MX_beamShape": collection_parameters["beamShape"],
-                "MX_beamSizeAtSampleX": collection_parameters["beamSizeAtSampleX"],
-                "MX_beamSizeAtSampleY": collection_parameters["beamSizeAtSampleY"],
-                "MX_dataCollectionId": collection_parameters["collection_id"],
-                "MX_detectorDistance": distance,
-                "MX_directory": str(directory),
-                "MX_exposureTime": oscillation_sequence["exposure_time"],
-                "MX_flux": collection_parameters["flux"],
-                "MX_fluxEnd": collection_parameters["flux_end"],
-                "MX_positionName": collection_parameters["position_name"],
-                "MX_numberOfImages": oscillation_sequence["number_of_images"],
-                "MX_oscillationRange": oscillation_sequence["range"],
-                "MX_oscillationStart": oscillation_sequence["start"],
-                "MX_oscillationOverlap": oscillation_sequence["overlap"],
-                "MX_resolution": collection_parameters["resolution"],
-                "scanType": scanType,
-                "MX_startImageNumber": oscillation_sequence["start_image_number"],
-                "MX_template": fileinfo["template"],
-                "MX_transmission": collection_parameters["transmission"],
-                "MX_xBeam": collection_parameters["xBeam"],
-                "MX_yBeam": collection_parameters["yBeam"],
-                "Sample_name": sample_name,
-                "InstrumentMonochromator_wavelength": collection_parameters[
-                    "wavelength"
-                ],
-                "Workflow_name": workflow_parameters.get("workflow_name"),
-                "Workflow_type": workflow_parameters.get("workflow_type"),
-                "Workflow_id": workflow_parameters.get("workflow_uid"),
-                "MX_kappa_settings_id": workflow_parameters.get(
-                    "workflow_kappa_settings_id"
-                ),
-                "MX_characterisation_id": workflow_parameters.get(
-                    "workflow_characterisation_id"
-                ),
-                "MX_position_id": workflow_parameters.get("workflow_position_id"),
-                "group_by": workflow_parameters.get("workflow_group_by"),
-            }
-            # Store metadata on disk
-            self.add_sample_metadata(metadata, collection_parameters)
-            icat_metadata_path = pathlib.Path(directory) / "metadata.json"
-            with open(icat_metadata_path, "w") as f:
-                f.write(json.dumps(metadata, indent=4))
-            # Create ICAT gallery
-            gallery_path = directory / "gallery"
-            gallery_path.mkdir(mode=0o755, exist_ok=True)
-            for snapshot_index in range(1, 5):
-                key = f"xtalSnapshotFullPath{snapshot_index}"
-                if key in collection_parameters:
-                    snapshot_path = pathlib.Path(collection_parameters[key])
-                    if snapshot_path.exists():
-                        logging.getLogger("HWR").debug(
-                            f"Copying snapshot index {snapshot_index} to gallery"
-                        )
-                        shutil.copy(snapshot_path, gallery_path)
-            logging.getLogger("HWR").info(f"Beamline: {beamline}")
-            logging.getLogger("HWR").info(f"Proposal: {proposal}")
+                oscillation_sequence = collection_parameters["oscillation_sequence"][0]
+                beamline = HWR.beamline.session.beamline_name.lower()
+                distance = HWR.beamline.detector.distance.get_value()
+                proposal = f"{HWR.beamline.session.proposal_code}{HWR.beamline.session.proposal_number}"
+                metadata = {
+                    "MX_beamShape": collection_parameters["beamShape"],
+                    "MX_beamSizeAtSampleX": collection_parameters["beamSizeAtSampleX"],
+                    "MX_beamSizeAtSampleY": collection_parameters["beamSizeAtSampleY"],
+                    "MX_dataCollectionId": collection_parameters["collection_id"],
+                    "MX_detectorDistance": distance,
+                    "MX_directory": str(directory),
+                    "MX_exposureTime": oscillation_sequence["exposure_time"],
+                    "MX_flux": collection_parameters["flux"],
+                    "MX_fluxEnd": collection_parameters["flux_end"],
+                    "MX_positionName": collection_parameters["position_name"],
+                    "MX_numberOfImages": oscillation_sequence["number_of_images"],
+                    "MX_oscillationRange": oscillation_sequence["range"],
+                    "MX_oscillationStart": oscillation_sequence["start"],
+                    "MX_oscillationOverlap": oscillation_sequence["overlap"],
+                    "MX_resolution": collection_parameters["resolution"],
+                    "scanType": scanType,
+                    "MX_startImageNumber": oscillation_sequence["start_image_number"],
+                    "MX_template": fileinfo["template"],
+                    "MX_transmission": collection_parameters["transmission"],
+                    "MX_xBeam": collection_parameters["xBeam"],
+                    "MX_yBeam": collection_parameters["yBeam"],
+                    "Sample_name": sample_name,
+                    "InstrumentMonochromator_wavelength": collection_parameters[
+                        "wavelength"
+                    ],
+                    "Workflow_name": workflow_params.get("workflow_name"),
+                    "Workflow_type": workflow_params.get("workflow_type"),
+                    "Workflow_id": workflow_params.get("workflow_uid"),
+                    "MX_kappa_settings_id": workflow_params.get(
+                        "workflow_kappa_settings_id"
+                    ),
+                    "MX_characterisation_id": workflow_params.get(
+                        "workflow_characterisation_id"
+                    ),
+                    "MX_position_id": workflow_params.get("workflow_position_id"),
+                    "group_by": workflow_params.get("workflow_group_by"),
+                }
+                # Store metadata on disk
+                self.add_sample_metadata(metadata, collection_parameters)
+                icat_metadata_path = pathlib.Path(directory) / "metadata.json"
+                with open(icat_metadata_path, "w") as f:
+                    f.write(json.dumps(metadata, indent=4))
+                # Create ICAT gallery
+                gallery_path = directory / "gallery"
+                gallery_path.mkdir(mode=0o755, exist_ok=True)
+                for snapshot_index in range(1, 5):
+                    key = f"xtalSnapshotFullPath{snapshot_index}"
+                    if key in collection_parameters:
+                        snapshot_path = pathlib.Path(collection_parameters[key])
+                        if snapshot_path.exists():
+                            logging.getLogger("HWR").debug(
+                                f"Copying snapshot index {snapshot_index} to gallery"
+                            )
+                            shutil.copy(snapshot_path, gallery_path)
+                logging.getLogger("HWR").info(f"Beamline: {beamline}")
+                logging.getLogger("HWR").info(f"Proposal: {proposal}")
 
-            self.icatClient.store_dataset(
-                beamline=beamline,
-                proposal=proposal,
-                dataset=dataset_name,
-                path=str(directory),
-                metadata=metadata,
-            )
-            logging.getLogger("HWR").debug("Done uploading to ICAT")
-        except Exception as e:
-            logging.getLogger("HWR").exception(e)
+                self.icatClient.store_dataset(
+                    beamline=beamline,
+                    proposal=proposal,
+                    dataset=dataset_name,
+                    path=str(directory),
+                    metadata=metadata,
+                )
+                logging.getLogger("HWR").debug("Done uploading to ICAT")
+            except Exception as e:
+                logging.getLogger("HWR").exception(e)
 
     def create_ssx_collection(
         self, data_path, collection_parameters, beamline_parameters, extra_lims_values

@@ -21,13 +21,15 @@
 """
 import abc
 from datetime import datetime
-from typing import List
+from typing import List, Literal
 from mxcubecore.BaseHardwareObjects import HardwareObject
 from mxcubecore.model.lims_session import Lims, LimsSessionManager, Session
 from mxcubecore import HardwareRepository as HWR
 import logging
 
 __credits__ = ["MXCuBE collaboration"]
+
+StoreEvent = Literal["CREATE", "UPDATE", "END"]
 
 
 class AbstractLims(HardwareObject, abc.ABC):
@@ -104,6 +106,35 @@ class AbstractLims(HardwareObject, abc.ABC):
         raise Exception("Abstract class. Not implemented")
 
     @abc.abstractmethod
+    def store_beamline_setup(self, session_id: str, bl_config_dict: dict):
+        raise Exception("Abstract class. Not implemented")
+
+    @abc.abstractmethod
+    def store_image(self, image_dict: dict):
+        raise Exception("Abstract class. Not implemented")
+
+    @abc.abstractmethod
+    def store_energy_scan(self, energyscan_dict: dict):
+        raise Exception("Abstract class. Not implemented")
+
+    @abc.abstractmethod
+    def store_xfe_spectrum(self, xfespectrum_dict: dict):
+        raise Exception("Abstract class. Not implemented")
+
+    @abc.abstractmethod
+    def store_workflow(self, workflow_dict: dict):
+        raise Exception("Abstract class. Not implemented")
+
+    @abc.abstractmethod
+    def store_data_collection(
+        self,
+        datacollection_dict: dict,
+        beamline_config_dict: dict,
+        event: StoreEvent = "CREATE",
+    ) -> tuple[int, int]:
+        raise Exception("Abstract class. Not implemented")
+
+    @abc.abstractmethod
     def update_bl_sample(self, bl_sample: str):
         """
         Creates or stos a BLSample entry.
@@ -119,8 +150,8 @@ class AbstractLims(HardwareObject, abc.ABC):
     def is_scheduled_on_host_beamline(self, beamline: str) -> bool:
         return beamline.strip().upper() == self.override_beamline_name.strip().upper()
 
-    def is_scheduled_now(self, startDate, endDate) -> bool:
-        return self.is_time_between(startDate, endDate)
+    def is_scheduled_now(self, start_date: str, end_date: str) -> bool:
+        return self.is_time_between(start_date, end_date)
 
     def is_time_between(self, start_date: str, end_date: str, check_time=None):
         if start_date is None or end_date is None:

@@ -153,18 +153,18 @@ class ISPyBAbstractLIMS(AbstractLims):
 
         return self.ldapConnection.authenticate(login_name, psd)
 
-    def store_data_collection(self, *args, **kwargs):
+    def store_data_collection(self, mx_collection, bl_config=None, event="CREATE"):
         try:
-            return self._store_data_collection(*args, **kwargs)
-        except gevent.GreenletExit:
-            # aborted by user ('kill')
-            raise
+            if event == "CREATE":
+                self._store_data_collection(mx_collection, bl_config)
+            elif event == "UPDATE":
+                self._update_data_collection(mx_collection)
         except Exception as e:
 
             # if anything else happens, let upper level process continue
             # (not a fatal error), but display exception still
             logging.exception("Could not store data collection")
-            return (0, 0, 0)
+            return (0, 0)
 
     def _store_data_collection(self, mx_collection, bl_config=None):
         """
@@ -182,7 +182,7 @@ class ISPyBAbstractLIMS(AbstractLims):
         """
         return self.adapter.store_data_collection(mx_collection, bl_config)
 
-    def update_data_collection(self, mx_collection, wait=False):
+    def _update_data_collection(self, mx_collection, wait=False):
         """
         Updates the datacollction mx_collection, this requires that the
         collectionId attribute is set and exists in the database.
@@ -192,7 +192,7 @@ class ISPyBAbstractLIMS(AbstractLims):
 
         :returns: None
         """
-        self.adapter.update_data_collection(mx_collection, wait)
+        self.adapter._update_data_collection(mx_collection, wait)
 
     def update_bl_sample(self, bl_sample):
         """
@@ -347,16 +347,3 @@ class ISPyBAbstractLIMS(AbstractLims):
         self.icat_client.create_ssx_collection(
             data_path, collection_parameters, beamline_parameters, extra_lims_values
         )
-
-    # Bindings to methods called from older bricks.
-    # getProposal = get_proposal
-    createSession = create_session
-    getSession = get_session
-    storeDataCollection = store_data_collection
-    getDataCollection = get_data_collection
-    updateBLSample = update_bl_sample
-    associateBLSampleAndEnergyScan = associate_bl_sample_and_energy_scan
-    updateDataCollection = update_data_collection
-    storeImage = store_image
-    storeEnergyScan = store_energy_scan
-    storeXfeSpectrum = store_xfe_spectrum
