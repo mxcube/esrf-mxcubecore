@@ -373,7 +373,7 @@ class ISPyBDataAdapter:
         group_id = self._collection.service.storeOrUpdateDataCollectionGroup(group)
         mx_collection["group_id"] = group_id
 
-    def update_data_collection(self, mx_collection, wait=False):
+    def _update_data_collection(self, mx_collection):
         if "collection_id" in mx_collection:
             try:
                 # Update the data collection group
@@ -654,7 +654,13 @@ class ISPyBDataAdapter:
 
         return blSetupId
 
-    def store_data_collection(self, mx_collection, bl_config=None):
+    def store_data_collection(self, mx_collection, bl_config=None, event="CREATE"):
+        if event == "CREATE":
+            self._store_data_collection(mx_collection, bl_config=None)
+        elif event == "UPPDATE":
+            self.update_data_collection(mx_collection)
+
+    def _store_data_collection(self, mx_collection, bl_config=None):
         """
         Stores the data collection mx_collection, and the beamline setup
         if provided.
