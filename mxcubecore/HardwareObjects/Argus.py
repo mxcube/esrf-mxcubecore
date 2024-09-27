@@ -17,6 +17,7 @@ class Argus(HardwareObject):
         self.running_processes = {}
         self.available_classes = {}
         self.last_response = {}
+        self.streams = {}  # save all available camerastreamlocations here
         self.server_communication_error = False
         self.closable_running = (
             False  # keep track if there are any closable processes are running
@@ -39,8 +40,7 @@ class Argus(HardwareObject):
                 )
         except Exception as e:
             self.server_communication_error = True
-            self.last_response = {"status": "error", "error_message": str(e)}
-            self.emit("lastResponseChanged")
+            self.emit_last_response_change("error", str(e))
             return {"Error": {"state": "UNKNOWN", "type": "Server-Connection"}}, {}
 
     def emit_process_change(self):
@@ -52,6 +52,14 @@ class Argus(HardwareObject):
             ):
                 self.running_processes = current_running
                 self.available_classes = classes
+
+                # check if any streaming processes have terminated
+                streams_to_remove = [
+                    streams
+                    for streams in self.streams.keys()
+                    if streams not in current_running.keys()
+                ]
+                self.remove_streams(streams_to_remove)
 
                 # check if any process started by user is running
                 self.closable_running = False
@@ -74,13 +82,12 @@ class Argus(HardwareObject):
     def get_last_response(self) -> dict:
         return self.last_response
 
-    def stop_process(self, name: List[str]):
+    def stop_process(self, name: str):
         print(f"Sending termination request for {name}")
         response = self.stub.TerminateProcesses(
-            pb2.TerminateProcessesRequest(names=name)
+            pb2.TerminateProcessesRequest(names=[name])
         )
-        self.emit_last_response_change(response)
-        return True
+        self.emit_last_response_change(response.status, response.error_message)
 
     def start_process(self, name: str, type: str, **args):
         print(f"Sending start process request for {name}")
@@ -89,10 +96,10 @@ class Argus(HardwareObject):
             type=type,
             args=[arg for arg in args["args"]],
         )
-        response = self.stub.StartProcesses(
-            pb2.StartProcessesRequest(processes=[process])
-        )
-        self.emit_last_response_change(response)
+        response = self.stub.StartProcesses(pb2.StartProcessesRequest(process=process))
+        self.emit_last_response_change(response.status, response.error_message)
+        if response.stream_id:
+            self.new_stream(name, response.stream_id)
 
     def manage_process(self, name: str, command: str, wait_time: int, **args):
         print(f"Sending manage request for command {command} of process {name}")
@@ -103,11 +110,23 @@ class Argus(HardwareObject):
             args=[arg for arg in args["args"]],
         )
         response = self.stub.ManageProcesses(request)
-        self.emit_last_response_change(response)
+        self.emit_last_response_change(response.status, response.error_message)
 
-    def emit_last_response_change(self, response: any):
+    def emit_last_response_change(self, status, error_message):
         self.last_response = {
-            "status": response.status,
-            "error_message": response.error_message,
+            "status": status,
+            "error_message": error_message,
         }
         self.emit("lastResponseChanged")
+
+    def new_stream(self, name: str, stream_id: str):
+        self.streams[name] = stream_id
+        self.emit("streamsChanged")
+
+    def remove_streams(self, streams: List[str]):
+        for stream in streams:
+            del self.streams[stream]
+        self.emit("streamsChanged")
+
+    def get_streams(self):
+        return self.streams
