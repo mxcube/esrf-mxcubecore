@@ -575,16 +575,18 @@ class ICATLIMS(AbstractLims):
                 scanType = "datacollection"
             else:
                 scanType = collection_parameters["experiment_type"]
-            workflow_params = collection_parameters.get("workflow_params", {})
-            workflow_type = workflow_params.get("workflow_type")
-            if workflow_type is None:
-                if directory.name.startswith("run"):
-                    sample_name = directory.parent.name
+            workflow_parameters = collection_parameters.get("workflow_parameters", {})
+            sample_name = workflow_parameters.get("sample_name")
+            workflow_type = workflow_parameters.get("workflow_type")
+            if not sample_name:
+                if workflow_type is None:
+                    if directory.name.startswith("run"):
+                        sample_name = directory.parent.name
+                    else:
+                        sample_name = directory.name
+                        dataset_name = fileinfo["prefix"]
                 else:
-                    sample_name = directory.name
-                    dataset_name = fileinfo["prefix"]
-            else:
-                sample_name = directory.parent.parent.name
+                    sample_name = directory.parent.parent.name
             oscillation_sequence = collection_parameters["oscillation_sequence"][0]
             beamline = HWR.beamline.session.beamline_name.lower()
             distance = HWR.beamline.detector.distance.get_value()
@@ -615,17 +617,17 @@ class ICATLIMS(AbstractLims):
                 "InstrumentMonochromator_wavelength": collection_parameters[
                     "wavelength"
                 ],
-                "Workflow_name": workflow_params.get("workflow_name"),
-                "Workflow_type": workflow_params.get("workflow_type"),
-                "Workflow_id": workflow_params.get("workflow_uid"),
-                "MX_kappa_settings_id": workflow_params.get(
+                "Workflow_name": workflow_parameters.get("workflow_name"),
+                "Workflow_type": workflow_parameters.get("workflow_type"),
+                "Workflow_id": workflow_parameters.get("workflow_uid"),
+                "MX_kappa_settings_id": workflow_parameters.get(
                     "workflow_kappa_settings_id"
                 ),
-                "MX_characterisation_id": workflow_params.get(
+                "MX_characterisation_id": workflow_parameters.get(
                     "workflow_characterisation_id"
                 ),
-                "MX_position_id": workflow_params.get("workflow_position_id"),
-                "group_by": workflow_params.get("workflow_group_by"),
+                "MX_position_id": workflow_parameters.get("workflow_position_id"),
+                "group_by": workflow_parameters.get("workflow_group_by"),
             }
             # Store metadata on disk
             self.add_sample_metadata(metadata, collection_parameters)
