@@ -60,5 +60,5 @@ class Session(BaseModel):
 
 
 class LimsSessionManager(BaseModel):
-    active_session: Optional[Session]
+    active_session: Optional[Session] = None
     sessions: Optional[List[Session]] = []
