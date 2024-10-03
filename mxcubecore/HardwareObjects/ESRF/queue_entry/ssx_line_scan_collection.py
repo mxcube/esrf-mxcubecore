@@ -1,7 +1,7 @@
 import logging
 import math
 
-from pydantic import Field
+from pydantic.v1 import Field
 from devtools import debug
 
 from mxcubecore import HardwareRepository as HWR
