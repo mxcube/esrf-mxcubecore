@@ -1,6 +1,6 @@
 from datetime import timedelta, datetime
 from typing import Optional, List, Union
-from pydantic import BaseModel, Field
+from pydantic.v1 import BaseModel, Field
 
 
 class Proposal(BaseModel):
