@@ -1,5 +1,5 @@
 from datetime import timedelta, datetime
-from typing import Optional, List, Union
+from typing import List, Optional
 from pydantic.v1 import BaseModel, Field
 
 
@@ -60,5 +60,5 @@ class Session(BaseModel):
 
 
 class LimsSessionManager(BaseModel):
-    active_session: Union[Session, None]
+    active_session: Optional[Session]
     sessions: Optional[List[Session]] = []
