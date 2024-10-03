@@ -6,7 +6,7 @@ import gevent
 
 from typing_extensions import Literal
 
-from pydantic import Field
+from pydantic.v1 import Field
 from devtools import debug
 
 from mxcubecore import HardwareRepository as HWR

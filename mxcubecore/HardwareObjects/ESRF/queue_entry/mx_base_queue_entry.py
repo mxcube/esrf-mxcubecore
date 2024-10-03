@@ -4,7 +4,7 @@ import json
 import logging
 
 from typing_extensions import Literal, Union
-from pydantic import BaseModel, Field
+from pydantic.v1 import BaseModel, Field
 from devtools import debug
 import os
 import gevent
