@@ -9,7 +9,7 @@ import numpy
 import json
 
 from typing import Union
-from pydantic import ValidationError
+from pydantic.v1 import ValidationError
 
 from mxcubecore.BaseHardwareObjects import HardwareObject
 from mxcubecore.TaskUtils import task
