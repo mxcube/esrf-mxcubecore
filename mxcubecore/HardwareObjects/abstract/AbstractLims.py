@@ -21,7 +21,7 @@
 """
 import abc
 from datetime import datetime
-from typing import List, Literal
+from typing import List, Literal, Tuple
 from mxcubecore.BaseHardwareObjects import HardwareObject
 from mxcubecore.model.lims_session import Lims, LimsSessionManager, Session
 from mxcubecore import HardwareRepository as HWR
@@ -131,7 +131,7 @@ class AbstractLims(HardwareObject, abc.ABC):
         datacollection_dict: dict,
         beamline_config_dict: dict,
         event: StoreEvent = "CREATE",
-    ) -> tuple[int, int]:
+    ) -> Tuple[int, int]:
         raise Exception("Abstract class. Not implemented")
 
     @abc.abstractmethod

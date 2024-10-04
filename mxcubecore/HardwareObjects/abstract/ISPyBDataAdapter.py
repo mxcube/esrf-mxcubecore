@@ -2,7 +2,7 @@ from __future__ import print_function
 import itertools
 import time
 from datetime import datetime
-from typing import List
+from typing import List, Dict
 from mxcubecore.HardwareObjects.abstract.ISPyBValueFactory import (
     ISPyBValueFactory,
 )
@@ -187,7 +187,7 @@ class ISPyBDataAdapter:
         else:
             return False
 
-    def __to_session(self, session: dict[str, str]) -> Session:
+    def __to_session(self, session: Dict[str, str]) -> Session:
         """
         Converts a dictionary composed by the person entries to the object proposal
         """
@@ -220,7 +220,7 @@ class ISPyBDataAdapter:
             is_scheduled_beamline=True,
         )
 
-    def __to_proposal(self, proposal: dict[str, str]) -> Proposal:
+    def __to_proposal(self, proposal: Dict[str, str]) -> Proposal:
         """
         Converts a dictionary composed by the person entries to the object proposal
         """
