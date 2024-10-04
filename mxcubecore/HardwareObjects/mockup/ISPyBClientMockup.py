@@ -82,13 +82,13 @@ class ISPyBClientMockup(ProposalTypeISPyBLims):
 
     def _authenticate(self, user_name, password):
         if user_name != "idtest0":
-            raise BaseException(f"{user_name} does not exist")
+            raise Exception(f"Could not authenticate")
 
         if password == "wrong":
-            raise BaseException("Wrong password")
+            raise Exception("Could not authenticate")
 
         if password == "ispybDown":
-            raise BaseException("ispyb is down")
+            raise Exception("Could not authenticate")
 
     def login(
         self, user_name: str, password: str, is_local_host: bool
