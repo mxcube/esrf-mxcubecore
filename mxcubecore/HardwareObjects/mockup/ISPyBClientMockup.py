@@ -80,6 +80,9 @@ class ISPyBClientMockup(ProposalTypeISPyBLims):
         )
         return self.loginType
 
+    def is_user_login_type(self):
+        return self.loginType == "user"
+
     def _authenticate(self, user_name, password):
         if user_name != "idtest0":
             raise Exception(f"Could not authenticate")
