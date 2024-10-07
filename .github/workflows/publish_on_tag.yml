@@ -19,22 +19,11 @@ jobs:
       - name: Set up Python 3.10
         uses: actions/setup-python@v4
         with:
-          python-version: "3.10"
-      - name: Update version
-        id: update-version
-        run: |
-            pip install --upgrade pip
-            pip install poetry
-            poetry version minor
-            git config --global user.email "oscarsso@esrf.fr"
-            git config --global user.name "Marcus Oskarsson"
-            git add -A
-            git commit -m "[skip ci] Bumped minor version"
-            git push -f
-            poetry build
+          python-version: "3.10"           
       - name: Publish package to PyPI
         id: publish-pacakge
         run: |
+          poetry build
           poetry config pypi-token.pypi ${{ secrets.PYPI }}
           poetry version ${{ github.ref_name }}
           poetry publish
