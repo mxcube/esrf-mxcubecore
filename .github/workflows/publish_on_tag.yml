@@ -29,6 +29,7 @@ jobs:
           poetry config repositories.gitlab ${ESRF_GITLAB_PYPI_URI}
           poetry config http-basic.gitlab gitlab-ci-token $ESRF_GITLAB_PYPI_TOKEN
           poetry version ${{ github.ref_name }}
+          poetry config repository
           poetry build
           poetry publish --repository gitlab
  
