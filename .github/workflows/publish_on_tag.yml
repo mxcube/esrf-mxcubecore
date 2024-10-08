@@ -25,7 +25,7 @@ jobs:
         run: |
           pip install --upgrade pip
           pip install poetry
-          poetry config repositories.gitlab ${{ env.ESRF_GITLAB_PYPI_URI }}
+          poetry config repositories.gitlab https://gitlab.esrf.fr/api/v4/projects/3202/packages/pypi
           poetry config http-basic.gitlab gitlab-ci-token ${{ secrets.ESRF_GITLAB_PYPI_TOKEN }}
           poetry version ${{ github.ref_name }}
           poetry build
