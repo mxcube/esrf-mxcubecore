@@ -989,6 +989,10 @@ class MiniDiff(HardwareObject):
         self.centringStatus["valid"] = True
         self.centringStatus["accepted"] = True
         self.emit("centringAccepted", (True, self.get_centring_status()))
+
+        # save position in MD2 software
+        self.save_centring_positions()
+
         logging.getLogger("HWR").info("DEBUG %s" % self.get_centring_status())
         logging.getLogger("user_level_log").info("Centring successful")
 
