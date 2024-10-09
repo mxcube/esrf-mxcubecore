@@ -369,9 +369,6 @@ class Microdiff(MiniDiff.MiniDiff):
         # check first if all the motors have stopped
         self._wait_ready(30)
 
-        # save position in MD2 software
-        self.save_centring_positions()
-
         # do normal stuff
         return MiniDiff.MiniDiff.emitCentringSuccessful(self)
 
