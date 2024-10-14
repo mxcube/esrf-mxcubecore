@@ -28,6 +28,7 @@ import abc
 from mxcubecore.BaseHardwareObjects import HardwareObject
 from typing import Union
 
+
 class AbstractSampleView(HardwareObject):
     """AbstractSampleView Class"""
 
