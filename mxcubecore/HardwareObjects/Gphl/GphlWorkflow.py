@@ -1690,7 +1690,9 @@ class GphlWorkflow(HardwareObjectYaml):
             rotation_settings = dict(
                 (role, current_pos_dict[role]) for role in sweepSetting.axisSettings
             )
-            orientation_id = gphl_workflow_model.workflow_parameters.get("orientation_id")
+            orientation_id = gphl_workflow_model.workflow_parameters.get(
+                "orientation_id"
+            )
             if orientation_id:
                 # We have a pre-existing orientation ID. Use it
                 rotation_settings["id_"] = orientation_id
@@ -1952,7 +1954,7 @@ class GphlWorkflow(HardwareObjectYaml):
                 )
             acq.path_template = path_template
             filename_params = scan.filenameParams
-            subdir = filename_params.get("subdir")  or ""
+            subdir = filename_params.get("subdir") or ""
             prefix = filename_params.get("prefix", "")
             head, prefix = os.path.split(prefix)
             if head and subdir:
@@ -1992,7 +1994,9 @@ class GphlWorkflow(HardwareObjectYaml):
             if not model_workflow_parameters.get("workflow_type"):
                 model_workflow_parameters["workflow_type"] = gphl_workflow_model.wftype
             if not model_workflow_parameters.get("workflow_uid"):
-                model_workflow_parameters["workflow_uid"] = str(HWR.beamline.gphl_connection._enactment_id)
+                model_workflow_parameters["workflow_uid"] = str(
+                    HWR.beamline.gphl_connection._enactment_id
+                )
             if not model_workflow_parameters.get("workflow_position_id"):
                 # As of 20240911 all workflows use a single position,
                 model_workflow_parameters["workflow_position_id"] = str(uuid.uuid1())
@@ -2001,8 +2005,12 @@ class GphlWorkflow(HardwareObjectYaml):
                 and not gphl_workflow_model.characterisation_done
                 and not model_workflow_parameters.get("workflow_characterisation_id")
             ):
-                model_workflow_parameters["workflow_characterisation_id"] = str(sweep.id_)
-            model_workflow_parameters["workflow_kappa_settings_id"] = str(orientation_id)
+                model_workflow_parameters["workflow_characterisation_id"] = str(
+                    sweep.id_
+                )
+            model_workflow_parameters["workflow_kappa_settings_id"] = str(
+                orientation_id
+            )
 
             initial_settings = sweep.get_initial_settings()
             orientation = (
