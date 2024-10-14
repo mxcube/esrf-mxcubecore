@@ -29,6 +29,7 @@ from mxcubecore.BaseHardwareObjects import HardwareObject
 from mxcubecore.model.queue_model_enumerables import CENTRING_METHOD
 from typing import Union
 
+
 class AbstractSampleView(HardwareObject):
     """AbstractSampleView Class"""
 
