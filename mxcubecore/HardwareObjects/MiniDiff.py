@@ -328,41 +328,52 @@ class MiniDiff(HardwareObject):
         # self.move_to_coord = self.move_to_beam()
 
     def set_rotation_axis_position(self, value: float, motor_name="phiz"):
-        self._set_rotation_axis_position(value)
+        self._set_rotation_axis_position(value, motor_name="phiz")
 
-    def _set_rotation_axis_position(self, value: float, motor_name="phiz"):
+    def _set_rotation_axis_position(self, value: float, motor_name="phiy"):
         logging.getLogger("HWR").info(
             f"Setting rotation axis ({motor_name}) position to {value}"
         )
 
         try:
-            self["centringReferencePosition"].set_property(motor_name)
-            self.commit_changes()
-        except:
-            logging.getLogger("HWR").exception(
-                f"Setting rotation axis position Failed while writing XML file"
-            )
-            raise
+            fname = self.get_xml_path()
+            logging.getLogger("HWR").info(f"Updating {fname}")
 
-        ref = self["centringReferencePosition"].get_property(motor_name, None)
+            tree = ET.parse(fname)
+            motor_tag = (
+                tree.getroot()
+                .findall("centringReferencePosition")[0]
+                .findall(motor_name)
+            )
+            motor_tag.text = str(value)
+            tree.write(fname)
+        except:
+            logging.getLogger("HWR").info(f"Could not update {fname}")
+            raise
+        else:
+            logging.getLogger("HWR").info(f"Wrote {fname}")
 
         if motor_name == "phiz":
             self.centringPhiz = sample_centring.CentringMotor(
-                self.phizMotor, reference_position=ref
+                self.phizMotor, reference_position=value
             )
         elif motor_name == "phiy":
             self.centringPhiy = sample_centring.CentringMotor(
-                self.phiyMotor, reference_position=ref
+                self.phiyMotor, reference_position=value
             )
+
+        script_name = (
+            "Change_AlignmentZ" if motor_name == "phiz" else "Change_AlignmentY"
+        )
 
         try:
             logging.getLogger("HWR").exception(
-                f"Setting MD AlignmentZ reference position"
+                f"Setting MD Alignment reference position"
             )
-            self.run_script("Change_AlignmentZ, " + str(value))
+        #            self.run_script(f"{script_name}, {value}")
         except:
             logging.getLogger("HWR").exception(
-                f"Setting MD AlignmentZ reference position failed"
+                f"Setting MD Alignment reference position failed"
             )
             raise
 
