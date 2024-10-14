@@ -453,11 +453,11 @@ class GphlWorkflow(HardwareObjectYaml):
             reslimits = (0.5, 5.0)
         if resolution < reslimits[0]:
             resolution = (
-                round(reslimits[0], resolution_decimals) + 0.1 ** resolution_decimals
+                round(reslimits[0], resolution_decimals) + 0.1**resolution_decimals
             )
         if resolution > reslimits[1]:
             resolution = (
-                round(reslimits[1], resolution_decimals) - 0.1 ** resolution_decimals
+                round(reslimits[1], resolution_decimals) - 0.1**resolution_decimals
             )
 
         fields["resolution"] = {
@@ -625,7 +625,6 @@ class GphlWorkflow(HardwareObjectYaml):
         elif not choose_lattice:
             # Characterisation
             ui_schema["parameters"]["column1"]["ui:order"].remove("point_groups")
-            pass
 
         else:
             # Acquisition
@@ -1691,7 +1690,9 @@ class GphlWorkflow(HardwareObjectYaml):
             rotation_settings = dict(
                 (role, current_pos_dict[role]) for role in sweepSetting.axisSettings
             )
-            orientation_id = gphl_workflow_model.workflow_parameters.get("orientation_id")
+            orientation_id = gphl_workflow_model.workflow_parameters.get(
+                "orientation_id"
+            )
             if orientation_id:
                 # We have a pre-existing orientation ID. Use it
                 rotation_settings["id_"] = orientation_id
@@ -1953,7 +1954,7 @@ class GphlWorkflow(HardwareObjectYaml):
                 )
             acq.path_template = path_template
             filename_params = scan.filenameParams
-            subdir = filename_params.get("subdir")  or ""
+            subdir = filename_params.get("subdir") or ""
             prefix = filename_params.get("prefix", "")
             head, prefix = os.path.split(prefix)
             if head and subdir:
@@ -1993,7 +1994,9 @@ class GphlWorkflow(HardwareObjectYaml):
             if not model_workflow_parameters.get("workflow_type"):
                 model_workflow_parameters["workflow_type"] = gphl_workflow_model.wftype
             if not model_workflow_parameters.get("workflow_uid"):
-                model_workflow_parameters["workflow_uid"] = str(HWR.beamline.gphl_connection._enactment_id)
+                model_workflow_parameters["workflow_uid"] = str(
+                    HWR.beamline.gphl_connection._enactment_id
+                )
             if not model_workflow_parameters.get("workflow_position_id"):
                 # As of 20240911 all workflows use a single position,
                 model_workflow_parameters["workflow_position_id"] = str(uuid.uuid1())
@@ -2002,8 +2005,12 @@ class GphlWorkflow(HardwareObjectYaml):
                 and not gphl_workflow_model.characterisation_done
                 and not model_workflow_parameters.get("workflow_characterisation_id")
             ):
-                model_workflow_parameters["workflow_characterisation_id"] = str(sweep.id_)
-            model_workflow_parameters["workflow_kappa_settings_id"] = str(orientation_id)
+                model_workflow_parameters["workflow_characterisation_id"] = str(
+                    sweep.id_
+                )
+            model_workflow_parameters["workflow_kappa_settings_id"] = str(
+                orientation_id
+            )
 
             initial_settings = sweep.get_initial_settings()
             orientation = (
@@ -2361,64 +2368,64 @@ class GphlWorkflow(HardwareObjectYaml):
                     "Sample re-centering now active - Zoom in before continuing."
                 )
 
-    #         else:
-    #             # TODO The UI popup does not work in mxcubeweb
-    #             # NB Temporarily inactivated pending a fix
-    #
-    #             # Ask user to zoom
-    #             info_text = """Automatic sample re-centering is now active
-    # Switch to maximum zoom before continuing"""
-    #
-    #             schema = {
-    #                 "title": "GΦL Translational calibration",
-    #                 "type": "object",
-    #                 "properties": {},
-    #             }
-    #             fields = schema["properties"]
-    #             fields["_info"] = {
-    #                 "type": "textdisplay",
-    #                 "default": info_text,
-    #                 "readOnly": True,
-    #             }
-    #             ui_schema = {
-    #                 "ui:order": ["_info"],
-    #                 "ui:widget": "vertical_box",
-    #                 "ui:options": {
-    #                     "return_signal": self.PARAMETER_RETURN_SIGNAL,
-    #                     # "update_signal": self.PARAMETER_UPDATE_SIGNAL,
-    #                     # "update_on_change": "selected",
-    #                 },
-    #             }
-    #             self._return_parameters = gevent.event.AsyncResult()
-    #             try:
-    #                 dispatcher.connect(
-    #                     self.receive_ok_cancel,
-    #                     self.PARAMETER_RETURN_SIGNAL,
-    #                     dispatcher.Any,
-    #                 )
-    #                 responses = dispatcher.send(
-    #                     self.PARAMETERS_NEEDED,
-    #                     self,
-    #                     schema,
-    #                     ui_schema,
-    #                 )
-    #                 if not responses:
-    #                     self._return_parameters.set_exception(
-    #                         RuntimeError(
-    #                             "Signal %s is not connected" % self.PARAMETERS_NEEDED
-    #                         )
-    #                     )
-    #
-    #                 result = self._return_parameters.get()
-    #                 if result is StopIteration:
-    #                     return StopIteration
-    #             finally:
-    #                 dispatcher.disconnect(
-    #                     self.receive_ok_cancel,
-    #                     self.PARAMETER_RETURN_SIGNAL,
-    #                     dispatcher.Any,
-    #                 )
-    #                 self._return_parameters = None
+        #         else:
+        #             # TODO The UI popup does not work in mxcubeweb
+        #             # NB Temporarily inactivated pending a fix
+        #
+        #             # Ask user to zoom
+        #             info_text = """Automatic sample re-centering is now active
+        # Switch to maximum zoom before continuing"""
+        #
+        #             schema = {
+        #                 "title": "GΦL Translational calibration",
+        #                 "type": "object",
+        #                 "properties": {},
+        #             }
+        #             fields = schema["properties"]
+        #             fields["_info"] = {
+        #                 "type": "textdisplay",
+        #                 "default": info_text,
+        #                 "readOnly": True,
+        #             }
+        #             ui_schema = {
+        #                 "ui:order": ["_info"],
+        #                 "ui:widget": "vertical_box",
+        #                 "ui:options": {
+        #                     "return_signal": self.PARAMETER_RETURN_SIGNAL,
+        #                     # "update_signal": self.PARAMETER_UPDATE_SIGNAL,
+        #                     # "update_on_change": "selected",
+        #                 },
+        #             }
+        #             self._return_parameters = gevent.event.AsyncResult()
+        #             try:
+        #                 dispatcher.connect(
+        #                     self.receive_ok_cancel,
+        #                     self.PARAMETER_RETURN_SIGNAL,
+        #                     dispatcher.Any,
+        #                 )
+        #                 responses = dispatcher.send(
+        #                     self.PARAMETERS_NEEDED,
+        #                     self,
+        #                     schema,
+        #                     ui_schema,
+        #                 )
+        #                 if not responses:
+        #                     self._return_parameters.set_exception(
+        #                         RuntimeError(
+        #                             "Signal %s is not connected" % self.PARAMETERS_NEEDED
+        #                         )
+        #                     )
+        #
+        #                 result = self._return_parameters.get()
+        #                 if result is StopIteration:
+        #                     return StopIteration
+        #             finally:
+        #                 dispatcher.disconnect(
+        #                     self.receive_ok_cancel,
+        #                     self.PARAMETER_RETURN_SIGNAL,
+        #                     dispatcher.Any,
+        #                 )
+        #                 self._return_parameters = None
 
         settings = goniostatRotation.axisSettings.copy()
         if goniostatTranslation is not None:
