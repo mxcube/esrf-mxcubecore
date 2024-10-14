@@ -985,11 +985,11 @@ class MiniDiff(HardwareObject):
     def moveToCentredPosition(self, centred_position):
         return self.move_motors(centred_position.as_dict())
 
-    def imageClicked(self, x, y, xi, yi):
+    def image_clicked(self, x, y, xi, yi):
         logging.getLogger("user_level_log").info(
             "Centring click at, x: %s, y: %s" % (int(x), int(y))
         )
-        sample_centring.user_click(x, y, False)
+        sample_centring.user_click(x, y, True)
 
     def emitCentringStarted(self, method):
         self.currentCentringMethod = method
@@ -997,6 +997,7 @@ class MiniDiff(HardwareObject):
         logging.getLogger("user_level_log").info("Starting centring")
 
     def accept_centring(self):
+        self.save_centring_positions()
         self.centringStatus["valid"] = True
         self.centringStatus["accepted"] = True
         self.emit("centringAccepted", (True, self.get_centring_status()))
