@@ -392,6 +392,8 @@ class ISPyBDataAdapter:
                 + "collection-id missing, the ISPyB data-collection is not updated."
             )
 
+        return (0, 0)
+
     def store_image(self, image_dict):
         """
         Stores the image (image parameters) <image_dict>
@@ -656,9 +658,11 @@ class ISPyBDataAdapter:
 
     def store_data_collection(self, mx_collection, bl_config=None, event="CREATE"):
         if event == "CREATE":
-            self._store_data_collection(mx_collection, bl_config=None)
+            res = self._store_data_collection(mx_collection, bl_config=None)
         elif event == "UPPDATE":
-            self.update_data_collection(mx_collection)
+            res = self.update_data_collection(mx_collection)
+
+        return res
 
     def _store_data_collection(self, mx_collection, bl_config=None):
         """

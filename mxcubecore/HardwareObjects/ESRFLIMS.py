@@ -101,12 +101,6 @@ class ESRFLIMS(AbstractLims):
     def create_session(self, session_dict):
         pass
 
-    def create_mx_collection(self, collection_parameters):
-        logging.getLogger("MX3.HWR").debug(
-            "create_mx_collection. collection_parameters=%s", str(collection_parameters)
-        )
-        self.drac.create_mx_collection(collection_parameters)
-
     def _store_data_collection_group(self, group_data):
         """
         sessionId is the session_id of the ESRFLIMS that corresponds to DRAC
@@ -116,9 +110,10 @@ class ESRFLIMS(AbstractLims):
         group_data["sessionId"] = self.ispyb.get_session_id()
         return self.ispyb._store_data_collection_group(group_data)
 
-    def store_data_collection(self, mx_collection, bl_config=None):
+    def store_data_collection(self, mx_collection, bl_config=None, event="CREATE"):
         mx_collection["sessionId"] = self.ispyb.get_session_id()
-        return self.ispyb.store_data_collection(mx_collection, bl_config)
+        self.drac.store_data_collection(collection_parameters, event)
+        return self.ispyb.store_data_collection(mx_collection, bl_config, event)
 
     def store_image(self, image_dict):
         """
@@ -237,4 +232,51 @@ class ESRFLIMS(AbstractLims):
         return True
 
     def update_bl_sample(self, bl_sample):
+        """
+        Creates or stos a BLSample entry.
+        # NBNB update doc string
+        :param sample_dict: A dictonary with the properties for the entry.
+        :type sample_dict: dict
+        """
         self.ispyb.update_bl_sample(bl_sample)
+
+    def store_beamline_setup(self, session_id, bl_config):
+        """
+        Stores the beamline setup dict <bl_config>.
+
+        :param session_id: The session id that the beamline_setup
+                           should be associated with.
+        :type session_id: int
+
+        :param bl_config: The dictonary with beamline settings.
+        :type bl_config: dict
+
+        :returns beamline_setup_id: The database id of the beamline setup.
+        :rtype: str
+        """
+        self.ispyb.store_beamline_setup(session_id, bl_config)
+
+    def store_energy_scan(self, energyscan_dict):
+        """
+        Store energyscan.
+
+        :param energyscan_dict: Energyscan data to store.
+        :type energyscan_dict: dict
+
+        :returns Dictonary with the energy scan id:
+        :rtype: dict
+        """
+        return self.ispyb.store_energy_scan(energyscan_dict)
+
+    def store_xfe_spectrum(self, xfespectrum_dict):
+        """
+        Stores a xfe spectrum.
+
+        :returns: A dictionary with the xfe spectrum id.
+        :rtype: dict
+
+        """
+        return self.ispyb.store_xfe_spectrum(xfespectrum_dict)
+
+    def store_workflow(self, *args, **kwargs):
+        pass
