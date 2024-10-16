@@ -154,17 +154,21 @@ class ISPyBAbstractLIMS(AbstractLims):
         return self.ldapConnection.authenticate(login_name, psd)
 
     def store_data_collection(self, mx_collection, bl_config=None, event="CREATE"):
+        res = (0, 0)
+
         try:
             if event == "CREATE":
-                self._store_data_collection(mx_collection, bl_config)
+                res = self._store_data_collection(mx_collection, bl_config)
             elif event == "UPDATE":
-                self._update_data_collection(mx_collection)
+                res = self._update_data_collection(mx_collection)
         except Exception as e:
 
             # if anything else happens, let upper level process continue
             # (not a fatal error), but display exception still
             logging.exception("Could not store data collection")
-            return (0, 0)
+            return res
+
+        return res
 
     def _store_data_collection(self, mx_collection, bl_config=None):
         """
@@ -182,7 +186,7 @@ class ISPyBAbstractLIMS(AbstractLims):
         """
         return self.adapter.store_data_collection(mx_collection, bl_config)
 
-    def _update_data_collection(self, mx_collection, wait=False):
+    def _update_data_collection(self, mx_collection):
         """
         Updates the datacollction mx_collection, this requires that the
         collectionId attribute is set and exists in the database.
@@ -192,7 +196,7 @@ class ISPyBAbstractLIMS(AbstractLims):
 
         :returns: None
         """
-        self.adapter._update_data_collection(mx_collection, wait)
+        return self.adapter._update_data_collection(mx_collection)
 
     def update_bl_sample(self, bl_sample):
         """
