@@ -111,8 +111,9 @@ class ESRFLIMS(AbstractLims):
         return self.ispyb._store_data_collection_group(group_data)
 
     def store_data_collection(self, mx_collection, bl_config=None, event="CREATE"):
+        logging.getLogger("HWR").info("Storing datacollection")
         mx_collection["sessionId"] = self.ispyb.get_session_id()
-        self.drac.store_data_collection(collection_parameters, event)
+        self.drac.store_data_collection(mx_collection, event)
         return self.ispyb.store_data_collection(mx_collection, bl_config, event)
 
     def store_image(self, image_dict):

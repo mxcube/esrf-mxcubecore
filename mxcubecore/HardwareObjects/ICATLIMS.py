@@ -575,6 +575,7 @@ class ICATLIMS(AbstractLims):
         pass
 
     def store_data_collection(self, collection_parameters, blconfig=None, event=None):
+        logging.getLogger("HWR").info("Storing datacollection in ICAT")
         if event == "END":
             try:
                 fileinfo = collection_parameters["fileinfo"]

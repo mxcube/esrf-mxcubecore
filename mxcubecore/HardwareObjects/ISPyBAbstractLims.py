@@ -161,6 +161,8 @@ class ISPyBAbstractLIMS(AbstractLims):
                 res = self._store_data_collection(mx_collection, bl_config)
             elif event == "UPDATE":
                 res = self._update_data_collection(mx_collection)
+            elif event == "END":
+                self.icat_client.store_data_collection(mx_collection, event=event)
         except Exception as e:
 
             # if anything else happens, let upper level process continue

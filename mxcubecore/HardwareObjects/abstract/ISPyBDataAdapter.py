@@ -151,7 +151,7 @@ class ISPyBDataAdapter:
             session["endDate"] = datetime.strptime(end_time, "%Y-%m-%d %H:%M:%S")
 
             # return data to original codification
-            logging.getLogger("ispyb_client").info("Session creation: %s" % session)
+            # logging.getLogger("ispyb_client").info("Session creation: %s" % session)
             session_id = self._collection.service.storeOrUpdateSession(
                 utf_decode(session)
             )
@@ -356,17 +356,17 @@ class ISPyBDataAdapter:
         :rtype: int
         """
         group_id = None
-        logging.getLogger("HWR").debug(
-            "ispyb_group_data_collections: %s"
-            % mx_collection["ispyb_group_data_collections"]
-        )
+        # logging.getLogger("HWR").debug(
+        #    "ispyb_group_data_collections: %s"
+        #    % mx_collection["ispyb_group_data_collections"]
+        # )
 
         if mx_collection["ispyb_group_data_collections"]:
             group_id = mx_collection.get("group_id", None)
-        logging.getLogger("HWR").debug(
-            "Storing data collection group in lims. data to store. group_id: %s mx_collection: %s"
-            % (str(group_id), str(mx_collection))
-        )
+        # logging.getLogger("HWR").debug(
+        #    "Storing data collection group in lims. data to store. group_id: %s mx_collection: %s"
+        #    % (str(group_id), str(mx_collection))
+        # )
         # Create a new group id
         group = ISPyBValueFactory().dcg_from_dc_params(self._collection, mx_collection)
         # if group_id is None:
@@ -404,9 +404,7 @@ class ISPyBDataAdapter:
         :returns: None
         """
         if self._collection:
-            logging.getLogger("HWR").debug(
-                "Storing image in lims. data to store: %s" % str(image_dict)
-            )
+            logging.getLogger("HWR").debug("Storing image in lims")
             if "dataCollectionId" in image_dict:
                 try:
                     image_id = self._collection.service.storeOrUpdateImage(image_dict)
@@ -457,9 +455,7 @@ class ISPyBDataAdapter:
 
     def store_robot_action(self, robot_action_dict):
         """Stores robot action"""
-        logging.getLogger("HWR").debug(
-            "  - storing robot_actions in lims : %s" % str(robot_action_dict)
-        )
+        logging.getLogger("HWR").debug("Storing robot actions in lims")
 
         if True:
             robot_action_vo = self._collection.factory.create("robotActionWS3VO")
@@ -596,9 +592,9 @@ class ISPyBDataAdapter:
             except URLError:
                 logging.getLogger("ispyb_client").exception(_CONNECTION_ERROR_MSG)
 
-            logging.getLogger("ispyb_client").info(
-                "[ISPYB] Session goona be created: session_dict %s" % session_dict
-            )
+            # logging.getLogger("ispyb_client").info(
+            #    "[ISPYB] Session goona be created: session_dict %s" % session_dict
+            # )
             logging.getLogger("ispyb_client").info(
                 "[ISPYB] Session created: %s" % session
             )
@@ -657,6 +653,7 @@ class ISPyBDataAdapter:
         return blSetupId
 
     def store_data_collection(self, mx_collection, bl_config=None, event="CREATE"):
+        logging.getLogger("HWR").info("Storing datacollection in ISPyB")
         if event == "CREATE":
             res = self._store_data_collection(mx_collection, bl_config=None)
         elif event == "UPPDATE":
@@ -678,10 +675,10 @@ class ISPyBDataAdapter:
         :returns: None
 
         """
-        logging.getLogger("HWR").debug(
-            "store_data_collection. mx_collection=%s bl_config=%s"
-            % (str(mx_collection), str(bl_config))
-        )
+        #        logging.getLogger("HWR").debug(
+        #            "store_data_collection. mx_collection=%s bl_config=%s"
+        #            % (str(mx_collection), str(bl_config))
+        #        )
 
         # mx_collection["blSampleId"] = 1003538
         # mx_collection["sample_reference"]["blSampleId"]
@@ -715,7 +712,7 @@ class ISPyBDataAdapter:
             data_collection
         )
         logging.getLogger("HWR").debug(
-            "  - storing data collection ok. collection id : %s" % collection_id
+            "Storing data collection ok. collection id : %s" % collection_id
         )
 
         return (collection_id, detector_id)
