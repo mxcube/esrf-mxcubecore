@@ -318,7 +318,9 @@ class Lima2Detector(AbstractDetector):
 
         manage_proc = True
 
-        energy = 11.56
+        #energy = 11.56
+        energy = HWR.beamline.energy.get_value()
+        #energy = 12.75
         jungfrau_gain0_ave = 41.401
 
         def get_param_file(n):
