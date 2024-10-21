@@ -5,7 +5,7 @@ import json
 import gevent
 import datetime
 
-from typing_extensions import Literal
+from typing_extensions import Literal, Optional
 from pydantic.v1 import BaseModel, Field
 from devtools import debug
 
@@ -35,7 +35,7 @@ class BaseUserCollectionParameters(BaseModel):
     exp_time: float = Field(95e-6, gt=0, lt=1, description="s")
     sub_sampling: Literal[1, 2, 4, 6, 8] = Field(1)
     take_pedestal: bool = Field(True)
-    reject_empty_frames: bool = Field(False)
+    reject_empty_frames: bool = Field(True)
 
     frequency: float = Field(
         float(HWR.beamline.diffractometer.get_property("max_freq", DEFAULT_MAX_FREQ)),
@@ -48,7 +48,7 @@ class SsxBaseQueueTaskParameters(BaseModel):
     common_parameters: CommonCollectionParamters
     collection_parameters: StandardCollectionParameters
     legacy_parameters: LegacyParameters
-    lims_parameters: ISPYBCollectionParameters
+    lims_parameters: Optional[ISPYBCollectionParameters]
 
     def update_dependent_fields(field_data):
         return {}
@@ -284,12 +284,13 @@ class SsxBaseQueueEntry(BaseQueueEntry):
         data_root_path = self.get_data_path()
         self._data_model._task_data.lims_parameters.end_time = datetime.datetime.now()
 
-        HWR.beamline.lims.create_ssx_collection(
-            data_root_path,
-            self._data_model._task_data,
-            self._beamline_values,
-            self._data_model._task_data.lims_parameters,
-        )
+        parameters = {}
+        parameters["collection_parameters"] = self._data_model._task_data
+        parameters["data_path"] = data_root_path
+        parameters["beamline_parameters"] = self._beamline_values
+        parameters["extra_lims_values"] = self._data_model._task_data.lims_parameters
+
+        HWR.beamline.lims.store_data_collection(parameters, event="END")
 
         logging.getLogger("user_level_log").info(f"Moving detector back")
         HWR.beamline.control.mtdsx.move(1000, wait=False)

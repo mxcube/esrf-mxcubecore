@@ -799,10 +799,10 @@ class ISPyBDataAdapter:
                 xfespectrum_dict["startTime"] = xfespectrum_dict["startTime"]
                 xfespectrum_dict["endTime"] = xfespectrum_dict["endTime"]
 
-            status[
-                "xfeFluorescenceSpectrumId"
-            ] = self._collection.service.storeOrUpdateXFEFluorescenceSpectrum(
-                xfespectrum_dict
+            status["xfeFluorescenceSpectrumId"] = (
+                self._collection.service.storeOrUpdateXFEFluorescenceSpectrum(
+                    xfespectrum_dict
+                )
             )
 
         except URLError as e:
