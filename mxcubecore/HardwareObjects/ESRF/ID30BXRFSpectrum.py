@@ -318,7 +318,7 @@ class XrfSpectrum(HardwareObject):
         self.spectrumInfo["blSampleId"]
         self.spectrumInfo.pop("blSampleId")
 
-        HWR.beamline.lims.storeXfeSpectrum(self.spectrumInfo)
+        HWR.beamline.lims.store_xfe_spectrum(self.spectrumInfo)
 
     def updateXrfSpectrum(self, spectrum_id, jpeg_spectrum_filename):
         pass
