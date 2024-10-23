@@ -655,8 +655,10 @@ class ISPyBDataAdapter:
     def store_data_collection(self, mx_collection, bl_config=None, event="CREATE"):
         logging.getLogger("HWR").info("Storing datacollection in ISPyB")
         if event == "CREATE":
-            res = self._store_data_collection(mx_collection, bl_config=None)
+            res = self._store_data_collection(mx_collection, bl_config=bl_config)
         elif event == "UPPDATE":
+            res = self.update_data_collection(mx_collection)
+        elif event == "END":
             res = self.update_data_collection(mx_collection)
 
         return res
