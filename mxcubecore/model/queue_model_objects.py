@@ -2666,6 +2666,8 @@ def to_collect_dict(data_collection, sample, centred_pos=None):
                 "spacegroup": proc_params.space_group,
                 "cell": proc_params.get_cell_str(),
                 "blSampleId": sample.lims_id,
+                "sample_name": sample.name,
+                "acronym": sample.crystals[0].protein_acronym,
             },
             "processing": str(proc_params.process_data and True),
             "processing_offline": data_collection.run_offline_processing,

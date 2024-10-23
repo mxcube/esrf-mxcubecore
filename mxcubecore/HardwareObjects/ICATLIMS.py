@@ -595,13 +595,21 @@ class ICATLIMS(AbstractLims):
                 workflow_params = collection_parameters.get("workflow_params", {})
                 workflow_type = workflow_params.get("workflow_type")
                 if workflow_type is None:
-                    if directory.name.startswith("run"):
-                        sample_name = directory.parent.name
-                    else:
-                        sample_name = directory.name
+                    if not directory.name.startswith("run"):
                         dataset_name = fileinfo["prefix"]
+
+                if collection_parameters["sample_reference"]["acronym"]:
+                    sample_name = (
+                        collection_parameters["sample_reference"]["acronym"]
+                        + "-"
+                        + collection_parameters["sample_reference"]["sample_name"]
+                    )
                 else:
-                    sample_name = directory.parent.parent.name
+                    sample_name = collection_parameters["sample_reference"][
+                        "sample_name"
+                    ].replace(":", "-")
+
+                logging.getLogger("HWR").info(f"LIMS sample name {sample_name}")
                 oscillation_sequence = collection_parameters["oscillation_sequence"][0]
                 beamline = HWR.beamline.session.beamline_name.lower()
                 distance = HWR.beamline.detector.distance.get_value()
