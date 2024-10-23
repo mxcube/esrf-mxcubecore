@@ -9,6 +9,7 @@ import json
 
 from typing import Union
 from pydantic.v1 import ValidationError
+import xml.etree.ElementTree as ET
 
 from mxcubecore.BaseHardwareObjects import HardwareObject
 from mxcubecore.TaskUtils import task
@@ -247,7 +248,7 @@ class MiniDiff(HardwareObject):
         # self.move_to_coord = self.move_to_beam()
 
     def set_rotation_axis_position(self, value: float, motor_name="phiz"):
-        self._set_rotation_axis_position(value, motor_name="phiz")
+        self._set_rotation_axis_position(value, motor_name=motor_name)
 
     def _set_rotation_axis_position(self, value: float, motor_name="phiy"):
         logging.getLogger("HWR").info(
@@ -268,7 +269,7 @@ class MiniDiff(HardwareObject):
             tree.write(fname)
         except:
             logging.getLogger("HWR").info(f"Could not update {fname}")
-            raise
+            # raise
         else:
             logging.getLogger("HWR").info(f"Wrote {fname}")
 
@@ -286,10 +287,9 @@ class MiniDiff(HardwareObject):
         )
 
         try:
-            logging.getLogger("HWR").exception(
-                f"Setting MD Alignment reference position"
-            )
-        #            self.run_script(f"{script_name}, {value}")
+            logging.getLogger("HWR").info(f"Setting MD Alignment reference position")
+            print(f" script name {script_name} value {value}")
+            self.run_script(f"{script_name}, {value}")
         except:
             logging.getLogger("HWR").exception(
                 f"Setting MD Alignment reference position failed"
