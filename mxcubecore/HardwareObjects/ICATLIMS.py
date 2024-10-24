@@ -592,7 +592,7 @@ class ICATLIMS(AbstractLims):
                     scanType = "datacollection"
                 else:
                     scanType = collection_parameters["experiment_type"]
-                workflow_params = collection_parameters.get("workflow_params", {})
+                workflow_params = collection_parameters.get("workflow_parameters", {})
                 workflow_type = workflow_params.get("workflow_type")
                 if workflow_type is None:
                     if not directory.name.startswith("run"):
