@@ -11,7 +11,7 @@ from mxcubecore.model.lims_session import (
 
 class ESRFLIMS(AbstractLims):
     """
-    ESRF client (ICAT+ and IPyB).
+    ESRF client (ICAT+ and ISPyB).
     """
 
     def __init__(self, name):
@@ -48,7 +48,7 @@ class ESRFLIMS(AbstractLims):
             user_name, token, self.session_manager
         )
         logging.getLogger("HWR").debug(
-            "%s sessions found. user=%s" % (len(sessions), user_name)
+            "DRAC sessions=%s" % (len(self.drac.session_manager.sessions),)
         )
 
         self.session_manager = self.drac.session_manager
@@ -73,6 +73,8 @@ class ESRFLIMS(AbstractLims):
                 session_manager.active_session.number,
                 self.is_local_host,
             )
+
+        self.session_manager = self.drac.session_manager
         return self.session_manager
 
     def is_user_login_type(self) -> bool:
