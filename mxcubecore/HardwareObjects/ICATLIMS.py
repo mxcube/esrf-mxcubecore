@@ -6,7 +6,10 @@ from datetime import (
     datetime,
     timedelta,
 )
-from typing import List
+from typing import (
+    List,
+    Optional,
+)
 
 from pyicat_plus.client.main import (
     IcatClient,
@@ -55,7 +58,10 @@ class ICATLIMS(AbstractLims):
         ]
 
     def login(
-        self, user_name: str, password: str, is_local_host: bool
+        self,
+        user_name: str,
+        password: str,
+        session_manager: Optional[LimsSessionManager],
     ) -> LimsSessionManager:
 
         logging.getLogger("HWR").debug("[ICAT] authenticate %s" % (user_name))
@@ -68,7 +74,7 @@ class ICATLIMS(AbstractLims):
             )
             raise RuntimeError("Could not initialize icatClient")
 
-        # Connected to metadata catalogue
+        # Connected to metadata icatClient
         logging.getLogger("HWR").debug(
             "[ICAT] Connected succesfully to icatClient. fullName=%s url=%s"
             % (self.icat_session["fullName"], self.url)
@@ -76,9 +82,17 @@ class ICATLIMS(AbstractLims):
 
         # Retrieving user's investigations
         sessions = self.to_sessions(self.__get_all_investigations())
+
+        if len(sessions) == 0:
+            raise Exception("No sessions available for user %s" % (user_name))
+
         logging.getLogger("HWR").debug(
             "[ICAT] Successfully retrieved %s sessions" % (len(sessions))
         )
+
+        # This is done because ICATLims can be used standalone or from ESRFLims
+        if session_manager is not None:
+            self.session_manager = session_manager
 
         # Check if there is currently a session in use and if user have
         # access to that session
@@ -95,9 +109,7 @@ class ICATLIMS(AbstractLims):
                     "Current session in-use (with id %s) not avaialble to user %s"
                     % (self.session_manager.active_session.session_id, user_name)
                 )
-
-        self.set_sessions(sessions)
-        return self.session_manager
+        return self.session_manager, self.icat_session["name"], sessions
 
     def is_user_login_type(self) -> bool:
         return True
@@ -632,7 +644,8 @@ class ICATLIMS(AbstractLims):
 
                 logging.getLogger("HWR").info(f"LIMS sample name {sample_name}")
                 oscillation_sequence = collection_parameters["oscillation_sequence"][0]
-                beamline = HWR.beamline.session.beamline_name.lower()
+
+                beamline = self._get_scheduled_beamline()
                 distance = HWR.beamline.detector.distance.get_value()
                 proposal = f"{HWR.beamline.session.proposal_code}{HWR.beamline.session.proposal_number}"
                 metadata = {
@@ -703,6 +716,22 @@ class ICATLIMS(AbstractLims):
                 logging.getLogger("HWR").debug("Done uploading to ICAT")
             except Exception as e:
                 logging.getLogger("HWR").exception(e)
+
+    def _get_scheduled_beamline(self):
+        """
+        This returns the beamline where the session has been scheduled (in case of a different beamline)
+        otherwise it returns the name of the beamline as set in the properties
+        """
+        active_session = self.session_manager.active_session
+
+        if active_session is None or active_session.is_scheduled_beamline:
+            return HWR.beamline.session.beamline_name.lower()
+
+        beamline = str(active_session["instrument"]["name"].lower())
+        logging.getLogger("HWR").info(
+            f"Session have been moved to another beamline: {beamline}"
+        )
+        return beamline
 
     def update_bl_sample(self, bl_sample: str):
         """

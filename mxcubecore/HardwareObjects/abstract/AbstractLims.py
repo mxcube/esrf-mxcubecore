@@ -35,6 +35,7 @@ from mxcubecore.BaseHardwareObjects import HardwareObject
 from mxcubecore.model.lims_session import (
     Lims,
     LimsSessionManager,
+    LimsUser,
     Session,
 )
 
@@ -444,16 +445,18 @@ class AbstractLims(HardwareObject, abc.ABC):
         else:
             return False
 
-    def set_sessions(self, sessions: List[Session]):
+    def __set_sessions(self, sessions: List[Session]):
         """
         Sets the curent lims session
         :param session: lims session value
         :return:
         """
         logging.getLogger("HWR").debug(
-            "%s sessions avaliable for user %s" % (len(sessions), self.get_user_name())
+            "%s sessions available for users %s"
+            % (len(sessions), self.session_manager.users.keys())
         )
         self.session_manager.sessions = sessions
+        self.emit("sessionsChanged", (sessions,))
 
     def get_active_session(self) -> Session:
         """
@@ -469,3 +472,54 @@ class AbstractLims(HardwareObject, abc.ABC):
             session_id: session id
         """
         raise Exception("Abstract class. Not implemented")
+
+    def __get_shared_sessions(self):
+        # Step 1: Collect all session_ids for each user
+        session_ids_by_user = {}
+
+        # Step 2: Iterate over users and collect session ids
+        for user_name, user in self.session_manager.users.items():
+            session_ids_by_user[user_name] = {
+                session.session_id for session in user.sessions
+            }
+
+        # Step 3: Find the intersection of session_ids (sessions shared by all users)
+        if not session_ids_by_user:
+            return []  # If no users, return empty list
+
+        # Find the common session ids across all users
+        common_session_ids = set.intersection(*session_ids_by_user.values())
+
+        # Step 4: Retrieve the sessions with these common session_ids and ensure uniqueness
+        shared_sessions = {}
+        for user_name, user in self.session_manager.users.items():
+            for session in user.sessions:
+                if session.session_id in common_session_ids:
+                    # Use session_id as the key to ensure uniqueness
+                    shared_sessions[session.session_id] = session
+
+        # Convert the dictionary values (which are unique) into a list
+        return list(shared_sessions.values())
+
+    def remove_user(self, user_name: str):
+        if user_name in self.session_manager.users:
+            del self.session_manager.users[user_name]
+            logging.getLogger("HWR").debug("User %s has been removed" % user_name)
+            self.__set_sessions(self.__get_shared_sessions())
+
+    def add_user(self, user_name: str, sessions: List[Session]):
+        """
+        Stores the user name and the sessions in the session maanger object
+
+        Args:
+            session_id: session id
+        """
+        self.session_manager.users[user_name] = LimsUser(
+            user_name=user_name, sessions=sessions
+        )
+        logging.getLogger("HWR").debug(
+            "User added to session manager, user_name=%s sessions=%s"
+            % (user_name, len(sessions))
+        )
+
+        self.__set_sessions(self.__get_shared_sessions())
