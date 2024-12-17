@@ -1,7 +1,6 @@
 import logging
 from typing import List
 
-
 from mxcubecore.HardwareObjects.abstract.AbstractLims import AbstractLims
 from mxcubecore.model.lims_session import (
     Lims,
