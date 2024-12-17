@@ -645,7 +645,6 @@ class ICATLIMS(AbstractLims):
                 logging.getLogger("HWR").info(f"LIMS sample name {sample_name}")
                 oscillation_sequence = collection_parameters["oscillation_sequence"][0]
 
-                beamline = self._get_scheduled_beamline()
                 distance = HWR.beamline.detector.distance.get_value()
                 proposal = f"{HWR.beamline.session.proposal_code}{HWR.beamline.session.proposal_number}"
                 metadata = {
@@ -703,8 +702,25 @@ class ICATLIMS(AbstractLims):
                                 f"Copying snapshot index {snapshot_index} to gallery"
                             )
                             shutil.copy(snapshot_path, gallery_path)
-                logging.getLogger("HWR").info(f"Beamline: {beamline}")
-                logging.getLogger("HWR").info(f"Proposal: {proposal}")
+
+                beamline = self._get_scheduled_beamline()
+                logging.getLogger("HWR").info(
+                    f"Dataset Beamline={beamline} Current Beamline={HWR.beamline.session.beamline_name}"
+                )
+                logging.getLogger("HWR").info(f"Proposal={proposal}")
+
+                # __actualInstrument is a dataset parameter that indicates where the dataset has been actually collected
+                # only filled when it does not match the scheduled beamline
+                try:
+                    if (
+                        self.active_session is None
+                        or not self.active_session.is_scheduled_beamline
+                    ):
+                        metadata["__actualInstrument"] = (
+                            HWR.beamline.session.beamline_name
+                        )
+                except Exception as e:
+                    logging.getLogger("HWR").exception(e)
 
                 self.icatClient.store_dataset(
                     beamline=beamline,
