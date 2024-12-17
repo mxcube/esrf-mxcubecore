@@ -539,6 +539,26 @@ class ICATLIMS(AbstractLims):
         except Exception as e:
             logging.getLogger("HWR").exception(e)
 
+    def add_beamline_configuration_metadata(self, metadata, beamline_config):
+        """
+        This is the mapping betweeh the beamline_config dict and the ICAt keys
+        in case they exist then they will be added to the metadata of the dataset
+        """
+        if beamline_config is not None:
+            key_mapping = {
+                "detector_px": "InstrumentDetector01_x_pixel_size",
+                "detector_py": "InstrumentDetector01_y_pixel_size",
+                "beam_divergence_vertical": "InstrumentBeam_vertical_incident_beam_divergence",
+                "beam_divergence_horizontal": "InstrumentBeam_horizontal_incident_beam_divergence",
+                "polarisation": "InstrumentBeam_final_polarization",
+                "detector_model": "InstrumentDetector01_model",
+                "detector_manufacturer": "InstrumentDetector01_manufacturer",
+            }
+
+            for config_key, metadata_key in key_mapping.items():
+                if config_key in beamline_config:
+                    metadata[metadata_key] = beamline_config[config_key]
+
     def add_sample_metadata(self, metadata, collection_parameters):
         """
         Adds to the metadata dictionary the metadata concerning sample position, container and tracking
@@ -602,7 +622,8 @@ class ICATLIMS(AbstractLims):
         pass
 
     def store_data_collection(self, mx_collection, bl_config=None):
-        pass
+        # stores the dictionay with the information about the beamline to be sent when a dataset is produced
+        self.beamline_config = bl_config
 
     def update_data_collection(self, mx_collection):
         pass
@@ -645,7 +666,6 @@ class ICATLIMS(AbstractLims):
                 logging.getLogger("HWR").info(f"LIMS sample name {sample_name}")
                 oscillation_sequence = collection_parameters["oscillation_sequence"][0]
 
-                beamline = self._get_scheduled_beamline()
                 distance = HWR.beamline.detector.distance.get_value()
                 proposal = f"{HWR.beamline.session.proposal_code}{HWR.beamline.session.proposal_number}"
                 metadata = {
@@ -688,6 +708,9 @@ class ICATLIMS(AbstractLims):
                 }
                 # Store metadata on disk
                 self.add_sample_metadata(metadata, collection_parameters)
+
+                self.add_beamline_configuration_metadata(metadata, self.beamline_config)
+
                 icat_metadata_path = pathlib.Path(directory) / "metadata.json"
                 with open(icat_metadata_path, "w") as f:
                     f.write(json.dumps(metadata, indent=4))
@@ -703,8 +726,25 @@ class ICATLIMS(AbstractLims):
                                 f"Copying snapshot index {snapshot_index} to gallery"
                             )
                             shutil.copy(snapshot_path, gallery_path)
-                logging.getLogger("HWR").info(f"Beamline: {beamline}")
-                logging.getLogger("HWR").info(f"Proposal: {proposal}")
+
+                beamline = self._get_scheduled_beamline()
+                logging.getLogger("HWR").info(
+                    f"Dataset Beamline={beamline} Current Beamline={HWR.beamline.session.beamline_name}"
+                )
+                logging.getLogger("HWR").info(f"Proposal={proposal}")
+
+                # __actualInstrument is a dataset parameter that indicates where the dataset has been actually collected
+                # only filled when it does not match the scheduled beamline
+                try:
+                    if (
+                        self.active_session is None
+                        or not self.active_session.is_scheduled_beamline
+                    ):
+                        metadata["__actualInstrument"] = (
+                            HWR.beamline.session.beamline_name
+                        )
+                except Exception as e:
+                    logging.getLogger("HWR").exception(e)
 
                 self.icatClient.store_dataset(
                     beamline=beamline,
