@@ -1,14 +1,6 @@
 import logging
 from typing import List
 
-
-from pyicat_plus.client.main import (
-    IcatClient,
-    IcatInvestigationClient,
-)
-from pyicat_plus.client.models.session import Session as ICATSession
-
-from mxcubecore import HardwareRepository as HWR
 from mxcubecore.HardwareObjects.abstract.AbstractLims import AbstractLims
 from mxcubecore.model.lims_session import (
     Lims,
@@ -19,7 +11,7 @@ from mxcubecore.model.lims_session import (
 
 class ESRFLIMS(AbstractLims):
     """
-    ESRF client.
+    ESRF client (ICAT+ and IPyB).
     """
 
     def __init__(self, name):
@@ -40,14 +32,36 @@ class ESRFLIMS(AbstractLims):
         )
         return self.drac.get_session_id()
 
+    def is_single_session_available(self):
+        """
+        True if there is no active session and there is
+        a single session available
+        """
+        return (
+            self.session_manager.active_session is None
+            and len(self.session_manager.sessions) == 1
+        )
+
     def login(self, user_name, token, is_local_host=False) -> LimsSessionManager:
         self.is_local_host = is_local_host
         session_manager, lims_username, sessions = self.drac.login(
             user_name, token, self.session_manager
         )
         logging.getLogger("HWR").debug(
-            "DRAC sessions=%s" % (len(self.drac.session_manager.sessions),)
+            "%s sessions found. user=%s" % (len(sessions), user_name)
         )
+
+        self.session_manager = self.drac.session_manager
+        self.add_user_and_shared_sessions(lims_username, sessions)
+
+        # In case there is a single available session then it is selected automatically
+        if self.is_single_session_available():
+            single_session = self.session_manager.sessions[0]
+            logging.getLogger("HWR").debug(
+                "Single session available which will be selected automatically. session_id=%s"
+                % (single_session.session_id)
+            )
+            self.set_active_session_by_id(single_session.session_id)
 
         if session_manager.active_session is None:
             logging.getLogger("HWR").debug(
@@ -59,9 +73,6 @@ class ESRFLIMS(AbstractLims):
                 session_manager.active_session.number,
                 self.is_local_host,
             )
-
-        self.session_manager = self.drac.session_manager
-        self.add_user(lims_username, sessions)
         return self.session_manager
 
     def is_user_login_type(self) -> bool:

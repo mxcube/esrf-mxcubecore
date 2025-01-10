@@ -2,25 +2,13 @@ import json
 import logging
 import pathlib
 
-from pyicat_plus.client.main import (
-    IcatClient,
-    IcatInvestigationClient,
-)
-from pyicat_plus.client.models.session import Session as ICATSession
-
 from mxcubecore import HardwareRepository as HWR
-from mxcubecore.BaseHardwareObjects import HardwareObject
 from mxcubecore.HardwareObjects.ICATLIMS import ICATLIMS
-from mxcubecore.model.lims_session import (
-    Lims,
-    LimsSessionManager,
-    Session,
-)
 
 
 class SSXICATLIMS(ICATLIMS):
     """
-    ICAT client.
+    ICAT+ client for SSX.
     """
 
     def store_data_collection(self, parameters, bl_config=None):
@@ -77,5 +65,5 @@ class SSXICATLIMS(ICATLIMS):
                 f.write(json.dumps(data, indent=4))
                 logging.getLogger("HWR").info(f"Wrote {icat_metadata_path}")
 
-        except Exception:
-            logging.getLogger("HWR").exception("")
+        except Exception as e:
+            logging.getLogger("HWR").exception("Failed uploading to ICAT (%s)", e)

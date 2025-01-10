@@ -2,6 +2,7 @@ import json
 import logging
 import pathlib
 import shutil
+import time
 from datetime import (
     datetime,
     timedelta,
@@ -11,10 +12,7 @@ from typing import (
     Optional,
 )
 
-from pyicat_plus.client.main import (
-    IcatClient,
-    IcatInvestigationClient,
-)
+from pyicat_plus.client.main import IcatClient
 from pyicat_plus.client.models.session import Session as ICATSession
 
 from mxcubecore import HardwareRepository as HWR
@@ -29,7 +27,7 @@ from mxcubecore.model.lims_session import (
 
 class ICATLIMS(AbstractLims):
     """
-    ICAT client.
+    ICAT+ client.
     """
 
     def __init__(self, name):
@@ -630,132 +628,154 @@ class ICATLIMS(AbstractLims):
 
     def finalize_data_collection(self, collection_parameters):
         logging.getLogger("HWR").info("Storing datacollection in ICAT")
-        if event == "END":
-            try:
-                fileinfo = collection_parameters["fileinfo"]
-                directory = pathlib.Path(fileinfo["directory"])
-                dataset_name = directory.name
-                # Determine the scan type
-                if dataset_name.endswith("mesh"):
-                    scanType = "mesh"
-                elif dataset_name.endswith("line"):
-                    scanType = "line"
-                elif dataset_name.endswith("characterisation"):
-                    scanType = "characterisation"
-                elif dataset_name.endswith("datacollection"):
-                    scanType = "datacollection"
-                else:
-                    scanType = collection_parameters["experiment_type"]
-                workflow_params = collection_parameters.get("workflow_parameters", {})
-                workflow_type = workflow_params.get("workflow_type")
-                if workflow_type is None:
-                    if not directory.name.startswith("run"):
-                        dataset_name = fileinfo["prefix"]
+        try:
+            fileinfo = collection_parameters["fileinfo"]
+            directory = pathlib.Path(fileinfo["directory"])
+            dataset_name = directory.name
+            # Determine the scan type
+            if dataset_name.endswith("mesh"):
+                scanType = "mesh"
+            elif dataset_name.endswith("line"):
+                scanType = "line"
+            elif dataset_name.endswith("characterisation"):
+                scanType = "characterisation"
+            elif dataset_name.endswith("datacollection"):
+                scanType = "datacollection"
+            else:
+                scanType = collection_parameters["experiment_type"]
+            workflow_params = collection_parameters.get("workflow_parameters", {})
+            workflow_type = workflow_params.get("workflow_type")
+            if workflow_type is None:
+                if not directory.name.startswith("run"):
+                    dataset_name = fileinfo["prefix"]
 
-                if collection_parameters["sample_reference"]["acronym"]:
-                    sample_name = (
-                        collection_parameters["sample_reference"]["acronym"]
-                        + "-"
-                        + collection_parameters["sample_reference"]["sample_name"]
-                    )
-                else:
-                    sample_name = collection_parameters["sample_reference"][
-                        "sample_name"
-                    ].replace(":", "-")
-
-                logging.getLogger("HWR").info(f"LIMS sample name {sample_name}")
-                oscillation_sequence = collection_parameters["oscillation_sequence"][0]
-
-                distance = HWR.beamline.detector.distance.get_value()
-                proposal = f"{HWR.beamline.session.proposal_code}{HWR.beamline.session.proposal_number}"
-                metadata = {
-                    "MX_beamShape": collection_parameters["beamShape"],
-                    "MX_beamSizeAtSampleX": collection_parameters["beamSizeAtSampleX"],
-                    "MX_beamSizeAtSampleY": collection_parameters["beamSizeAtSampleY"],
-                    "MX_dataCollectionId": collection_parameters["collection_id"],
-                    "MX_detectorDistance": distance,
-                    "MX_directory": str(directory),
-                    "MX_exposureTime": oscillation_sequence["exposure_time"],
-                    "MX_flux": collection_parameters["flux"],
-                    "MX_fluxEnd": collection_parameters["flux_end"],
-                    "MX_positionName": collection_parameters["position_name"],
-                    "MX_numberOfImages": oscillation_sequence["number_of_images"],
-                    "MX_oscillationRange": oscillation_sequence["range"],
-                    "MX_oscillationStart": oscillation_sequence["start"],
-                    "MX_oscillationOverlap": oscillation_sequence["overlap"],
-                    "MX_resolution": collection_parameters["resolution"],
-                    "scanType": scanType,
-                    "MX_startImageNumber": oscillation_sequence["start_image_number"],
-                    "MX_template": fileinfo["template"],
-                    "MX_transmission": collection_parameters["transmission"],
-                    "MX_xBeam": collection_parameters["xBeam"],
-                    "MX_yBeam": collection_parameters["yBeam"],
-                    "Sample_name": sample_name,
-                    "InstrumentMonochromator_wavelength": collection_parameters[
-                        "wavelength"
-                    ],
-                    "Workflow_name": workflow_params.get("workflow_name"),
-                    "Workflow_type": workflow_params.get("workflow_type"),
-                    "Workflow_id": workflow_params.get("workflow_uid"),
-                    "MX_kappa_settings_id": workflow_params.get(
-                        "workflow_kappa_settings_id"
-                    ),
-                    "MX_characterisation_id": workflow_params.get(
-                        "workflow_characterisation_id"
-                    ),
-                    "MX_position_id": workflow_params.get("workflow_position_id"),
-                    "group_by": workflow_params.get("workflow_group_by"),
-                }
-                # Store metadata on disk
-                self.add_sample_metadata(metadata, collection_parameters)
-
-                self.add_beamline_configuration_metadata(metadata, self.beamline_config)
-
-                icat_metadata_path = pathlib.Path(directory) / "metadata.json"
-                with open(icat_metadata_path, "w") as f:
-                    f.write(json.dumps(metadata, indent=4))
-                # Create ICAT gallery
-                gallery_path = directory / "gallery"
-                gallery_path.mkdir(mode=0o755, exist_ok=True)
-                for snapshot_index in range(1, 5):
-                    key = f"xtalSnapshotFullPath{snapshot_index}"
-                    if key in collection_parameters:
-                        snapshot_path = pathlib.Path(collection_parameters[key])
-                        if snapshot_path.exists():
-                            logging.getLogger("HWR").debug(
-                                f"Copying snapshot index {snapshot_index} to gallery"
-                            )
-                            shutil.copy(snapshot_path, gallery_path)
-
-                beamline = self._get_scheduled_beamline()
-                logging.getLogger("HWR").info(
-                    f"Dataset Beamline={beamline} Current Beamline={HWR.beamline.session.beamline_name}"
+            if collection_parameters["sample_reference"]["acronym"]:
+                sample_name = (
+                    collection_parameters["sample_reference"]["acronym"]
+                    + "-"
+                    + collection_parameters["sample_reference"]["sample_name"]
                 )
-                logging.getLogger("HWR").info(f"Proposal={proposal}")
+            else:
+                sample_name = collection_parameters["sample_reference"][
+                    "sample_name"
+                ].replace(":", "-")
 
-                # __actualInstrument is a dataset parameter that indicates where the dataset has been actually collected
-                # only filled when it does not match the scheduled beamline
-                try:
-                    if (
-                        self.active_session is None
-                        or not self.active_session.is_scheduled_beamline
-                    ):
-                        metadata["__actualInstrument"] = (
-                            HWR.beamline.session.beamline_name
+            logging.getLogger("HWR").info(f"LIMS sample name {sample_name}")
+            oscillation_sequence = collection_parameters["oscillation_sequence"][0]
+
+            beamline = HWR.beamline.session.beamline_name.lower()
+            distance = HWR.beamline.detector.distance.get_value()
+            proposal = f"{HWR.beamline.session.proposal_code}{HWR.beamline.session.proposal_number}"
+            metadata = {
+                "MX_beamShape": collection_parameters["beamShape"],
+                "MX_beamSizeAtSampleX": collection_parameters["beamSizeAtSampleX"],
+                "MX_beamSizeAtSampleY": collection_parameters["beamSizeAtSampleY"],
+                "MX_dataCollectionId": collection_parameters["collection_id"],
+                "MX_detectorDistance": distance,
+                "MX_directory": str(directory),
+                "MX_exposureTime": oscillation_sequence["exposure_time"],
+                "MX_flux": collection_parameters["flux"],
+                "MX_fluxEnd": collection_parameters["flux_end"],
+                "MX_positionName": collection_parameters["position_name"],
+                "MX_numberOfImages": oscillation_sequence["number_of_images"],
+                "MX_oscillationRange": oscillation_sequence["range"],
+                "MX_oscillationStart": oscillation_sequence["start"],
+                "MX_oscillationOverlap": oscillation_sequence["overlap"],
+                "MX_resolution": collection_parameters["resolution"],
+                "scanType": scanType,
+                "MX_startImageNumber": oscillation_sequence["start_image_number"],
+                "MX_template": fileinfo["template"],
+                "MX_transmission": collection_parameters["transmission"],
+                "MX_xBeam": collection_parameters["xBeam"],
+                "MX_yBeam": collection_parameters["yBeam"],
+                "Sample_name": sample_name,
+                "InstrumentMonochromator_wavelength": collection_parameters[
+                    "wavelength"
+                ],
+                "Workflow_name": workflow_params.get("workflow_name"),
+                "Workflow_type": workflow_params.get("workflow_type"),
+                "Workflow_id": workflow_params.get("workflow_uid"),
+                "MX_kappa_settings_id": workflow_params.get(
+                    "workflow_kappa_settings_id"
+                ),
+                "MX_characterisation_id": workflow_params.get(
+                    "workflow_characterisation_id"
+                ),
+                "MX_position_id": workflow_params.get("workflow_position_id"),
+                "group_by": workflow_params.get("workflow_group_by"),
+            }
+            # Store metadata on disk
+            self.add_sample_metadata(metadata, collection_parameters)
+            self.add_beamline_configuration_metadata(metadata, self.beamline_config)
+
+            icat_metadata_path = pathlib.Path(directory) / "metadata.json"
+            with open(icat_metadata_path, "w") as f:
+                f.write(json.dumps(metadata, indent=4))
+            # Create ICAT gallery
+            gallery_path = directory / "gallery"
+            gallery_path.mkdir(mode=0o755, exist_ok=True)
+            for snapshot_index in range(1, 5):
+                key = f"xtalSnapshotFullPath{snapshot_index}"
+                if key in collection_parameters:
+                    snapshot_path = pathlib.Path(collection_parameters[key])
+                    if snapshot_path.exists():
+                        logging.getLogger("HWR").debug(
+                            f"Copying snapshot index {snapshot_index} to gallery"
                         )
-                except Exception as e:
-                    logging.getLogger("HWR").exception(e)
+                        shutil.copy(snapshot_path, gallery_path)
 
-                self.icatClient.store_dataset(
-                    beamline=beamline,
-                    proposal=proposal,
-                    dataset=dataset_name,
-                    path=str(directory),
-                    metadata=metadata,
+            beamline = self._get_scheduled_beamline()
+            logging.getLogger("HWR").info(
+                f"Dataset Beamline={beamline} Current Beamline={HWR.beamline.session.beamline_name}"
+            )
+            logging.getLogger("HWR").info(f"Proposal={proposal}")
+
+            # __actualInstrument is a dataset parameter that indicates where the dataset has been actually collected
+            # only filled when it does not match the scheduled beamline
+            try:
+                if (
+                    self.active_session is None
+                    or not self.active_session.is_scheduled_beamline
+                ):
+                    metadata["__actualInstrument"] = HWR.beamline.session.beamline_name
+            except Exception:
+                logging.getLogger("HWR").exception("")
+
+            # Ensure that the datacollection time is present
+            if "startDate" not in collection_parameters:
+                logging.getLogger("HWR").warn(
+                    "Setting ingestion time as datacollection start time. This is not optimal"
                 )
-                logging.getLogger("HWR").debug("Done uploading to ICAT")
-            except Exception as e:
-                logging.getLogger("HWR").exception(e)
+                metadata["startDate"] = time.strftime("%Y-%m-%d %H:%M:%S")
+            else:
+                metadata["startDate"] = collection_parameters["startDate"]
+
+            self.icatClient.store_dataset(
+                beamline=beamline,
+                proposal=proposal,
+                dataset=dataset_name,
+                path=str(directory),
+                metadata=metadata,
+            )
+            logging.getLogger("HWR").debug("Done uploading to ICAT")
+        except Exception as e:
+            logging.getLogger("HWR").exception("Failed uploading to ICAT")
+
+    def _get_scheduled_beamline(self):
+        """
+        This returns the beamline where the session has been scheduled (in case of a different beamline)
+        otherwise it returns the name of the beamline as set in the properties
+        """
+        active_session = self.session_manager.active_session
+
+        if active_session is None or active_session.is_scheduled_beamline:
+            return HWR.beamline.session.beamline_name.lower()
+
+        beamline = str(active_session["instrument"]["name"].lower())
+        logging.getLogger("HWR").info(
+            f"Session have been moved to another beamline: {beamline}"
+        )
+        return beamline
 
     def _get_scheduled_beamline(self):
         """

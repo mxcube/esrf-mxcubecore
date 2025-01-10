@@ -507,12 +507,11 @@ class AbstractLims(HardwareObject, abc.ABC):
             logging.getLogger("HWR").debug("User %s has been removed" % user_name)
             self.__set_sessions(self.__get_shared_sessions())
 
-    def add_user(self, user_name: str, sessions: List[Session]):
+    def add_user_and_shared_sessions(self, user_name: str, sessions: List[Session]):
         """
-        Stores the user name and the sessions in the session maanger object
-
-        Args:
-            session_id: session id
+        Stores the username and the shared sessions in the session manager object.
+        The shared sessions represent the intersection of all sessions
+        for each user currently connected.
         """
         self.session_manager.users[user_name] = LimsUser(
             user_name=user_name, sessions=sessions

@@ -145,6 +145,10 @@ class AbstractCollect(HardwareObject, object):
         """
         Actual collect sequence
         """
+
+        # Used to capture starting time of the data collection for LIMS purposes
+        self.current_dc_parameters["startDate"] = time.strftime("%Y-%m-%d %H:%M:%S")
+
         log = logging.getLogger("user_level_log")
         log.info("Collection: Preparing to collect")
         self.emit("collectReady", (False,))
