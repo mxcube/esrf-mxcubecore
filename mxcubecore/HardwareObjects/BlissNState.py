@@ -30,12 +30,11 @@ Example xml file:
 """
 from enum import Enum
 
-from mxcubecore.HardwareObjects.BlissMotor import BlissMotor
 from mxcubecore.HardwareObjects.abstract.AbstractNState import (
     AbstractNState,
     BaseValueEnum,
 )
-
+from mxcubecore.HardwareObjects.BlissMotor import BlissMotor
 
 __copyright__ = """ Copyright © 2020 by the MXCuBE collaboration """
 __license__ = "LGPLv3+"
@@ -156,7 +155,7 @@ class BlissNState(AbstractNState):
         return self.STATES.UNKNOWN
 
     def _update_state_motor(self, state):
-        """ Update the state for the motor type. """
+        """Update the state for the motor type."""
         try:
             state = BlissMotor.SPECIFIC_TO_HWR_STATE[state.upper()]
         except KeyError:
@@ -172,7 +171,10 @@ class BlissNState(AbstractNState):
             super().initialise_values()
         if self.device_type == "motor":
             try:
-                values = {val["label"].upper(): val["label"] for val in self._bliss_obj.positions_list}
+                values = {
+                    val["label"].upper(): val["label"]
+                    for val in self._bliss_obj.positions_list
+                }
                 self.VALUES = Enum(
                     "ValueEnum",
                     dict(values, **{item.name: item.value for item in BaseValueEnum}),
