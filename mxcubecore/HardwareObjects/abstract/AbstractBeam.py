@@ -256,3 +256,30 @@ class AbstractBeam(HardwareObject):
             self.emit("beamSizeChanged", (self._beam_width, self._beam_height))
             self.emit("beamInfoChanged", (self._beam_info_dict))
             self.emit("beamPosChanged", (self._beam_position_on_screen,))
+
+    @property
+    def is_beam(self):
+        """Check if there is beam.
+        Returns:
+            (bool): True if beam present, False otherwise
+        """
+        return self._is_beam()
+
+    def _is_beam(self):
+        """Specific implementation to check the presence of the beam.
+        Raises:
+            NotImplementedError.
+        """
+        return True
+
+    def wait_for_beam(self, timeout=None):
+        """Wait until beam present
+        Args:
+            timeout (float): optional - timeout [s],
+                             If timeout == 0: return at once and do not wait
+                                              (default);
+                             if timeout is None: wait forever.
+        Returns:
+            (bool): True if beam present, False otherwise
+        """
+        return True

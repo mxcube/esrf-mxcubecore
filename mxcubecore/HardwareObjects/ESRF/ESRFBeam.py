@@ -38,6 +38,11 @@ class ESRFBeam(AbstractBeam):
 
     unit = "mm"
 
+    def __init__(self, name):
+        super().__init__(name)
+        self._beam_check_obj = None
+        self._monitorbeam_obj = None
+
     def init(self):
         """Initialize hardware"""
         super().init()
@@ -48,10 +53,10 @@ class ESRFBeam(AbstractBeam):
             _definer_type.append("aperture")
 
         _slits = self.get_property("slits")
+        _bliss_obj = self.get_object_by_role("bliss")
         if _slits:
             self._slits = {}
             _definer_type.append("slits")
-            _bliss_obj = self.get_object_by_role("bliss")
             for name in _slits.split():
                 _key, _val = name.split(":")
                 self._slits.update({_key: _bliss_obj.getattribute(_val)})
@@ -79,6 +84,12 @@ class ESRFBeam(AbstractBeam):
         if self._definer:
             self._definer.connect("valueChanged", self._re_emit_values)
             self._definer.connect("stateChanged", self._re_emit_values)
+
+        self._monitorbeam_obj = self.get_object_by_role("monitor_beam")
+
+        beam_check = self.get_property("beam_check_name")
+        if beam_check and _bliss_obj:
+            self._beam_check_obj = getattr(_bliss_obj, beam_check)
 
     def _re_emit_values(self, value):
         # redefine as re_emit_values takes no arguments
@@ -313,3 +324,27 @@ class ESRFBeam(AbstractBeam):
     def get_beam_size(self):
         beam_value = self.get_value()
         return (beam_value[0], beam_value[1])
+
+    def _is_beam(self):
+        """Check if there is beam
+        Returns:
+            (bool): True if beam present, False otherwise
+        """
+        return self._beam_check_obj.is_beam()
+
+    def wait_for_beam(self, timeout=None):
+        """Wait until beam present
+        Args:
+            timeout (float): optional - timeout [s],
+                             If timeout == 0: return at once and do not wait
+                                              (default);
+                             if timeout is None: wait forever.
+        """
+        if self._monitorbeam_obj:
+            try:
+                timeout = timeout or self._beam_check_obj.timeout
+                if self._monitorbeam_obj.get_value().value:
+                    return self._beam_check_obj.wait_for_beam(timeout)
+            except AttributeError:
+                return True
+        return True
