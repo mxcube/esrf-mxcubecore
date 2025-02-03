@@ -272,6 +272,7 @@ class RootNode(TaskNode):
         TaskNode.__init__(self)
         self._name = "root"
         self._total_node_count = 0
+        self._node_id = 0
 
 
 class TaskGroup(TaskNode):
