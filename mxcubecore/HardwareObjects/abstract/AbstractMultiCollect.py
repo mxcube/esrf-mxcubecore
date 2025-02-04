@@ -580,7 +580,9 @@ class AbstractMultiCollect(object):
             logging.getLogger("user_level_log").info(
                 f"Taking sample ({self.number_of_snapshots}) snapshosts"
             )
-            self.take_snapshots(data_collect_parameters)
+            if self.number_of_snapshots:
+                self.take_snapshots(data_collect_parameters)
+
         centring_info = HWR.beamline.diffractometer.get_centring_status()
         # move *again* motors, since taking snapshots may change positions
         logging.getLogger("user_level_log").info(
