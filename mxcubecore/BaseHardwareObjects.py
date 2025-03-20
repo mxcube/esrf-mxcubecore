@@ -695,9 +695,16 @@ class HardwareObjectMixin(CommandContainer):
 
         # Add methods that are exported programatically
         for attr_name in dir(self):
-            _attr = getattr(self, attr_name)
+            # For some reason, properties defined on child classes
+            # are listable with dir, but not accessible with getattr
+            # In this case we are only intereted in methods so we can
+            # skip properties.
+            try:
+                _attr = getattr(self, attr_name)
+            except AttributeError:
+                _attr = None
 
-            if getattr(_attr, "__exported__", False):
+            if _attr is not None and getattr(_attr, "__exported__", False):
                 self._exports[attr_name] = []
 
         if self._exports:
