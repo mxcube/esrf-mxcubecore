@@ -748,4 +748,4 @@ class XMLRPCServer(HardwareObject):
         return self.gphl_workflow_status
 
     def set_rotation_axis_position(self, value: float):
-        HWR.beamline.diffractometer.set_rotation_axis_position(value, motor_name="phiy")
+        HWR.beamline.diffractometer.set_rotation_axis_position(value)
