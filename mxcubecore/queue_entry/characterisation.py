@@ -166,7 +166,8 @@ class CharacterisationQueueEntry(BaseQueueEntry):
 
                     try:
                         strategy_result = self.edna_result.getCharacterisationResult().getStrategyResult()
-                    except Exception:
+                    except Exception as ex:
+                        logging.getLogger("HWR").exception("")
                         strategy_result = None
 
                     if strategy_result:
