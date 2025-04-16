@@ -647,12 +647,9 @@ class XMLRPCServer(HardwareObject):
         """
         Centers the beam using the beamcmds hardware object.
         """
-        self.beamcmds_hwobj.centrebeam()
-        while (
-            self.beamcmds_hwobj.centrebeam._cmd_execution
-            and not self.beamcmds_hwobj.centrebeam._cmd_execution.ready()
-        ):
-            time.sleep(1)
+        # hardcoded for time being
+        actions = HWR.beamline.beamline_actions.get_object_by_role("controller")
+        getattr(actions, "centrebeam")()
 
     def _register_module_functions(self, module_name, recurse=True, prefix=""):
         log = logging.getLogger("HWR")
