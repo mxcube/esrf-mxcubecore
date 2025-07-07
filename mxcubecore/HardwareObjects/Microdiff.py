@@ -472,14 +472,21 @@ class Microdiff(MiniDiff.MiniDiff):
 
     def set_phase(self, phase, wait=False, timeout=None):
         """Set the phase"""
-        _use_custom = self.get_property("use_custom_phase_script", False)
         if not self._ready():
             logging.getLogger("HWR").exception("MD not ready - phase not set.")
             return
 
         current_phase = self.get_current_phase()
+        # do not change phase if not necessary to save time
+        if phase in current_phase:
+            msg = f"Current phase is already {phase}, not changing"
+            logging.getLogger("user_level_log").info(msg)
+            return
+
         msg = f"Current phase is {current_phase} and moving to {phase}"
         logging.getLogger("user_level_log").info(msg)
+
+        _use_custom = self.get_property("use_custom_phase_script", False)
 
         if phase in self.phases:
             if phase in ["BeamLocation", "Transfer"]:
@@ -622,7 +629,7 @@ class Microdiff(MiniDiff.MiniDiff):
         self.scan_detector_gate_pulse_readout_time.set_value(dead_time * 1000)
         self.move_motors(mesh_center.as_dict())
         positions = self.get_positions()
-
+        
         params = "%0.3f\t" % (end - start)
         params += "%0.3f\t" % -mesh_range["horizontal_range"]
         params += "%0.3f\t" % mesh_range["vertical_range"]
