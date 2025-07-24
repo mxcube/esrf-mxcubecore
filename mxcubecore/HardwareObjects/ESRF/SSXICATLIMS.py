@@ -52,17 +52,23 @@ class SSXICATLIMS(ICATLIMS):
             data.update(collection_parameters.user_collection_parameters.dict())
             data.update(collection_parameters.collection_parameters.dict())
 
+            # Round float values to 3 decimal places
+            rounded_data = {
+                key: round(value, 3) if isinstance(value, float) else value
+                for key, value in data.items()
+            }
+
             self.icatClient.store_dataset(
                 beamline="ID29",
                 proposal=f"{HWR.beamline.session.proposal_code}{HWR.beamline.session.proposal_number}",
                 dataset=collection_parameters.path_parameters.prefix,
                 path=data_path,
-                metadata=data,
+                metadata=rounded_data,
             )
 
             icat_metadata_path = pathlib.Path(data_path) / "metadata.json"
             with open(icat_metadata_path, "w") as f:
-                f.write(json.dumps(data, indent=4))
+                f.write(json.dumps(rounded_data, indent=4))
                 logging.getLogger("HWR").info(f"Wrote {icat_metadata_path}")
 
         except Exception as e:
