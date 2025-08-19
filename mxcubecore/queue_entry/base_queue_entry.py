@@ -871,8 +871,7 @@ def mount_sample(data_model, centring_done_cb, async_result):
                 elif centring_method == CENTRING_METHOD.LOOP:
                     sview.start_auto_centring()
                     log.warning(
-                        "Centring in progress. Please save"
-                        + " the suggested centring or re-center"
+                        "Centring sample, please wait"
                     )
                 elif centring_method == CENTRING_METHOD.FULLY_AUTOMATIC:
                     log.info("Centring sample, please wait.")
