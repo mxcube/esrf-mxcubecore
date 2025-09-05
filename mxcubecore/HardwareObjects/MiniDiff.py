@@ -252,7 +252,7 @@ class MiniDiff(HardwareObject):
         logging.getLogger("HWR").info(
             f"Setting rotation axis ({motor_name}) position to {value}"
         )
-
+        fname = None
         try:
             fname = self.get_xml_path()
             logging.getLogger("HWR").info(f"Updating {fname}")
@@ -265,7 +265,7 @@ class MiniDiff(HardwareObject):
             )
             motor_tag.text = str(value)
             tree.write(fname)
-        except:
+        except Exception:
             logging.getLogger("HWR").info(f"Could not update {fname}")
             # raise
         else:
@@ -620,7 +620,7 @@ class MiniDiff(HardwareObject):
         else:
             try:
                 fun(sample_info)
-            except Exception:
+            except Exception as ex:
                 logging.getLogger("HWR").exception("MiniDiff: problem while centring")
                 self.emitCentringFailed()
 
@@ -841,8 +841,8 @@ class MiniDiff(HardwareObject):
 
         try:
             res = auto_centring_procedure.get()
-        except Exception:
-            logging.error("Could not complete automatic centring")
+        except Exception as ex:
+            logging.exception("Could not complete automatic centring")
             logging.getLogger("user_level_log").info("Automatic loop centring failed")
             self.emitCentringFailed()
             self.reject_centring()
