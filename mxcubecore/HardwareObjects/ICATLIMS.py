@@ -43,6 +43,7 @@ class ICATLIMS(AbstractLims):
         self.url = self.get_property("ws_root")
         self.ingesters = self.get_property("queue_urls")
         self.investigations = []
+        self.samples = []
 
         # Initialize ICAT client
         self.icatClient = IcatClient(
