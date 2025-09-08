@@ -105,6 +105,9 @@ class AbstractMultiCollect(object):
     def data_collection_end_hook(self, data_collect_parameters):
         pass
 
+    def _bliss_data_collection_hook(self, data_collect_parameters):
+        pass
+
     @abc.abstractmethod
     @task
     def close_fast_shutter(self):
@@ -488,6 +491,9 @@ class AbstractMultiCollect(object):
         logging.getLogger("user_level_log").info(
             "Creating directory for images and processing"
         )
+
+        self._bliss_data_collection_hook(data_collect_parameters)
+        
         self.create_directories(
             file_parameters["directory"], file_parameters["process_directory"]
         )
@@ -846,7 +852,7 @@ class AbstractMultiCollect(object):
 
                     und = self.get_undulators_gaps()
                     i = 1
-                    for jj in self.bl_config.undulators:
+                    for jj in HWR.beamline.undulators:
                         key = jj.type
                         if key in und:
                             data_collect_parameters["undulatorGap%d" % (i)] = und[key]
@@ -1074,6 +1080,7 @@ class AbstractMultiCollect(object):
             # Bug fix for MD2/3(UP): diffractometer still has things to do even after the last frame is taken (decelerate motors and
             # possibly download diagnostics) so we cannot trigger the cleanup (that will send an abort on the diffractometer) as soon as
             # the last frame is counted
+
             self.diffractometer().wait_ready(1000)
 
         # data collection done
@@ -1089,6 +1096,7 @@ class AbstractMultiCollect(object):
             self.emit("collectReady", (False,))
             self.emit("collectStarted", (owner, 1))
             for data_collect_parameters in data_collect_parameters_list:
+                logging.getLogger("user_level_log").info("DN logging in loop for AbstractMuliCollect")
                 logging.debug("collect parameters = %r", data_collect_parameters)
                 failed = False
                 try:
