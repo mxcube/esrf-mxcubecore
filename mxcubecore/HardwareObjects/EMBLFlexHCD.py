@@ -231,9 +231,9 @@ class EMBLFlexHCD(SampleChanger):
                     present_sample_list.append(sample)
                     break  # stop inner loop once matched
 
-        self.user_log.info(
-            "Loaded %d samples from Flex Sample Changer", len(present_sample_list)
-        )
+        #self.user_log.info(
+        #    "Loaded %d samples from Flex Sample Changer", len(present_sample_list)
+        #)
         return present_sample_list
 
     @task
