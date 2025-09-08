@@ -20,6 +20,7 @@ class ESRFMultiCollect(AbstractMultiCollect, HardwareObject):
         self._metadataClient = None
         self.__mesh_steps = None
         self._mesh_range = None
+        self._detector = None
 
     @property
     def _mesh_steps(self):
@@ -147,7 +148,7 @@ class ESRFMultiCollect(AbstractMultiCollect, HardwareObject):
                     start, end, exptime, number_of_images, wait=False
                 )
 
-            if self.oscillation_task.ready():
+            if self.oscillation_task and self.oscillation_task.ready():
                 self.oscillation_task.get()
         else:
             self.oscil(start, end, exptime, number_of_images)
@@ -309,6 +310,7 @@ class ESRFMultiCollect(AbstractMultiCollect, HardwareObject):
         return self._detector.stop_acquisition()
 
     def reset_detector(self):
+        raise BaseException("Problem with detector, aborting ...")
         return self._detector.reset()
 
     def prepare_input_files(
