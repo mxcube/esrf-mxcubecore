@@ -257,25 +257,25 @@ class AbstractMultiCollect(object):
         sample_info = parameters.get("sample_reference")
         try:
             sample_id = int(sample_info["blSampleId"])
-        except Exception:
+        except KeyError:
             sample_id = None
 
         try:
             sample_code = sample_info["code"]
-        except Exception:
+        except KeyError:
             sample_code = None
 
         sample_location = None
 
         try:
             sample_container_number = int(sample_info["container_reference"])
-        except Exception:
-            logging.getLogger("HWR").exception("")
+        except KeyError:
+            pass
         else:
             try:
                 vial_number = int(sample_info["sample_location"])
-            except Exception:
-                logging.getLogger("HWR").exception("")
+            except KeyError:
+                pass
             else:
                 sample_location = (sample_container_number, vial_number)
 

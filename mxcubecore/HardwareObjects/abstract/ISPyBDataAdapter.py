@@ -58,6 +58,8 @@ def utf_decode(res_d):
             utf_decode(value)
         try:
             res_d[key] = value.decode("utf8", "ignore")
+        except AttributeError:
+            pass
         except Exception:
             logging.getLogger("HWR").exception("")
 
