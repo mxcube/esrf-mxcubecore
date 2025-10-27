@@ -18,11 +18,9 @@ class MD2MultiCollect(ESRFMultiCollect):
         ESRFMultiCollect.data_collection_hook(self, data_collect_parameters)
         self._detector.shutterless = data_collect_parameters["shutterless"]
 
-        try:
+        if hasattr(HWR.beamline.sample_changer, "get_crystal_id"):
             comment = HWR.beamline.sample_changer.get_crystal_id()
             data_collect_parameters["comment"] = comment
-        except Exception:
-            self.log.exception("")
 
     @task
     def get_beam_size(self):
