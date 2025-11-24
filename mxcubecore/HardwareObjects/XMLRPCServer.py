@@ -172,6 +172,9 @@ class XMLRPCServer(HardwareObject):
 
         self._server.register_function(self.set_rotation_axis_position)
 
+        self._server.register_function(self.get_current_cd_crystal_id)
+        
+
         # Register functions from modules specified in <apis> element
         apis = self.get_property("apis", {})
         for api in apis.get("api"):
@@ -738,3 +741,6 @@ class XMLRPCServer(HardwareObject):
         """
         actions = HWR.beamline.beamline_actions.get_object_by_role("controller")
         actions.centrebeam()
+
+    def get_current_cd_crystal_id(self):
+        return HWR.beamline.harvester.get_current_crystal_id()
