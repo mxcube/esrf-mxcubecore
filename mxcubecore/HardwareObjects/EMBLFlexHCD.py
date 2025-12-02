@@ -214,7 +214,9 @@ class EMBLFlexHCD(SampleChanger):
                     cell, puck, puck_type, puck_barcode, well, sample_barcode, state = [
                         p.strip() for p in entry.split(",")
                     ]
+
                     state = "in_puck" if state == "on_gonio" else state
+
                 except ValueError:
                     self.log.warning("Skipping unexpected sample entry: %s", entry)
                     continue
