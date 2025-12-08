@@ -19,6 +19,7 @@ class Sample(Component):
     __IMAGE_X_PROPERTY__ = "X"
     __IMAGE_Y_PROPERTY__ = "Y"
     __INFO_URL_PROPERTY__ = "Info"
+    __STATE_PROPERTY__ = "state"
 
     def __init__(self, container, address, scannable):
         super(Sample, self).__init__(container, address, scannable)
@@ -124,6 +125,12 @@ class Sample(Component):
 
     def get_info_url(self):
         return self.get_property(self.__INFO_URL_PROPERTY__)
+
+    def set_state(self, value):
+        self._set_property(self.__STATE_PROPERTY__, value)
+
+    def get_state(self):
+        return self.get_property(self.__STATE_PROPERTY__)
 
     #########################           PROTECTED           #########################
 

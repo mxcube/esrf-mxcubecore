@@ -224,19 +224,23 @@ class EMBLFlexHCD(SampleChanger):
                 sample_addr = f"{cell}:{puck}:{int(well):02d}"
                 if sample.get_address() == sample_addr:
                     # Add extra info directly into the sample object
-                    sample.container_info = {
+                    container_info = {
                         "puck_barcode": puck_barcode,
                         "sample_barcode": sample_barcode,
                         "state": state,
                         "puck_type": puck_type,
                     }
 
+                    if sample.container_info != container_info:
+                        sample.container_info = container_info
+                        self._set_dirty()
+
                     present_sample_list.append(sample)
                     break  # stop inner loop once matched
 
-        #self.user_log.info(
+        # self.user_log.info(
         #    "Loaded %d samples from Flex Sample Changer", len(present_sample_list)
-        #)
+        # )
         return present_sample_list
 
     @task
@@ -733,8 +737,6 @@ class EMBLFlexHCD(SampleChanger):
                 self._set_selected_sample(samp)
             else:
                 samp._set_loaded(False)
-
-        self._set_selected_sample(None)
 
     def prepare_hutch(self, **kwargs):
         return

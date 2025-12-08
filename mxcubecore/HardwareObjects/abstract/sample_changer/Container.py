@@ -44,6 +44,7 @@ class Container(Component):
         Returns the list of all Sample objects under of this container (recursively)
         :rtype: list
         """
+        print("Container.get_sample_list called")
         samples = []
         for c in self.get_components():
             if isinstance(c, Sample):

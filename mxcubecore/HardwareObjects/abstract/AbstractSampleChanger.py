@@ -393,6 +393,9 @@ class SampleChanger(Container, HardwareObject):
             "status": self._get_status(element),
             "id": self._get_id(element),
             "selected": element.is_selected(),
+            "container_info": (
+                element.container_info if hasattr(element, "container_info") else {}
+            ),
         }
 
         parent.setdefault("children", []).append(new_element)
@@ -925,6 +928,10 @@ class SampleChanger(Container, HardwareObject):
             Container._set_selected_component(self, component)
             self._trigger_selection_changed_event()
 
+    def _update_sample_info(self, sample, info):
+
+        self._trigger_sample_info_changed_event(sample, info)
+
     def trigger_progress_message(self, message: str):
         self.emit(self.PROGRESS_MESSAGE, (message,))
 
@@ -944,6 +951,9 @@ class SampleChanger(Container, HardwareObject):
 
     def _trigger_info_changed_event(self):
         self.emit(self.INFO_CHANGED_EVENT, ())
+
+    def _trigger_sample_info_changed_event(self, sample, info):
+        self.emit(self.INFO_CHANGED_EVENT, (sample, info))
 
     def _trigger_task_finished_event(self, task, ret, exception):
         self.emit(self.TASK_FINISHED_EVENT, (task, ret, exception))
