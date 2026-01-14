@@ -308,7 +308,7 @@ class Microdiff(MiniDiff.MiniDiff):
             {
                 "type": "exporter",
                 "exporter_address": self.exporter_addr,
-                "name": "get_last_task_info",
+                "name": "getLastTaskInfo",
             },
             "getLastTaskInfo",
         )
