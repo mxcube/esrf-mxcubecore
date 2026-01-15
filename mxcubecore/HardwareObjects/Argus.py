@@ -8,13 +8,17 @@ from threading import Thread
 from time import sleep
 from uuid import uuid1
 
-import argussight.grpc.argus_service_pb2 as pb2
-import argussight.grpc.argus_service_pb2_grpc as pb2_grpc
-import grpc
-from argussight.grpc.helper_functions import (
-    pack_to_any,
-    unpack_from_any,
-)
+try:
+    import argussight.grpc.argus_service_pb2 as pb2
+    import argussight.grpc.argus_service_pb2_grpc as pb2_grpc
+
+    import grpc
+    from argussight.grpc.helper_functions import (
+        pack_to_any,
+        unpack_from_any,
+    )
+except ImportError:
+    pass
 
 from mxcubecore.BaseHardwareObjects import HardwareObject
 
