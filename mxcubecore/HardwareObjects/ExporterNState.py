@@ -59,6 +59,7 @@ class ExporterNState(AbstractNState):
         self.value_channel = None
         self.state_channel = None
         self.use_value_as_state = None
+        self._disabled = False
 
     def init(self):
         """Initialise the device"""
@@ -93,6 +94,12 @@ class ExporterNState(AbstractNState):
 
         self.state_channel.connect_signal("update", self._update_state)
         self.update_state()
+
+    def disable(self):
+        self._disabled = True
+
+    def enable(self):
+        self._disabled = False
 
     def _wait_hardware(self, value, timeout=None):
         """Wait timeout seconds till hardware in place.
@@ -165,11 +172,7 @@ class ExporterNState(AbstractNState):
         # moving backlight IN during data collection
         value_channel_name = self.get_property("value_channel_name")
 
-        if (
-            value_channel_name == "BackLightIsOn"
-            and HWR.beamline.diffractometer.get_current_phase() == "DataCollection"
-            and value == self.VALUES.IN
-        ):
+        if self._disabled:
             logging.getLogger("user_level_log").exception(
                 (
                     "MicroDiff: MXCuBE Soft interlock, cannot move backlight while in"
