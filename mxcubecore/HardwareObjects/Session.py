@@ -33,7 +33,7 @@ class Session(HardwareObject):
         self.base_directory = None
         self.base_process_directory = None
         self.base_archive_directory = None
-        self._endstation_name : str = ""
+        self._endstation_name: str = ""
 
         self.raw_data_folder_name = default_raw_data_folder
         self.processed_data_folder_name = default_processed_data_folder
@@ -50,7 +50,7 @@ class Session(HardwareObject):
     def endstation_name(self) -> str:
         return self._endstation_name
 
-    def set_endstation_name(self, name) -> None:
+    def set_endstation_name(self, name: str) -> None:
         self.log.info(f"Setting end-station name to {name}")
         self._endstation_name = name
 
