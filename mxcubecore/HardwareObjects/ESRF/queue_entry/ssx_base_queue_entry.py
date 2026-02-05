@@ -14,6 +14,7 @@ from pydantic import (
 from typing_extensions import (
     Literal,
     Optional,
+    Union,
 )
 
 from ewoksjob.client import submit
@@ -55,7 +56,7 @@ class SsxBaseQueueTaskParameters(BaseModel):
     common_parameters: CommonCollectionParamters
     collection_parameters: StandardCollectionParameters
     legacy_parameters: LegacyParameters
-    lims_parameters: Optional[ISPYBCollectionParameters]
+    lims_parameters: Union[ISPYBCollectionParameters, None]
 
     def update_dependent_fields(field_data):
         return {}
@@ -624,5 +625,7 @@ class SsxBaseQueueEntry(BaseQueueEntry):
                 "chip_model": "",
                 "polarisation": 0.99,
                 "mono_stripe": "PdB4C",
+                "number_of_rows": 20,
+                "number_of_columns": 20,
             }
         )

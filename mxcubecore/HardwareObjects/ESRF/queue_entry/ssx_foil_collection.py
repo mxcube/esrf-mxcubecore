@@ -22,8 +22,8 @@ __category__ = "General"
 
 class SSXUserCollectionParameters(BaseUserCollectionParameters):
     num_images: int = Field(0, description="")
-    horizontal_spacing: float = Field(20, gt=0, lt=1000, description="um")
-    vertical_spacing: float = Field(20, gt=0, lt=1000, description="um")
+    horizontal_spacing: float = Field(20, gt=0, lt=1000, unit="um")
+    vertical_spacing: float = Field(20, gt=0, lt=1000, unit="um")
     use_current_focus: bool = Field(False, description="")
 
     _chip_name_tuple = tuple(
