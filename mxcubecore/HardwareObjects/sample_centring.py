@@ -243,7 +243,9 @@ def centre_plate1Click(
 
         # while i < n_points and (dx > 3 or dy > 3) :
         # NBNB is this temporary or permanent?
-        while True:  # it is now a while true loop that can be interrupted at any time by the save button, to allow user to have a 1 click centring as precise as he wants (see HutchMenuBrick)
+        while (
+            True
+        ):  # it is now a while true loop that can be interrupted at any time by the save button, to allow user to have a 1 click centring as precise as he wants (see HutchMenuBrick)
             USER_CLICKED_EVENT = gevent.event.AsyncResult()
             try:
                 x, y = USER_CLICKED_EVENT.get()
@@ -263,10 +265,14 @@ def centre_plate1Click(
             # Alterning between phi min and omega max to gradually converge to the
             # centring point
             if i % 2 == 0:
-                omega_min = omega.get_value()  # in case the omega range sent us to a position where sample is invisible, if user moves omega, this modifications is saved for future moves
+                omega_min = (
+                    omega.get_value()
+                )  # in case the omega range sent us to a position where sample is invisible, if user moves omega, this modifications is saved for future moves
                 omega.set_value(omega_max)
             else:
-                omega_max = omega.get_value()  # in case the omega range sent us to a position where sample is invisible, if user moves omega, this modifications is saved for future moves
+                omega_max = (
+                    omega.get_value()
+                )  # in case the omega range sent us to a position where sample is invisible, if user moves omega, this modifications is saved for future moves
                 omega.set_value(omega_min)
 
             READY_FOR_NEXT_POINT.set()
