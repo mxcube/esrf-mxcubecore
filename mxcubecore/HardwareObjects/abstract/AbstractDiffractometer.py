@@ -70,7 +70,6 @@ from pydantic.v1 import BaseModel, Field, ValidationError
 from mxcubecore.BaseHardwareObjects import HardwareObject, HardwareObjectState
 from mxcubecore import HardwareRepository as HWR
 
-
 __copyright__ = """ Copyright © by the MXCuBE collaboration """
 __license__ = "LGPLv3+"
 
@@ -217,6 +216,7 @@ class AbstractDiffractometer(HardwareObject):
         """Initialise username property.
         Initialise the equipment, defined in the configuration file
         """
+        super().init()
         self.username = self.get_property("username") or self.username
 
         # motors
