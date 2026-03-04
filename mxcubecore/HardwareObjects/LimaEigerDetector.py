@@ -9,6 +9,8 @@ import time
 
 import gevent
 
+from pathlib import Path
+
 from mxcubecore import HardwareRepository as HWR
 from mxcubecore.HardwareObjects.abstract.AbstractDetector import AbstractDetector
 from mxcubecore.model.queue_model_objects import PathTemplate
@@ -19,6 +21,7 @@ class LimaEigerDetector(AbstractDetector):
     def __init__(self, name):
         AbstractDetector.__init__(self, name)
         self.binning_mode = 1
+        self._monitor_acquisition_greenlet = None
 
     def init(self):
         AbstractDetector.init(self)
@@ -241,12 +244,40 @@ class LimaEigerDetector(AbstractDetector):
         self.get_channel_object("saving_suffix").set_value(suffix)
         self.get_channel_object("saving_format").set_value("HDF5")
 
+    def _monitor_acquisition(self, exptime, number_of_images):
+        exptime = (self.get_channel_object("acq_expo_time").get_value(),)
+        number_of_images = (self.get_channel_object("acq_nb_frames").get_value(),)
+        images_per_file = self.get_channel_object("saving_frame_per_file").get_value()
+        nfiles = int(math.ceil(number_of_images / images_per_file))
+
+        dirname = self.get_channel_object("saving_directory").get_value()
+        prefix = self.get_channel_object("saving_prefix").get_value()
+
+        for i in range(nfiles):
+            fpath = Path(dirname) / f"{prefix}_data_{i:06d}.h5"
+
+            if fpath.exists():
+                continue  # skip already-written files
+
+            while not fpath.exists():
+                time.sleep(exptime * images_per_file)
+
+            self.log.info("File %s written", fpath)
+            self.emit("progress", (i + 1) / nfiles * 100)
+
+        self.emit("progress", 100)
+
     def start_acquisition(self):
         self.wait_ready()
         logging.getLogger("user_level_log").info("Preparing acquisition.")
         self.get_command_object("prepare_acq")()
         logging.getLogger("user_level_log").info("Detector ready, continuing")
         self.get_command_object("start_acq")()
+
+        if self._monitor_acquisition_greenlet:
+            self._monitor_acquisition_greenlet.kill()
+
+        self._monitor_acquisition_greenlet = gevent.spawn(self._monitor_acquisition)
 
     def stop_acquisition(self):
         self.update_state(self.STATES.BUSY)
@@ -259,6 +290,9 @@ class LimaEigerDetector(AbstractDetector):
         self.get_command_object("reset")()
         self.wait_ready()
         self.update_state(self.STATES.READY)
+
+        if self._monitor_acquisition_greenlet:
+            self._monitor_acquisition_greenlet.kill()
 
     def reset(self):
         self.stop_acquisition()
@@ -282,8 +316,7 @@ class LimaEigerDetector(AbstractDetector):
         pass
 
     def get_image_file_name(self, pt, suffix=None):
-        pt.precision = 1
-        template = "%s_%s_%%" + str(pt.precision) + "d_master.%s"
+        template = "%s_%s_1_master.%s"
 
         if suffix:
             file_name = template % (pt.get_prefix(), pt.run_number, suffix)
