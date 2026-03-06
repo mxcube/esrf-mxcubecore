@@ -362,10 +362,28 @@ class SampleView(AbstractSampleView):
         self.current_centring_method = "Automatic"
         self.emit("centringStarted", ("Automatic"))
         diffr = HWR.beamline.diffractometer
+        self.wait_status_ready(60)
         diffr.run_custom_script("sample_centering")
         diffr.wait_status_ready()
-        self.centring_done()
-        self.accept_centring()
+
+        # if the centering fails move to the next sample
+        try:
+            res_centering = self.get_last_task_info()
+            if (
+                    res_centering[0].endswith("sample_centering.java")
+                    and res_centering[6] == "-1"
+            ):
+                self.log.exception("MiniDiff: problem while centring")
+                self.centring_failed()
+            else:
+                self.log.info(
+                    "MiniDiff: centring went fine with %s" % str(res_centering)
+                )
+                self.centring_done()
+                self.accept_centring()
+        except:
+             self.log.exception("MD script for sample centering had a problem")
+
 
     def start_auto_centring(self):
         """Start automatic centring procedure"""
@@ -480,16 +498,19 @@ class SampleView(AbstractSampleView):
            image_path_list: List of file name(s) to save the snapshot(s}
                             (full path).
         """
+
         if len(image_path_list) > 0:
             diffr = HWR.beamline.diffractometer
             phase = diffr.get_phase_enum.CENTRE
             if diffr.get_phase() != phase:
                 use_custom_snapshot_routine = (
-                    self.get_property("custom_snapshot_script_dir") or False
+                    diffr.get_property("custom_snapshot_script_dir") or False
                 )
 
-                if not use_custom_snapshot_routine:
-                    diffr.set_phase(phase)
+                #if not use_custom_snapshot_routine:
+                diffr.set_phase(phase)
+
+        HWR.beamline.diffractometer.wait_status_ready()
 
         for image_path in image_path_list:
             snapshot_index = image_path_list.index(image_path)
@@ -498,8 +519,10 @@ class SampleView(AbstractSampleView):
 
             self.save_snapshot(filename=image_path)
             # do not move 90 degrees if not needed
-            if not diffr.in_plate_mode and snapshot_index < len(image_path_list) - 1:
-                diffr.omega.set_value_relative(90, timeout=200)
+            if not HWR.beamline.diffractometer.in_plate_mode and \
+               snapshot_index < len(image_path_list) - 1:
+                HWR.beamline.diffractometer.omega.set_value_relative(90, timeout=200)
+
 
     def save_snapshot(
         self,
