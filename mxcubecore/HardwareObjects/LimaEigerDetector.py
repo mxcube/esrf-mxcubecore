@@ -244,28 +244,28 @@ class LimaEigerDetector(AbstractDetector):
         self.get_channel_object("saving_suffix").set_value(suffix)
         self.get_channel_object("saving_format").set_value("HDF5")
 
-    def _monitor_acquisition(self, exptime, number_of_images):
-        exptime = (self.get_channel_object("acq_expo_time").get_value(),)
-        number_of_images = (self.get_channel_object("acq_nb_frames").get_value(),)
+    def _monitor_acquisition(self):
+        exptime = self.get_channel_object("acq_expo_time").get_value()
+        number_of_images = self.get_channel_object("acq_nb_frames").get_value()
         images_per_file = self.get_channel_object("saving_frame_per_file").get_value()
         nfiles = int(math.ceil(number_of_images / images_per_file))
 
         dirname = self.get_channel_object("saving_directory").get_value()
         prefix = self.get_channel_object("saving_prefix").get_value()
 
-        for i in range(nfiles):
-            fpath = Path(dirname) / f"{prefix}_data_{i:06d}.h5"
+        saved = []
 
-            if fpath.exists():
-                continue  # skip already-written files
+        for i in range(1, nfiles+1):
+            fpath = Path(dirname) / f"{prefix}_data_{i:06d}.h5"
 
             while not fpath.exists():
                 time.sleep(exptime * images_per_file)
 
-            self.log.info("File %s written", fpath)
-            self.emit("progress", (i + 1) / nfiles * 100)
+            self.log.info(f"File {fpath} written")
+            self.emit("progress", i / nfiles)
+            self.log.info("Progress %s", i / nfiles)
 
-        self.emit("progress", 100)
+        self.emit("progress", 1)
 
     def start_acquisition(self):
         self.wait_ready()
@@ -277,7 +277,9 @@ class LimaEigerDetector(AbstractDetector):
         if self._monitor_acquisition_greenlet:
             self._monitor_acquisition_greenlet.kill()
 
-        self._monitor_acquisition_greenlet = gevent.spawn(self._monitor_acquisition)
+        self._monitor_acquisition_greenlet = gevent.spawn(
+            self._monitor_acquisition
+        )
 
     def stop_acquisition(self):
         self.update_state(self.STATES.BUSY)
@@ -293,6 +295,10 @@ class LimaEigerDetector(AbstractDetector):
 
         if self._monitor_acquisition_greenlet:
             self._monitor_acquisition_greenlet.kill()
+            self.log.info(
+                "Monitor acqusition greenlet killed before completion"
+            )
+            self.emit("progress", 1)
 
     def reset(self):
         self.stop_acquisition()
@@ -316,7 +322,8 @@ class LimaEigerDetector(AbstractDetector):
         pass
 
     def get_image_file_name(self, pt, suffix=None):
-        template = "%s_%s_1_master.%s"
+        pt.precision = 1
+        template = "%s_%s_%%" + str(pt.precision) + "d_master.%s"
 
         if suffix:
             file_name = template % (pt.get_prefix(), pt.run_number, suffix)
