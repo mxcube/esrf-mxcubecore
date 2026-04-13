@@ -27,7 +27,7 @@ from mxcubecore.model.common import (
     PathParameters,
     StandardCollectionParameters,
 )
-from mxcubecore.queue_entry.base_queue_entry import BaseQueueEntry
+from mxcubecore.queue_entry.base_queue_entry import BaseQueueEntry, BaseMXModel
 
 DEFAULT_MAX_FREQ = 925
 
@@ -38,7 +38,7 @@ class SSXPathParameters(PathParameters):
     )
 
 
-class BaseUserCollectionParameters(BaseModel):
+class BaseUserCollectionParameters(BaseMXModel):
     exp_time: float = Field(75e-6, gt=0, lt=1, unit="s")
     sub_sampling: Literal[1, 2, 4, 6, 8] = Field(1)
     take_pedestal: bool = Field(True)

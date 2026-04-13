@@ -17,7 +17,7 @@ class CommonCollectionParamters(BaseModel):
 class PathParameters(BaseModel):
     prefix: str
     subdir: str
-    experiment_name: Optional[str]
+    experiment_name: Optional[str] = ""
 
     class Config:
         extra = "ignore"

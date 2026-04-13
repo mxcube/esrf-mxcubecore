@@ -5,6 +5,8 @@ from pydantic import (
     Field,
 )
 
+from devtools import debug
+
 from mxcubecore.model.common import (
     CommonCollectionParamters,
     LegacyParameters,
@@ -12,16 +14,20 @@ from mxcubecore.model.common import (
     StandardCollectionParameters,
 )
 from mxcubecore.model.queue_model_objects import DataCollection
-from mxcubecore.queue_entry.base_queue_entry import BaseQueueEntry, TaskPrerequisite
+from mxcubecore.queue_entry.base_queue_entry import BaseQueueEntry, TaskPrerequisite, BaseMXModel
 
 __credits__ = ["MXCuBE collaboration"]
 __license__ = "LGPLv3+"
 __category__ = "General"
 
 
-class TestUserCollectionParameters(BaseModel):
-    num_images: int = Field(0, description="")
+
+
+class TestUserCollectionParameters(BaseMXModel):
+    num_images: int = Field(20, description="")
     exp_time: float = Field(100e-6, gt=0, lt=1, unit="s")
+    total_time: float = Field(100e-6, gt=0, lt=1, unit="s")
+
     cell_a: float = Field(0.0, title="Cell A")
     cell_b: float = Field(0.0, title="Cell B")
     cell_c: float = Field(0.0, title="Cell C")
@@ -42,7 +48,10 @@ class TestCollectionTaskParameters(BaseModel):
 
     @staticmethod
     def update_dependent_fields(field_data):
-        return {}
+        exp_time = field_data.get("exp_time", 0)
+        num_images = field_data.get("num_images", 0)
+        new_data = {"total_time": num_images * exp_time}
+        return new_data
 
     @staticmethod
     def ui_schema():
@@ -57,6 +66,8 @@ class TestCollectionTaskParameters(BaseModel):
                 "cell_alpha": processing_ui_options,
                 "cell_beta": processing_ui_options,
                 "cell_gamma": processing_ui_options,
+                "total_time": {"ui:readonly": "true"},
+                "required": ["num_images"]
             }
         )
 
@@ -83,6 +94,10 @@ class TestCollectionQueueEntry(BaseQueueEntry):
 
     def __init__(self, view, data_model: TestCollectionQueueModel):
         super().__init__(view=view, data_model=data_model)
+
+        import pdb
+        pdb.set_trace()
+        debug(self._data_model._task_data)
 
     def execute(self):
         super().execute()
