@@ -33,6 +33,10 @@ if find_spec("esrf_ontologies"):
     from esrf_ontologies import technique
 
 
+if find_spec("esrf_ontologies"):
+    from esrf_ontologies import technique
+
+
 logger = logging.getLogger("HWR")
 
 # Attribute names read off the beamline_config object in
@@ -235,6 +239,13 @@ class DataCollectionMetadataGatherer:
         params = params.finalize()
         metadata = params.to_icat_dict()
         metadata.update(extra)
+
+        # ontologies
+        try:
+            tech = technique.get_technique_metadata("MX", "SAD")
+            metadata.update(tech.get_dataset_metadata())
+        except (NameError, TypeError):
+            logger.warning("No technique added to the metadata")
 
         # metadata.json is a superset of what's sent to ICAT - it additionally
         # includes the experiment/processing plan and a few identifying
