@@ -3,6 +3,7 @@ import logging
 import shutil
 from collections import defaultdict
 from datetime import datetime, timedelta
+from importlib.util import find_spec
 from pathlib import Path
 from typing import Any, List, Optional
 from zoneinfo import ZoneInfo
@@ -22,6 +23,10 @@ from mxcubecore.model.lims_session import (
     SampleSheet,
     Session,
 )
+
+if find_spec("esrf_ontologies"):
+    from esrf_ontologies import technique
+
 
 logger = logging.getLogger("HWR")
 
@@ -1025,6 +1030,13 @@ class ICATLIMS(AbstractLims):
                 }
             )
 
+            # ontologies
+            try:
+                tech = technique.get_technique_metadata("MX", "MAD")
+                metadata.update(tech.get_dataset_metadata())
+            except (NameError, TypeError):
+                self.log.warning("No technique added to the metadata")
+
             self.icatClient.store_dataset(
                 beamline=beamline,
                 proposal=proposal,
@@ -1083,6 +1095,13 @@ class ICATLIMS(AbstractLims):
                     "MX_exposureTime": xfespectrum_dict.get("exposureTime"),
                 }
             )
+
+            # ontologies
+            try:
+                tech = technique.get_technique_metadata("MX", "XRF")
+                metadata.update(tech.get_dataset_metadata())
+            except (NameError, TypeError):
+                self.log.warning("No technique added to the metadata")
 
             self.icatClient.store_dataset(
                 beamline=beamline,
@@ -1245,14 +1264,16 @@ class ICATLIMS(AbstractLims):
             proposal = f"{HWR.beamline.session.proposal_code}"
             proposal += f"{HWR.beamline.session.proposal_number}"
 
-            diffractometer_hwobj = HWR.beamline.diffractometer
-            motor_positions = diffractometer_hwobj.get_positions()
-            if "kappa" in motor_positions:
-                kappa_pos = round(float(motor_positions["kappa"]), 1)
-                kappa_phi_pos = round(float(motor_positions["kappa_phi"]), 1)
-                mx_kappa_settings_id = f"Kappa: {kappa_pos}, Phi: {kappa_phi_pos}"
-            else:
-                mx_kappa_settings_id = None
+            mx_kappa_settings_id = None
+            diffr = HWR.beamline.diffractometer
+            kappa_pos = diffr.kappa.get_value() if hasattr(diffr, "kappa") else None
+            kappa_phi_pos = (
+                diffr.kappa_phi.get_value() if hasattr(diffr, "kappa_phi") else None
+            )
+            if kappa_pos and kappa_phi_pos:
+                mx_kappa_settings_id = (
+                    f"Kappa: {kappa_pos:0.1f}, Phi: {kappa_phi_pos:0.1f}"
+                )
 
             metadata.update(
                 {
@@ -1337,6 +1358,13 @@ class ICATLIMS(AbstractLims):
                 )
             except RuntimeError:
                 logger.warning("Failed to get MX_axis_end")
+
+            # ontologies
+            try:
+                tech = technique.get_technique_metadata("MX", "SAD")
+                metadata.update(tech.get_dataset_metadata())
+            except (NameError, TypeError):
+                self.log.warning("No technique added to the metadata")
 
             icat_metadata_path = Path(directory) / "metadata.json"
             with Path(icat_metadata_path).open("w") as f:
