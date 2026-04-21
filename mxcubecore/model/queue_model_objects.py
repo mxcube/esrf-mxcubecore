@@ -2767,9 +2767,7 @@ def to_collect_dict(data_collection, sample, centred_pos=None):
     for tag in ("detector_distance", "energy", "transmission"):
         if tag in dd and not dd[tag]:
             del dd[tag]
-    resolution = dd.get("resolution")
-    if resolution is not None:
-        del dd["resolution"]
+    
     return result
 
 
