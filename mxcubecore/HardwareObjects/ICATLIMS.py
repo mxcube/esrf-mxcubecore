@@ -40,7 +40,9 @@ class ICATLIMS(AbstractLims):
         super().__init__(name)
         HardwareObject.__init__(self, name)
         self.investigations = None
-        self.icatClient = None
+        self._icat_client_list = []
+        self._active_user = None
+        self._icat_session_list = None
         self.lims_rest = None
         self.ingesters = None
 
@@ -51,11 +53,19 @@ class ICATLIMS(AbstractLims):
         self.samples = []
 
         # Initialize ICAT client
-        self.icatClient = IcatClient(
+        self._icat_client = IcatClient(
             icatplus_restricted_url=self.url,
             metadata_urls=["bcu-mq-01:61613"],
             reschedule_investigation_urls=["bcu-mq-01:61613"],
         )
+
+    @property
+    def _icat_client(self):
+        return self._icat_client_list[self._active_user]
+
+    @property
+    def icat_session(self):
+        return self._icat_session_list[self._active_user]
 
     def get_lims_name(self) -> List[Lims]:
         return [
@@ -65,8 +75,19 @@ class ICATLIMS(AbstractLims):
             ),
         ]
 
+    def _create_icat_client(self, user_name: str):
+        if user_name not in self._icat_client_list:
+            self._icat_client_list.append(
+                IcatClient(
+                    icatplus_restricted_url=self.url,
+                    metadata_urls=["bcu-mq-01:61613"],
+                    reschedule_investigation_urls=["bcu-mq-01:61613"],
+                )
+            )
+
     def _create_icat_session(self, user_name: str, password: str):
-        self.icat_session: dict = self.icatClient.do_log_in(password)
+        token = self._icat_client_list[user_name].do_log_in(password)
+        self._icat_session_list[user_name] = token
 
     def login(
         self,
@@ -79,7 +100,7 @@ class ICATLIMS(AbstractLims):
 
         self._create_icat_session(user_name=user_name, password=password)
 
-        if self.icatClient is None or self.icatClient is None:
+        if self._icat_client is None or self._icat_client is None:
             msg = "Error initializing icatClient: "
             msg += f"icatClient={self.url}"
             logger.error(msg)
@@ -505,9 +526,7 @@ class ICATLIMS(AbstractLims):
         self, session_id: str, username: str | None = None
     ) -> Session:
         logger.debug(f"set_active_session_by_id: {session_id}")
-
-        if username:
-            self.icat_session = self.session_manager.users[username].icat_session
+        self._active_user = username
 
         if self.is_session_already_active(self.session_manager.active_session):
             return self.session_manager.active_session
@@ -552,7 +571,7 @@ class ICATLIMS(AbstractLims):
     def allow_session(self, session: Session):
         self.active_session = session
         logger.debug("allow_session investigationId=%s", session.session_id)
-        self.icatClient.reschedule_investigation(session.session_id)
+        self._icat_client.reschedule_investigation(session.session_id)
 
     def get_session_by_id(self, sid: str):
         msg = f"get_session_by_id investigationId={sid} "
@@ -587,7 +606,7 @@ class ICATLIMS(AbstractLims):
                 or self.icat_session["isInstrumentScientist"]
             ):
                 # Setting up of the session done by admin or staff
-                self.investigations = self.icatClient.get_investigations_by(
+                self.investigations = self._icat_client.get_investigations_by(
                     start_date=datetime.today()
                     - timedelta(days=float(self.before_offset_days)),
                     end_date=datetime.today()
@@ -603,11 +622,11 @@ class ICATLIMS(AbstractLims):
                     )
                     return []
 
-                self.investigations = self.icatClient.get_investigations_by(
+                self.investigations = self._icat_client.get_investigations_by(
                     ids=[self.session_manager.active_session.session_id]
                 )
             else:
-                self.investigations = self.icatClient.get_investigations_by(
+                self.investigations = self._icat_client.get_investigations_by(
                     filter=self.filter,
                     instrument_name=self.compatible_beamlines,
                     start_date=datetime.today()
@@ -756,7 +775,7 @@ class ICATLIMS(AbstractLims):
             session_id = self.session_manager.active_session.session_id
             msg = f"Retrieving parcels by investigation_id {session_id}"
             logger.debug(msg)
-            parcels = self.icatClient.get_parcels_by(session_id)
+            parcels = self._icat_client.get_parcels_by(session_id)
         except Exception:
             logger.exception("Failed on get_parcels_by_investigation_id")
         else:
@@ -772,7 +791,7 @@ class ICATLIMS(AbstractLims):
             msg = "Retrieving samples by investigation_id "
             msg += f"{self.session_manager.active_session.session_id}"
             logger.debug(msg)
-            samples = self.icatClient.get_samples_by(
+            samples = self._icat_client.get_samples_by(
                 self.session_manager.active_session.session_id
             )
         except Exception:
@@ -1022,7 +1041,7 @@ class ICATLIMS(AbstractLims):
             except (NameError, TypeError):
                 self.log.warning("No technique added to the metadata")
 
-            self.icatClient.store_dataset(
+            self._icat_client.store_dataset(
                 beamline=beamline,
                 proposal=proposal,
                 dataset=str(directory.name),
@@ -1088,7 +1107,7 @@ class ICATLIMS(AbstractLims):
             except (NameError, TypeError):
                 self.log.warning("No technique added to the metadata")
 
-            self.icatClient.store_dataset(
+            self._icat_client.store_dataset(
                 beamline=beamline,
                 proposal=proposal,
                 dataset=str(directory.name),
@@ -1140,7 +1159,7 @@ class ICATLIMS(AbstractLims):
             Optional[SampleInformation]: Returns a SampleInformation object or None.
         """
         try:
-            result = self.icatClient.get_sample_files_information_by(sample_id)
+            result = self._icat_client.get_sample_files_information_by(sample_id)
             return SampleInformation.parse_obj(result)
         except requests.exceptions.HTTPError as e:
             if e.response.status_code == 404:
@@ -1177,7 +1196,7 @@ class ICATLIMS(AbstractLims):
             )  # Make sure the folder exists
 
             try:
-                result = self.icatClient.download_file_by(
+                result = self._icat_client.download_file_by(
                     sample_id=sample_id,
                     resource_id=resource.id,
                     use_chunks=True,
@@ -1396,7 +1415,7 @@ class ICATLIMS(AbstractLims):
             except RuntimeError as e:
                 logger.warning("Failed to create gallery. %s", e)
 
-            self.icatClient.store_dataset(
+            self._icat_client.store_dataset(
                 beamline=beamline,
                 proposal=proposal,
                 dataset=dataset_name,
