@@ -11,7 +11,6 @@ from uuid import uuid1
 try:
     import argussight.grpc.argus_service_pb2 as pb2
     import argussight.grpc.argus_service_pb2_grpc as pb2_grpc
-
     import grpc
     from argussight.grpc.helper_functions import (
         pack_to_any,
