@@ -65,6 +65,8 @@ colorama = "^0.4.6"
 pyicat-plus = {version = "==3.0.1", optional = true}
 mxcube-video-streamer = "^1.8.5"
 defusedxml = "0.7.1"
+argussight = {version = "^0.3.0", optional = true}
+grpcio = {version = "^1.70.0", optional = true}
 
 [tool.poetry.group.dev.dependencies]
 pre-commit = "^4.1.0"
@@ -79,6 +81,9 @@ myst-parser = "^2.0.0"
 sphinx = "<7.2"
 sphinx-last-updated-by-git = "^0.3.7"
 sphinxcontrib-mermaid = "^0.9.2"
+
+[tool.poetry.extras]
+argus = ["argussight", "grpcio"]
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
