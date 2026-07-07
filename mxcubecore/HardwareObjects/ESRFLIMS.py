@@ -171,6 +171,9 @@ class ESRFLIMS(AbstractLims):
 
     def is_session_already_active(self, session_id: str) -> bool:
         return self.drac.is_session_already_active(session_id)
+    
+    def set_active_user(self, username: str):
+        self.drac.set_active_user(username)
 
     def set_active_session_by_id(
         self, session_id: str, username: str
