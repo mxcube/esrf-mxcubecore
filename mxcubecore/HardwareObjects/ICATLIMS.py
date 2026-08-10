@@ -33,10 +33,6 @@ if find_spec("esrf_ontologies"):
     from esrf_ontologies import technique
 
 
-if find_spec("esrf_ontologies"):
-    from esrf_ontologies import technique
-
-
 logger = logging.getLogger("HWR")
 
 # Attribute names read off the beamline_config object in
