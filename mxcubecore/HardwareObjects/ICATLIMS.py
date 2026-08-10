@@ -25,10 +25,10 @@ from mxcubecore.model.lims_session import (
     Download,
     Lims,
     LimsSessionManager,
-    LoadedPuck,
     SampleSheet,
     Session,
 )
+from mxcubecore.model.tracking_model_objects import LoadedPuck
 
 if find_spec("esrf_ontologies"):
     from esrf_ontologies import technique
