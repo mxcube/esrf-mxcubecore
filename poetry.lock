@@ -651,35 +651,36 @@ idna = ">=2.0.0"
 
 [[package]]
 name = "esrf-ontologies"
-version = "1.1.0"
+version = "2.1.0"
 description = "ESRF Ontologies"
 optional = true
 python-versions = ">=3.8"
 groups = ["main"]
 files = [
-    {file = "esrf_ontologies-1.1.0-py3-none-any.whl", hash = "sha256:c48789eab516d2bc4090b27471d5904e600358e80e14b72b94572705dfe88165"},
-    {file = "esrf_ontologies-1.1.0.tar.gz", hash = "sha256:d3fab908a148e54b0314abc44cb81d87662d37bbd37d7a57e48326b4d42b4259"},
+    {file = "esrf_ontologies-2.1.0-py3-none-any.whl", hash = "sha256:79938adb51a82709d3743253c7fb5b544f82fc585d0d511b5f7d537053ee4789"},
+    {file = "esrf_ontologies-2.1.0.tar.gz", hash = "sha256:17e56ee21d3fdb63d16873e65db55c5753fdf01549f9cfb9158ffecc6ea15ff6"},
 ]
 
 [package.extras]
-dev = ["black (>=22)", "esrf-ontologies[test]", "flake8 (>=4)", "owlready2"]
-doc = ["esrf-ontologies[test]", "pydata-sphinx-theme", "sphinx (>=4.5)", "sphinx-autodoc-typehints (>=1.16)"]
+dev = ["black (>=22)", "esrf-ontologies[test]", "flake8 (>=4)", "isort", "owlready2"]
+doc = ["esrf-ontologies[test]", "pydata-sphinx-theme", "sphinx (>=4.5,<9.0.0rc1)", "sphinx-autodoc-typehints (>=1.16)", "sphinx-copybutton"]
 test = ["pytest (>=7)"]
 
 [[package]]
 name = "esrf-pathlib"
-version = "0.6.0"
+version = "1.1.0"
 description = "A drop-in pathlib clone with ESRF-specific path utilities"
 optional = true
 python-versions = ">=3.8"
 groups = ["main"]
 files = [
-    {file = "esrf_pathlib-0.6.0.tar.gz", hash = "sha256:d8589936e8407a606210fed324e2ee97ab7896cf9314f67c06064ecb000d7687"},
+    {file = "esrf_pathlib-1.1.0-py3-none-any.whl", hash = "sha256:983027f6cf07c1309c8f960c8600447d7b3573baf102ccc6d340c82af1087e65"},
+    {file = "esrf_pathlib-1.1.0.tar.gz", hash = "sha256:a66a7c11791361811a99c85805c4834cc1782afc58750e8baa88d8c8c1d7c9d7"},
 ]
 
 [package.extras]
 dev = ["black (>=22)", "esrf-pathlib[test]", "flake8 (>=4.0)", "isort"]
-doc = ["esrf-pathlib[test]", "pydata-sphinx-theme", "sphinx (>=6.0)", "sphinx-autodoc-typehints"]
+doc = ["esrf-pathlib[test]", "pydata-sphinx-theme", "sphinx (>=6.0)", "sphinx-argparse", "sphinx-autodoc-typehints", "sphinx-copybutton"]
 test = ["pytest (>=7.0)"]
 
 [[package]]
@@ -802,6 +803,42 @@ werkzeug = ">=3.1.0"
 [package.extras]
 async = ["asgiref (>=3.2)"]
 dotenv = ["python-dotenv"]
+
+[[package]]
+name = "flexcache"
+version = "0.3"
+description = "Saves and loads to the cache a transformed versions of a source object."
+optional = true
+python-versions = ">=3.9"
+groups = ["main"]
+files = [
+    {file = "flexcache-0.3-py3-none-any.whl", hash = "sha256:d43c9fea82336af6e0115e308d9d33a185390b8346a017564611f1466dcd2e32"},
+    {file = "flexcache-0.3.tar.gz", hash = "sha256:18743bd5a0621bfe2cf8d519e4c3bfdf57a269c15d1ced3fb4b64e0ff4600656"},
+]
+
+[package.dependencies]
+typing-extensions = "*"
+
+[package.extras]
+test = ["pytest", "pytest-cov", "pytest-mpl", "pytest-subtests"]
+
+[[package]]
+name = "flexparser"
+version = "0.4"
+description = "Parsing made fun ... using typing."
+optional = true
+python-versions = ">=3.9"
+groups = ["main"]
+files = [
+    {file = "flexparser-0.4-py3-none-any.whl", hash = "sha256:3738b456192dcb3e15620f324c447721023c0293f6af9955b481e91d00179846"},
+    {file = "flexparser-0.4.tar.gz", hash = "sha256:266d98905595be2ccc5da964fe0a2c3526fbbffdc45b65b3146d75db992ef6b2"},
+]
+
+[package.dependencies]
+typing-extensions = "*"
+
+[package.extras]
+test = ["pytest", "pytest-cov", "pytest-mpl", "pytest-subtests"]
 
 [[package]]
 name = "fonttools"
@@ -947,8 +984,8 @@ files = [
 [package.dependencies]
 cffi = {version = ">=1.12.2", markers = "platform_python_implementation == \"CPython\" and sys_platform == \"win32\""}
 greenlet = [
-    {version = ">=3.0rc3", markers = "platform_python_implementation == \"CPython\" and python_version >= \"3.11\""},
     {version = ">=2.0.0", markers = "platform_python_implementation == \"CPython\" and python_version < \"3.11\""},
+    {version = ">=3.0rc3", markers = "platform_python_implementation == \"CPython\" and python_version >= \"3.11\""},
 ]
 "zope.event" = "*"
 "zope.interface" = "*"
@@ -1320,29 +1357,38 @@ zstd = ["zstandard (>=0.18.0)"]
 
 [[package]]
 name = "icat-esrf-definitions"
-version = "2.1.2"
+version = "3.5.0"
 description = "ESRF ICAT definitions"
 optional = true
-python-versions = ">=3.6"
+python-versions = ">=3.8"
 groups = ["main"]
 files = [
-    {file = "icat_esrf_definitions-2.1.2.tar.gz", hash = "sha256:1af66f6dcad6f17e1873c26ae01de752ed2a2b51034ee773fd534a9d85d758b3"},
+    {file = "icat_esrf_definitions-3.5.0-py3-none-any.whl", hash = "sha256:3fa8e814e4f16f2e3b21bb4f426c6291fcd0beb4694fe5415e4a2bcd36da228a"},
+    {file = "icat_esrf_definitions-3.5.0.tar.gz", hash = "sha256:c002b236f4497e33fa48d57bce82f1ab1d3f7a752cd39941106f9ddf68e9bcfd"},
 ]
 
+[package.dependencies]
+esrf-ontologies = ">=2.1"
+pint = "*"
+pydantic = "*"
+typing_extensions = {version = "*", markers = "python_version < \"3.11\""}
+
 [package.extras]
-dev = ["pre-commit", "pytest"]
-test = ["pytest"]
+dev = ["datamodel-code-generator", "icat-esrf-definitions[test]", "pre-commit", "ruff", "tabulate"]
+doc = ["icat-esrf-definitions[test]", "pydata-sphinx-theme", "sphinx (>=4.5)", "sphinx-autodoc-typehints (>=1.16)", "sphinx-copybutton"]
+test = ["icat-esrf-definitions[xml]", "pytest", "silx"]
+xml = ["xmltodict"]
 
 [[package]]
 name = "icat-plus-client"
-version = "4.93.3"
+version = "4.93.7"
 description = "ICAT+ API"
 optional = true
 python-versions = "*"
 groups = ["main"]
 files = [
-    {file = "icat_plus_client-4.93.3-py3-none-any.whl", hash = "sha256:c07d108d97c6fe54badb63e88ea07093ff8414289b031ca723ed8ea48ae26072"},
-    {file = "icat_plus_client-4.93.3.tar.gz", hash = "sha256:21c9ea3794000f501b89c107708bbbc4b5a6138478906deb6e21b97c4f1fcf15"},
+    {file = "icat_plus_client-4.93.7-py3-none-any.whl", hash = "sha256:f4498dced3af32623509db0be4dd6a6b3c458d0420cbdd3e6aca36c70c32a4a8"},
+    {file = "icat_plus_client-4.93.7.tar.gz", hash = "sha256:1afb2dd5cae0658e6054667f299643bc7ea483321c3b148f379d7ca6b3680a19"},
 ]
 
 [package.dependencies]
@@ -2182,9 +2228,9 @@ files = [
 
 [package.dependencies]
 numpy = [
+    {version = ">=1.21.4", markers = "python_version >= \"3.10\" and platform_system == \"Darwin\""},
+    {version = ">=1.21.2", markers = "platform_system != \"Darwin\" and python_version >= \"3.10\""},
     {version = ">=1.23.5", markers = "python_version >= \"3.11\""},
-    {version = ">=1.21.4", markers = "python_version == \"3.10\" and platform_system == \"Darwin\""},
-    {version = ">=1.21.2", markers = "platform_system != \"Darwin\" and python_version == \"3.10\""},
 ]
 
 [[package]]
@@ -2309,12 +2355,78 @@ tests = ["check-manifest", "coverage (>=7.4.2)", "defusedxml", "markdown2", "ole
 xmp = ["defusedxml"]
 
 [[package]]
+name = "pint"
+version = "0.24.4"
+description = "Physical quantities module"
+optional = true
+python-versions = ">=3.9"
+groups = ["main"]
+markers = "python_version == \"3.10\""
+files = [
+    {file = "Pint-0.24.4-py3-none-any.whl", hash = "sha256:aa54926c8772159fcf65f82cc0d34de6768c151b32ad1deb0331291c38fe7659"},
+    {file = "pint-0.24.4.tar.gz", hash = "sha256:35275439b574837a6cd3020a5a4a73645eb125ce4152a73a2f126bf164b91b80"},
+]
+
+[package.dependencies]
+flexcache = ">=0.3"
+flexparser = ">=0.4"
+platformdirs = ">=2.1.0"
+typing-extensions = ">=4.0.0"
+
+[package.extras]
+babel = ["babel (<=2.8)"]
+bench = ["pytest", "pytest-codspeed"]
+dask = ["dask"]
+mip = ["mip (>=1.13)"]
+numpy = ["numpy (>=1.23)"]
+pandas = ["pint-pandas (>=0.3)"]
+test = ["pytest", "pytest-benchmark", "pytest-cov", "pytest-mpl", "pytest-subtests"]
+testbase = ["pytest", "pytest-benchmark", "pytest-cov", "pytest-subtests"]
+uncertainties = ["uncertainties (>=3.1.6)"]
+xarray = ["xarray"]
+
+[[package]]
+name = "pint"
+version = "0.25.3"
+description = "Physical quantities module"
+optional = true
+python-versions = ">=3.11"
+groups = ["main"]
+markers = "python_version == \"3.11\""
+files = [
+    {file = "pint-0.25.3-py3-none-any.whl", hash = "sha256:27eb25143bd5de9fcc4d5a4b484f16faf6b4615aa93ece6b3373a8c1a3c1b97d"},
+    {file = "pint-0.25.3.tar.gz", hash = "sha256:f8f5df6cf65314d74da1ade1bf96f8e3e4d0c41b51577ac53c49e7d44ca5acee"},
+]
+
+[package.dependencies]
+flexcache = ">=0.3"
+flexparser = ">=0.4"
+platformdirs = ">=2.1.0"
+typing-extensions = ">=4.0.0"
+
+[package.extras]
+all = ["babel (<=2.8)", "dask (<2025.3.0)", "matplotlib", "numpy (>=1.23)", "pint-pandas (>=0.3)", "scipy", "uncertainties (>=3.1.6)", "xarray"]
+babel = ["babel (<=2.8)"]
+codspeed = ["pytest", "pytest-benchmark", "pytest-codspeed", "pytest-cov", "pytest-mpl", "pytest-subtests"]
+dask = ["dask (<2025.3.0)"]
+docs = ["babel", "commonmark (==0.8.1)", "currencyconverter", "docutils", "graphviz", "ipykernel", "ipython (<=8.12)", "jupyter-client", "nbsphinx", "pooch", "pygments (>=2.4)", "recommonmark (==0.5.0)", "sciform", "scipy", "serialize", "sparse", "sphinx (>=6,<8.2)", "sphinx-book-theme (>=1.1.0)", "sphinx-copybutton", "sphinx-design"]
+matplotlib = ["matplotlib"]
+numpy = ["numpy (>=1.23)"]
+pandas = ["pint-pandas (>=0.3)"]
+scipy = ["scipy"]
+test = ["pytest", "pytest-benchmark", "pytest-cov", "pytest-subtests"]
+test-all = ["pytest", "pytest-benchmark", "pytest-cov", "pytest-mpl", "pytest-subtests"]
+test-mpl = ["pytest-mpl"]
+uncertainties = ["uncertainties (>=3.1.6)"]
+xarray = ["xarray"]
+
+[[package]]
 name = "platformdirs"
 version = "4.3.6"
 description = "A small Python package for determining appropriate platform-specific dirs, e.g. a `user data dir`."
 optional = false
 python-versions = ">=3.8"
-groups = ["dev"]
+groups = ["main", "dev"]
 files = [
     {file = "platformdirs-4.3.6-py3-none-any.whl", hash = "sha256:73e575e1408ab8103900836b97580d5307456908a03e92031bab39e4554cc3fb"},
     {file = "platformdirs-4.3.6.tar.gz", hash = "sha256:357fb2acbc885b0419afd3ce3ed34564c13c9b95c89360cd9563f73aa5e2b907"},
@@ -2695,32 +2807,33 @@ windows-terminal = ["colorama (>=0.4.6)"]
 
 [[package]]
 name = "pyicat-plus"
-version = "1.0.0"
+version = "3.0.0rc1"
 description = "Python client to ICAT+"
 optional = true
 python-versions = ">=3.8"
 groups = ["main"]
 files = [
-    {file = "pyicat_plus-1.0.0-py3-none-any.whl", hash = "sha256:9e6dbbef544c32e3ab8d37f79ab3152b991b18ab3893ad2e5baae5145f5f07f9"},
-    {file = "pyicat_plus-1.0.0.tar.gz", hash = "sha256:6517d3e03f11b49549d45cba51f66a9b2a20e6b7046cdf732b096ba686aa83ef"},
+    {file = "pyicat_plus-3.0.0rc1-py3-none-any.whl", hash = "sha256:fa83bc4d5e6ef39e49930101ecae6712dc0b84651dceb32494103620c77360be"},
+    {file = "pyicat_plus-3.0.0rc1.tar.gz", hash = "sha256:fe24a6aa14fb7ec1a1bf5eb5994a84f18f4c720fba3fcf47ae91a3acaf67b2c7"},
 ]
 
 [package.dependencies]
-esrf-ontologies = "*"
-esrf-pathlib = "*"
+esrf-ontologies = ">=2.1"
+esrf-pathlib = ">=1.0.0"
 h5py = "*"
-icat-esrf-definitions = "*"
+icat-esrf-definitions = ">=3.5"
+icat-plus-client = "*"
 numpy = "*"
+pillow = "*"
 querypool = "*"
 requests = "*"
 stompest = "*"
-tqdm = "*"
+xsdata = {version = "*", markers = "python_version >= \"3.9\""}
 
 [package.extras]
-bliss = ["blissdata[beacon]"]
-dev = ["black (>=25)", "flake8 (>=4)", "isort", "pep8-naming", "pyicat-plus[test]"]
-doc = ["pydata-sphinx-theme", "pyicat-plus[test]", "sphinx (>=4.5)", "sphinx-autodoc-typehints (>=1.16)", "sphinx-copybutton"]
-test = ["coilmq", "h5py (>=3.5)", "numpy (>=1.15)", "psutil", "pyicat-plus[bliss]", "pytest (>=7)", "pytest-timeout (>=2.1)", "stomp.py (>=7)", "xmltodict"]
+dev = ["pre-commit", "pyicat-plus[test]", "ruff", "xsdata[cli]"]
+doc = ["pydata-sphinx-theme", "pyicat-plus[test]", "sphinx (>=4.5)", "sphinx-autodoc-typehints (>=1.16)", "sphinx-copybutton", "sphinx-design"]
+test = ["coilmq", "h5py (>=3.5)", "numpy (>=1.15)", "psutil", "pytest (>=7)", "pytest-timeout (>=2.1)", "stomp.py (>=7)"]
 
 [[package]]
 name = "pyparsing"
@@ -3803,28 +3916,6 @@ files = [
 ]
 
 [[package]]
-name = "tqdm"
-version = "4.67.1"
-description = "Fast, Extensible Progress Meter"
-optional = true
-python-versions = ">=3.7"
-groups = ["main"]
-files = [
-    {file = "tqdm-4.67.1-py3-none-any.whl", hash = "sha256:26445eca388f82e72884e0d580d5464cd801a3ea01e63e5601bdff9ba6a48de2"},
-    {file = "tqdm-4.67.1.tar.gz", hash = "sha256:f8aef9c52c08c13a65f30ea34f4e5aac3fd1a34959879d7e59e63027286627f2"},
-]
-
-[package.dependencies]
-colorama = {version = "*", markers = "platform_system == \"Windows\""}
-
-[package.extras]
-dev = ["nbval", "pytest (>=6)", "pytest-asyncio (>=0.24)", "pytest-cov", "pytest-timeout"]
-discord = ["requests"]
-notebook = ["ipywidgets (>=6)"]
-slack = ["slack-sdk"]
-telegram = ["requests"]
-
-[[package]]
 name = "typer"
 version = "0.20.0"
 description = "Typer, build great CLIs. Easy to code. Based on Python type hints."
@@ -3922,7 +4013,7 @@ description = "Fast implementation of asyncio event loop on top of libuv"
 optional = false
 python-versions = ">=3.8.1"
 groups = ["main"]
-markers = "sys_platform != \"win32\" and sys_platform != \"cygwin\" and platform_python_implementation != \"PyPy\""
+markers = "platform_python_implementation != \"PyPy\" and sys_platform != \"win32\" and sys_platform != \"cygwin\""
 files = [
     {file = "uvloop-0.22.1-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:ef6f0d4cc8a9fa1f6a910230cd53545d9a14479311e87e3cb225495952eb672c"},
     {file = "uvloop-0.22.1-cp310-cp310-macosx_10_9_x86_64.whl", hash = "sha256:7cd375a12b71d33d46af85a3343b35d98e8116134ba404bd657b3b1d15988792"},
@@ -4241,6 +4332,28 @@ markupsafe = ">=2.1.1"
 watchdog = ["watchdog (>=2.3)"]
 
 [[package]]
+name = "xsdata"
+version = "26.2"
+description = "Python XML Binding"
+optional = true
+python-versions = ">=3.10"
+groups = ["main"]
+files = [
+    {file = "xsdata-26.2-py3-none-any.whl", hash = "sha256:85a591a4405d903416afbd4a917e8dda8ea44641a3e66d72134bc2a31b3c16b0"},
+    {file = "xsdata-26.2.tar.gz", hash = "sha256:c631af71aaa75734f8ce92a08fcf8389d905dee2aab0b5032c9032e9071009a6"},
+]
+
+[package.dependencies]
+typing-extensions = ">=4.12.0"
+
+[package.extras]
+cli = ["click (>=8.0.0)", "jinja2 (>=3.0.0)", "ruff (>=0.9.8)", "toposort (>=1.9)"]
+docs = ["markdown-exec[ansi]", "mkdocs", "mkdocs-gen-files", "mkdocs-literate-nav", "mkdocs-material", "mkdocs-minify-plugin", "mkdocstrings[python]"]
+lxml = ["lxml (>=5.0.0)"]
+soap = ["requests (>=2.28.0)"]
+test = ["pre-commit (>=3.0.0)", "pytest (>=8.0.0)", "pytest-benchmark (>=4.0.0)", "pytest-cov (>=5.0.0)"]
+
+[[package]]
 name = "zope-event"
 version = "4.6"
 description = "Very basic event publishing system"
@@ -4313,4 +4426,4 @@ argus = ["argussight", "grpcio"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.10,<3.12"
-content-hash = "78de65f8d9fb24186472e2bc6fac88ee253e3f873b1496779a19144f76d6e105"
+content-hash = "bb1527a8f3953f7faca7c13aea957d0f0b9f4ba4270c1b2173337a36f3100779"
