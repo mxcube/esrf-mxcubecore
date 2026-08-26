@@ -984,8 +984,8 @@ files = [
 [package.dependencies]
 cffi = {version = ">=1.12.2", markers = "platform_python_implementation == \"CPython\" and sys_platform == \"win32\""}
 greenlet = [
-    {version = ">=2.0.0", markers = "platform_python_implementation == \"CPython\" and python_version < \"3.11\""},
     {version = ">=3.0rc3", markers = "platform_python_implementation == \"CPython\" and python_version >= \"3.11\""},
+    {version = ">=2.0.0", markers = "platform_python_implementation == \"CPython\" and python_version < \"3.11\""},
 ]
 "zope.event" = "*"
 "zope.interface" = "*"
@@ -1381,21 +1381,21 @@ xml = ["xmltodict"]
 
 [[package]]
 name = "icat-plus-client"
-version = "4.93.7"
+version = "4.95.5"
 description = "ICAT+ API"
 optional = true
 python-versions = "*"
 groups = ["main"]
 files = [
-    {file = "icat_plus_client-4.93.7-py3-none-any.whl", hash = "sha256:f4498dced3af32623509db0be4dd6a6b3c458d0420cbdd3e6aca36c70c32a4a8"},
-    {file = "icat_plus_client-4.93.7.tar.gz", hash = "sha256:1afb2dd5cae0658e6054667f299643bc7ea483321c3b148f379d7ca6b3680a19"},
+    {file = "icat_plus_client-4.95.5-py3-none-any.whl", hash = "sha256:497bbf3ea52c4da39dfdf30750b9b9286d9757b1da66c154dc656ed56edca39e"},
+    {file = "icat_plus_client-4.95.5.tar.gz", hash = "sha256:0415f9b83e2ced1c19992d3fa22c2d715856e69a9f7fbe031c844d4e69a05d14"},
 ]
 
 [package.dependencies]
 pydantic = ">=2"
-python-dateutil = "*"
+python-dateutil = ">=2.8.2"
 typing-extensions = ">=4.7.1"
-urllib3 = ">=1.25.3,<2.1.0"
+urllib3 = ">=1.25.3,<3.0.0"
 
 [[package]]
 name = "identify"
@@ -2228,9 +2228,9 @@ files = [
 
 [package.dependencies]
 numpy = [
-    {version = ">=1.21.4", markers = "python_version >= \"3.10\" and platform_system == \"Darwin\""},
-    {version = ">=1.21.2", markers = "platform_system != \"Darwin\" and python_version >= \"3.10\""},
     {version = ">=1.23.5", markers = "python_version >= \"3.11\""},
+    {version = ">=1.21.4", markers = "python_version == \"3.10\" and platform_system == \"Darwin\""},
+    {version = ">=1.21.2", markers = "platform_system != \"Darwin\" and python_version == \"3.10\""},
 ]
 
 [[package]]
@@ -2807,14 +2807,14 @@ windows-terminal = ["colorama (>=0.4.6)"]
 
 [[package]]
 name = "pyicat-plus"
-version = "3.0.0rc1"
+version = "3.0.0rc3"
 description = "Python client to ICAT+"
 optional = true
 python-versions = ">=3.8"
 groups = ["main"]
 files = [
-    {file = "pyicat_plus-3.0.0rc1-py3-none-any.whl", hash = "sha256:fa83bc4d5e6ef39e49930101ecae6712dc0b84651dceb32494103620c77360be"},
-    {file = "pyicat_plus-3.0.0rc1.tar.gz", hash = "sha256:fe24a6aa14fb7ec1a1bf5eb5994a84f18f4c720fba3fcf47ae91a3acaf67b2c7"},
+    {file = "pyicat_plus-3.0.0rc3-py3-none-any.whl", hash = "sha256:9fefbc0de421c71224151ee3dacb35645d4442a5947bb3afa6f7114c955ca1af"},
+    {file = "pyicat_plus-3.0.0rc3.tar.gz", hash = "sha256:afe464172fc7ea9edd00fb1a4084a3344969d65787d6ca7c3c613558eaae1568"},
 ]
 
 [package.dependencies]
@@ -2822,7 +2822,7 @@ esrf-ontologies = ">=2.1"
 esrf-pathlib = ">=1.0.0"
 h5py = "*"
 icat-esrf-definitions = ">=3.5"
-icat-plus-client = "*"
+icat-plus-client = ">=4.95.5"
 numpy = "*"
 pillow = "*"
 querypool = "*"
@@ -3006,14 +3006,14 @@ dev = ["pre-commit", "pytest-asyncio", "tox"]
 
 [[package]]
 name = "python-dateutil"
-version = "2.7.5"
+version = "2.9.0.post0"
 description = "Extensions to the standard Python datetime module"
 optional = false
-python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*"
+python-versions = "!=3.0.*,!=3.1.*,!=3.2.*,>=2.7"
 groups = ["main"]
 files = [
-    {file = "python-dateutil-2.7.5.tar.gz", hash = "sha256:88f9287c0174266bb0d8cedd395cfba9c58e87e5ad86b2ce58859bc11be3cf02"},
-    {file = "python_dateutil-2.7.5-py2.py3-none-any.whl", hash = "sha256:063df5763652e21de43de7d9e00ccf239f953a832941e37be541614732cdfc93"},
+    {file = "python-dateutil-2.9.0.post0.tar.gz", hash = "sha256:37dd54208da7e1cd875388217d5e00ebd4179249f90fb72437e91a35459a0ad3"},
+    {file = "python_dateutil-2.9.0.post0-py2.py3-none-any.whl", hash = "sha256:a8b2bc7bffae282281c8140a97d3aa9c14da0b136dfe83f850eea9a5f7470427"},
 ]
 
 [package.dependencies]
@@ -4013,7 +4013,7 @@ description = "Fast implementation of asyncio event loop on top of libuv"
 optional = false
 python-versions = ">=3.8.1"
 groups = ["main"]
-markers = "platform_python_implementation != \"PyPy\" and sys_platform != \"win32\" and sys_platform != \"cygwin\""
+markers = "sys_platform != \"win32\" and sys_platform != \"cygwin\" and platform_python_implementation != \"PyPy\""
 files = [
     {file = "uvloop-0.22.1-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:ef6f0d4cc8a9fa1f6a910230cd53545d9a14479311e87e3cb225495952eb672c"},
     {file = "uvloop-0.22.1-cp310-cp310-macosx_10_9_x86_64.whl", hash = "sha256:7cd375a12b71d33d46af85a3343b35d98e8116134ba404bd657b3b1d15988792"},
@@ -4426,4 +4426,4 @@ argus = ["argussight", "grpcio"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.10,<3.12"
-content-hash = "bb1527a8f3953f7faca7c13aea957d0f0b9f4ba4270c1b2173337a36f3100779"
+content-hash = "ec8056068dc866c3d28e6fe8ebe8c974ef751ba900f6d2d48c54e86941305d98"
