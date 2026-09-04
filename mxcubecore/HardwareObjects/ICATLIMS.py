@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Any, List, Optional, Tuple
 from zoneinfo import ZoneInfo
 
+from gevent.lock import RLock
 from pydantic import ValidationError
 from pyicat_plus import errors as icat_errors
 from pyicat_plus.client import models as icat_models
@@ -474,6 +475,7 @@ class ICATLIMS(AbstractLims):
         self._icat_client_dict = {}
         self._active_user = None
         self._icat_session_dict = {}
+        self._active_user_lock = RLock()
         self.lims_rest = None
         self.activemq_url = None
 
@@ -489,13 +491,24 @@ class ICATLIMS(AbstractLims):
 
     @property
     def _icat_client(self):
-        self.log.info("Using ICAT client for user: %s", self._active_user)
-        self.log.info("ICAT clients are: %s", str(self._icat_client_dict.values()))
-        return self._icat_client_dict[self._active_user]
+        with self._active_user_lock:
+            active_user = self._active_user
+        self.log.debug("Using ICAT client for user: %s", active_user)
+        try:
+            return self._icat_client_dict[active_user]
+        except KeyError:
+            msg = f"No active ICAT client for user {active_user!r}"
+            raise RuntimeError(msg) from None
 
     @property
     def icat_session(self):
-        return self._icat_session_dict[self._active_user]
+        with self._active_user_lock:
+            active_user = self._active_user
+        try:
+            return self._icat_session_dict[active_user]
+        except KeyError:
+            msg = f"No active ICAT session for user {active_user!r}"
+            raise RuntimeError(msg) from None
 
     def get_lims_name(self) -> List[Lims]:
         return [
@@ -532,13 +545,14 @@ class ICATLIMS(AbstractLims):
         return icat_session, icat_client
 
     def set_active_user(self, username: str):
-        if username not in self._icat_client_dict:
-            msg = f"User {username} has no active ICAT session"
-            logger.error(msg)
-            raise RuntimeError(msg)
+        with self._active_user_lock:
+            if username not in self._icat_client_dict:
+                msg = f"User {username} has no active ICAT session"
+                logger.error(msg)
+                raise RuntimeError(msg)
 
-        self._active_user = username
-        self.log.info("Active ICAT user set to: %s", self._active_user)
+            self._active_user = username
+        self.log.info("Active ICAT user set to: %s", username)
 
     def login(
         self,
@@ -549,8 +563,9 @@ class ICATLIMS(AbstractLims):
         logger.debug(f"ICAT authenticate {username}")
 
         icat_session, icat_client = self._create_icat_session(username, password)
-        self._icat_client_dict[username] = icat_client
-        self._icat_session_dict[username] = icat_session
+        with self._active_user_lock:
+            self._icat_client_dict[username] = icat_client
+            self._icat_session_dict[username] = icat_session
 
         # Connected to metadata icatClient
         msg = "Connected succesfully to ICAT: "
@@ -590,6 +605,23 @@ class ICATLIMS(AbstractLims):
                 raise RuntimeError(msg)
 
         return self.session_manager, icat_session, sessions
+
+    def remove_user(self, user_name: str):
+        """Drop a signed-out user's ICAT client/session along with the
+        base-class session-manager bookkeeping. Never evicts the user
+        currently active (matches AbstractLims.remove_user, which refuses
+        to remove a user whose session is the active one)."""
+        with self._active_user_lock:
+            if user_name == self._active_user:
+                self.log.debug(
+                    "User %s was not removed because it is the active ICAT user",
+                    user_name,
+                )
+                return
+            self._icat_client_dict.pop(user_name, None)
+            self._icat_session_dict.pop(user_name, None)
+
+        super().remove_user(user_name)
 
     def is_user_login_type(self) -> bool:
         return True
@@ -1533,6 +1565,11 @@ class ICATLIMS(AbstractLims):
         Returns:
             List containing the paths of the downloaded files.
         """
+        # Snapshot once: self._icat_client resolves through the shared
+        # "active user" and each download below yields to other greenlets,
+        # so re-reading the property mid-loop could switch identity if
+        # another user takes control while this loop is still running.
+        icat_client = self._icat_client
         downloaded_files: List[Download] = []
         for resource in resources:
             resource_folder = Path(output_folder) / sample_name
@@ -1543,7 +1580,7 @@ class ICATLIMS(AbstractLims):
             )  # Make sure the folder exists
 
             try:
-                result = self._icat_client.download_file_by(str(sample_id), resource.id)
+                result = icat_client.download_file_by(str(sample_id), resource.id)
                 output_path = Path(resource_folder / resource.filename)
                 with output_path.open("wb") as f:
                     f.write(result)
