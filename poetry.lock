@@ -984,8 +984,8 @@ files = [
 [package.dependencies]
 cffi = {version = ">=1.12.2", markers = "platform_python_implementation == \"CPython\" and sys_platform == \"win32\""}
 greenlet = [
-    {version = ">=3.0rc3", markers = "platform_python_implementation == \"CPython\" and python_version >= \"3.11\""},
     {version = ">=2.0.0", markers = "platform_python_implementation == \"CPython\" and python_version < \"3.11\""},
+    {version = ">=3.0rc3", markers = "platform_python_implementation == \"CPython\" and python_version >= \"3.11\""},
 ]
 "zope.event" = "*"
 "zope.interface" = "*"
@@ -2228,9 +2228,9 @@ files = [
 
 [package.dependencies]
 numpy = [
+    {version = ">=1.21.4", markers = "python_version >= \"3.10\" and platform_system == \"Darwin\""},
+    {version = ">=1.21.2", markers = "platform_system != \"Darwin\" and python_version >= \"3.10\""},
     {version = ">=1.23.5", markers = "python_version >= \"3.11\""},
-    {version = ">=1.21.4", markers = "python_version == \"3.10\" and platform_system == \"Darwin\""},
-    {version = ">=1.21.2", markers = "platform_system != \"Darwin\" and python_version == \"3.10\""},
 ]
 
 [[package]]
@@ -2807,14 +2807,14 @@ windows-terminal = ["colorama (>=0.4.6)"]
 
 [[package]]
 name = "pyicat-plus"
-version = "3.0.0rc3"
+version = "3.0.0rc5"
 description = "Python client to ICAT+"
 optional = true
 python-versions = ">=3.8"
 groups = ["main"]
 files = [
-    {file = "pyicat_plus-3.0.0rc3-py3-none-any.whl", hash = "sha256:9fefbc0de421c71224151ee3dacb35645d4442a5947bb3afa6f7114c955ca1af"},
-    {file = "pyicat_plus-3.0.0rc3.tar.gz", hash = "sha256:afe464172fc7ea9edd00fb1a4084a3344969d65787d6ca7c3c613558eaae1568"},
+    {file = "pyicat_plus-3.0.0rc5-py3-none-any.whl", hash = "sha256:137db31c9140a411844781c531613657da25b2343180df7c88970cc3f65a29e3"},
+    {file = "pyicat_plus-3.0.0rc5.tar.gz", hash = "sha256:a960fdcf281f89659c3d27c6c05543e19a850553b1faf9643b5c9bea1d911bb6"},
 ]
 
 [package.dependencies]
@@ -2825,6 +2825,7 @@ icat-esrf-definitions = ">=3.5"
 icat-plus-client = ">=4.95.5"
 numpy = "*"
 pillow = "*"
+pint = "<=0.25.3"
 querypool = "*"
 requests = "*"
 stompest = "*"
@@ -2832,7 +2833,7 @@ xsdata = {version = "*", markers = "python_version >= \"3.9\""}
 
 [package.extras]
 dev = ["pre-commit", "pyicat-plus[test]", "ruff", "xsdata[cli]"]
-doc = ["pydata-sphinx-theme", "pyicat-plus[test]", "sphinx (>=4.5)", "sphinx-autodoc-typehints (>=1.16)", "sphinx-copybutton", "sphinx-design"]
+doc = ["pydata-sphinx-theme", "pyicat-plus[test]", "sphinx (>=4.5)", "sphinx-argparse", "sphinx-autodoc-typehints (>=1.16)", "sphinx-copybutton", "sphinx-design"]
 test = ["coilmq", "h5py (>=3.5)", "numpy (>=1.15)", "psutil", "pytest (>=7)", "pytest-timeout (>=2.1)", "stomp.py (>=7)"]
 
 [[package]]
@@ -4013,7 +4014,7 @@ description = "Fast implementation of asyncio event loop on top of libuv"
 optional = false
 python-versions = ">=3.8.1"
 groups = ["main"]
-markers = "sys_platform != \"win32\" and sys_platform != \"cygwin\" and platform_python_implementation != \"PyPy\""
+markers = "platform_python_implementation != \"PyPy\" and sys_platform != \"win32\" and sys_platform != \"cygwin\""
 files = [
     {file = "uvloop-0.22.1-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:ef6f0d4cc8a9fa1f6a910230cd53545d9a14479311e87e3cb225495952eb672c"},
     {file = "uvloop-0.22.1-cp310-cp310-macosx_10_9_x86_64.whl", hash = "sha256:7cd375a12b71d33d46af85a3343b35d98e8116134ba404bd657b3b1d15988792"},
@@ -4426,4 +4427,4 @@ argus = ["argussight", "grpcio"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.10,<3.12"
-content-hash = "ec8056068dc866c3d28e6fe8ebe8c974ef751ba900f6d2d48c54e86941305d98"
+content-hash = "6953e506fe0922c9157b8b277249e3d5da5ba0604632197fe2312b699cc38237"
