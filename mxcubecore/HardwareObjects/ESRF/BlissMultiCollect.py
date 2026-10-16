@@ -48,6 +48,10 @@ from .fill_meta_data import FillMetaData
 
 
 class BlissMultiCollect(ESRFMultiCollect):
+    class HOConfig(ESRFMultiCollect.HOConfig):
+        scan_object: str | None = None
+        geometry: list | str = [-1, 0, 0, 0, -1, 0]
+
     def __init__(self, name):
         super().__init__(name)
         self.fast_characterisation = None

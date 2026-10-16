@@ -140,6 +140,12 @@ class Cell(Container):
 
 
 class EMBLFlexHCD(SampleChanger):
+    class HOConfig(SampleChanger.HOConfig):
+        exporter_address: str | None = None
+        tango_device: str | None = None
+        # puck type (SC3, UNI) for each cell
+        puck_configuration: list | str = ["UNI"] * 8
+
     __TYPE__ = "Flex Sample Changer"
 
     def __init__(self, *args, **kwargs):
