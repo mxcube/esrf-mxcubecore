@@ -194,7 +194,15 @@ class Lima2Detector(AbstractDetector):
         file_name = time.strftime(dump_params_file_pattern)
         dump_params_filename = os.path.join(data_root_path, file_name)
 
-        packet_fifo_depth = 20000
+        ctrl_dev = self.__device.ctrl
+        lima2_host = ctrl_dev.info().server_host
+
+        if "id29p9jfrau" in lima2_host:
+            packet_fifo_depth = 20000
+        elif "id29jfraulima" in lima2_host:
+            packet_fifo_depth = 7500
+        else:
+            packet_fifo_depth = 2500
 
         acq_params = {
             "acq": {
@@ -257,7 +265,8 @@ class Lima2Detector(AbstractDetector):
             "accumulated": True,
         }
 
-        dense_comp_with_hw_nx = True
+        cpu_type = "power9" if "id29p9jfrau" in lima2_host else "intel"
+        dense_comp_with_hw_nx = cpu_type == "power9"
         dense_comp = "zip" if dense_comp_with_hw_nx else "bshuf_lz4"
 
         compression = {
@@ -265,7 +274,7 @@ class Lima2Detector(AbstractDetector):
             "dense": dense_comp,
             "sparse": "none",
             "spots": "none",
-            "accumulated": "zip",
+            "accumulated": dense_comp,
         }
 
         saving_streams = ["raw", "dense", "sparse", "spots"] + [
