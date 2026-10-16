@@ -368,7 +368,7 @@ class SsxBaseQueueEntry(BaseQueueEntry):
     def start_ewoks(self, parameters):
         raw_path = os.path.normpath(parameters["data_path"])
 
-        inputs_acc = [{"name": "path_scan", "value": raw_path}]
+        inputs_acc = [{"name": "path_scan", "value": raw_path,"id":"detect_scan"}]
         upload_parameters_acc = {
             "beamline": HWR.beamline.session.beamline_name.lower(),
             "proposal": (
@@ -390,6 +390,7 @@ class SsxBaseQueueEntry(BaseQueueEntry):
             inputs=inputs_acc,
             flag_icat=True,
             upload_parameters=upload_parameters_acc,
+            engine="ppf"
         )
 
         inputs_npeaks = [{"name": "data_path", "value": raw_path, "all": True}]
