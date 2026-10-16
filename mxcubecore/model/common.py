@@ -17,7 +17,7 @@ class CommonCollectionParamters(BaseModel):
 class PathParameters(BaseModel):
     prefix: str
     subdir: str
-    experiment_name: Optional[str]
+    experiment_name: Optional[str] = ""
 
     class Config:
         extra = "ignore"
@@ -75,3 +75,4 @@ class ISPYBCollectionParameters(BaseModel):
     mono_stripe: str
     number_of_rows: Optional[int] = 0
     number_of_columns: Optional[int] = 0
+    experiment_type: str = ""
