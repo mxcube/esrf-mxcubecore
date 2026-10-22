@@ -2,7 +2,7 @@ import logging
 from abc import abstractmethod
 from typing import Annotated, Literal, Optional, Union
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, RootModel
 
 try:
     import argussight.grpc.argus_service_pb2 as pb2
@@ -149,6 +149,10 @@ class ArgusTrigger(BaseModel):
         description="Application type for the actions (Argus or MXCuBE)",
     )
     cases: list[TriggerCase] = Field(description="List of cases for the trigger")
+
+
+class ArgusSettings(RootModel[dict[str, str | int | float | bool]]):
+    """Mapping of setting name to value for a running Argus process."""
 
 
 class ArgusStreams(BaseModel):
