@@ -28,6 +28,7 @@ except ImportError:
 from mxcubecore import HardwareRepository as HWR
 from mxcubecore.BaseHardwareObjects import HardwareObject
 from mxcubecore.model.argus_model import (
+    ArgusSettings,
     ArgusTrigger,
     HiddenInitially,
     HideAction,
@@ -74,14 +75,16 @@ class Argus(HardwareObject):
         thread.start()
 
     def init(self):
-        # start the argus server
-        self._argus_pid = Popen(
-            ["argussight", "--config", self.get_property("config_path")],
-            stdout=DEVNULL,
-            stderr=DEVNULL,
-            close_fds=True,
-            shell=False,
-        )
+        # start the argus server if configured
+        if self.get_property("start_argus", False):
+            logging.getLogger("HWR").info("Starting Argus server...")
+            self._argus_pid = Popen(
+                ["argussight", "--config", self.get_property("config_path")],
+                stdout=DEVNULL,
+                stderr=DEVNULL,
+                close_fds=True,
+                shell=False,
+            )
 
         streams_to_run = []
         streams_to_run = self.get_property("streams", [])
@@ -202,8 +205,9 @@ class Argus(HardwareObject):
 
     def cleanup(self):
         stop_event.set()
-        logging.getLogger("HWR").info("Shutting down Argus server...")
-        kill(self._argus_pid.pid, SIGTERM)
+        if self._argus_pid is not None:
+            logging.getLogger("HWR").info("Shutting down Argus server...")
+            kill(self._argus_pid.pid, SIGTERM)
 
         sleep(1)  # give the server some time to shutdown before killing the streams
         logging.getLogger("HWR").info("Shutting down streams connected to Argus...")
@@ -338,9 +342,9 @@ class Argus(HardwareObject):
     def get_multi_views(self):
         return self._multi_views
 
-    def change_settings(self, name: str, settings: dict) -> None:
+    def change_settings(self, name: str, settings: ArgusSettings) -> None:
         converted_settings = {}
-        for key, setting in settings.items():
+        for key, setting in settings.root.items():
             converted_settings[key] = pack_to_any(setting)
         request = pb2.ChangeSettingsRequest(name=name, settings=converted_settings)
         response = self.stub.ChangeSettings(request)
