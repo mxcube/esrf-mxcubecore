@@ -51,6 +51,15 @@ stop_event = Event()
 
 
 class Argus(HardwareObject):
+    class HOConfig(HardwareObject.HOConfig):
+        start_argus: bool = False
+        grpc_url: str = "localhost:50051"
+        config_path: str | None = None
+        # {'stream': [{name, create, uri, port, main...}, ...]}, or json string
+        streams: dict | list | str = []
+        multi_views: dict = {}
+        triggers: dict = {}
+
     def __init__(self, name, retry_delay=1):
         super().__init__(name)
         channel = grpc.insecure_channel(
