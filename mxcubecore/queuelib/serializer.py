@@ -113,6 +113,11 @@ class QueueSerializer:
             if isinstance(n, qmo.Sample):
                 result.append(self._build_sample_node(n))
 
+            # Checked before DataCollection, as tasks defined by a pydantic
+            # DATA_MODEL (for instance SSX) often subclass DataCollection
+            elif isinstance(n, qmo.TaskNode) and getattr(n, "task_data", None):
+                result.append(self._handle_task_node(sample_node, n))
+
             elif isinstance(n, qmo.Characterisation):
                 result.append(self._handle_char_node(sample_node, n))
 
@@ -135,9 +140,6 @@ class QueueSerializer:
                 n, "interleave_num_images", 0
             ):
                 result.append(self._handle_interleaved_node(sample_node, n))
-
-            elif isinstance(n, qmo.TaskNode) and getattr(n, "task_data", None):
-                result.append(self._handle_task_node(sample_node, n))
 
             else:
                 result.extend(self._queue_to_dict_rec(n))
