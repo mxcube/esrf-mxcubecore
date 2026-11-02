@@ -91,7 +91,7 @@ class SsxDataCollectionMetadataGatherer:
             "MX_xBeam": beamline_parameters.beam_x,
             "MX_yBeam": beamline_parameters.beam_y,
             "Project_name": path_parameters.prefix,
-            "Sample_name": path_parameters.prefix,
+            "Sample_name": sample.protein_acronym,
             "scanNumber": 0,
             "InstrumentMonochromator_wavelength": beamline_parameters.wavelength,
             "SSXChip_model": extra_lims_values.chip_model,

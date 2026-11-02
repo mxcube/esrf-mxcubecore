@@ -379,7 +379,7 @@ class SsxBaseQueueEntry(BaseQueueEntry):
             "raw": [raw_path],
             "metadata": {
                 "Sample_name": (
-                    parameters["collection_parameters"].path_parameters.prefix
+                    parameters["sample"].protein_acronym
                 )
             },
         }
@@ -404,7 +404,7 @@ class SsxBaseQueueEntry(BaseQueueEntry):
             "raw": [raw_path],
             "metadata": {
                 "Sample_name": (
-                    parameters["collection_parameters"].path_parameters.prefix
+                    parameters["sample"].protein_acronym
                 )
             },
         }
