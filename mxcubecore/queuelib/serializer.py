@@ -416,6 +416,7 @@ class QueueSerializer:
         )
 
     def _handle_task_node(self, sample_node, node) -> TaskNodeModel:
+        
         parameters = {
             **node.task_data.collection_parameters.dict(),
             **node.task_data.user_collection_parameters.dict(),
@@ -423,6 +424,7 @@ class QueueSerializer:
             **node.task_data.common_parameters.dict(),
             **node.task_data.legacy_parameters.dict(),
         }
+        parameters["osc_range"]=0
         pt = node.acquisitions[0].path_template
         parameters["path"] = pt.directory
         parameters["subdir"] = os.path.join(
