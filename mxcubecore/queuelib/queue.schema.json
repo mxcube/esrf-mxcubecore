@@ -2723,6 +2723,36 @@
           "default": null,
           "title": "Containercode"
         },
+        "containerSampleChangerLocation": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Containersamplechangerlocation"
+        },
+        "sampleLocation": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Samplelocation"
+        },
         "crystalSpaceGroup": {
           "anyOf": [
             {
@@ -2741,6 +2771,9 @@
               "type": "number"
             },
             {
+              "type": "string"
+            },
+            {
               "type": "null"
             }
           ],
@@ -2751,6 +2784,9 @@
           "anyOf": [
             {
               "type": "number"
+            },
+            {
+              "type": "string"
             },
             {
               "type": "null"
@@ -2765,6 +2801,9 @@
               "type": "number"
             },
             {
+              "type": "string"
+            },
+            {
               "type": "null"
             }
           ],
@@ -2775,6 +2814,9 @@
           "anyOf": [
             {
               "type": "number"
+            },
+            {
+              "type": "string"
             },
             {
               "type": "null"
@@ -2789,6 +2831,9 @@
               "type": "number"
             },
             {
+              "type": "string"
+            },
+            {
               "type": "null"
             }
           ],
@@ -2801,11 +2846,29 @@
               "type": "number"
             },
             {
+              "type": "string"
+            },
+            {
               "type": "null"
             }
           ],
           "default": null,
           "title": "Cellgamma"
+        },
+        "diffractionPlan": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Diffractionplan"
         }
       },
       "required": [
