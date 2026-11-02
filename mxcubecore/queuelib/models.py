@@ -34,7 +34,14 @@ VALID_PREFIX_TEMPLATE_FIELDS = ("{PREFIX}", "{POSITION}")
 VALID_SUBDIR_TEMPLATE_FIELDS = ("{ACRONYM}", "{NAME}", "{POSITION}")
 
 
-def validate_safe_string(value: str | None, field_name: str) -> str | None:
+def validate_safe_string(
+    value: str | None, field_name: str, extra_chars: str = ""
+) -> str | None:
+    """Validate that <value> only contains "safe" characters.
+
+    <extra_chars> are additional characters allowed for <field_name>, for
+    instance "," for a beam size given as width and height.
+    """
     if value is None:
         return None
 
@@ -43,7 +50,7 @@ def validate_safe_string(value: str | None, field_name: str) -> str | None:
 
     value = value.strip()
 
-    invalid_char = re.search(r"[^a-zA-Z0-9:+_. -]", value)
+    invalid_char = re.search(rf"[^a-zA-Z0-9:+_. \-{re.escape(extra_chars)}]", value)
     if invalid_char:
         raise ValueError(
             f"{field_name} contains invalid character: {invalid_char.group(0)!r}"
@@ -247,12 +254,17 @@ class WorkflowParameters(TaskDataPathModel):
         "name",
         "label",
         "doc",
-        "beam_size",
         mode="before",
     )
     @classmethod
     def validate_energy_scan_strings(cls, value: str, info) -> str:
         return validate_safe_string(value, info.field_name)
+
+    @field_validator("beam_size", mode="before")
+    @classmethod
+    def validate_beam_size(cls, value: str | None) -> str | None:
+        # The beam size can be given as width and height, e.g. "0.03, 0.03"
+        return validate_safe_string(value, "beam_size", extra_chars=",")
 
     @field_validator("cell_count", mode="before")
     @classmethod
