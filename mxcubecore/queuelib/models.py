@@ -627,8 +627,8 @@ class SampleNode(QueueNodeModel):
     tasks: list[TaskNodeUnion]
     crystalUUID: str | None = None  # noqa: N815
     image_url: str = ""
-    image_x: str | None = None
-    image_y: str | None = None
+    image_x: str | float | None = None
+    image_y: str | float | None = None
     loadable: bool = True
     puck_barcode: str | None = None
     puck_type: str | None = None
