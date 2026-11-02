@@ -36,7 +36,7 @@ class LegacyParameters(BaseModel):
 class StandardCollectionParameters(BaseModel):
     num_images: int
     osc_start: Optional[float]
-    osc_range: Optional[float]
+    osc_range: float = 0
     energy: float
     transmission: float
     resolution: float

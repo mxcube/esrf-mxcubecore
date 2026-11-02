@@ -358,6 +358,11 @@ class DataCollectionParameters(TaskDataPathModel):
     def validate_mesh_range(cls, value):
         return normalize_mesh_range(value)
 
+    @field_validator("osc_range", mode="before")
+    @classmethod
+    def validate_osc_range(cls, value):
+        return 0 if value is None else value
+
     @field_validator("detector_roi_mode", mode="before")
     @classmethod
     def validate_detector_roi_mode(cls, value):

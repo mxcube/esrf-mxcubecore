@@ -573,8 +573,8 @@ class QueueBuilder:
         Return:
             The data model.
         """
-        if not task["parameters"]["osc_range"]:
-            task["parameters"]["osc_range"] = None
+        if not task["parameters"].get("osc_range"):
+            task["parameters"]["osc_range"] = 0
 
         task["parameters"]["shape"] = str(task["parameters"]["shape"])
 
