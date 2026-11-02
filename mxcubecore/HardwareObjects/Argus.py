@@ -52,6 +52,7 @@ stop_event = Event()
 
 class Argus(HardwareObject):
     class HOConfig(HardwareObject.HOConfig):
+        start_argus: bool = False
         grpc_url: str = "localhost:50051"
         config_path: str | None = None
         # {'stream': [{name, create, uri, port, main...}, ...]}, or json string
