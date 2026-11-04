@@ -55,8 +55,8 @@ class ESRFBeamlineActions(BeamlineActions):
         controller_commands: dict | None = None
         hwobj_command_roles: list | str | None = None
 
-    def __init__(self, *args):
-        super().__init__(*args)
+    def __init__(self,name,  *args):
+        super().__init__(name, *args)
         self.ctrl_list = []
         self.hwobj_list = []
 
