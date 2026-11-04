@@ -10,6 +10,7 @@ from email.mime.text import MIMEText
 from importlib.util import find_spec
 from pathlib import Path
 from typing import Any, List, Optional, Tuple
+from urllib.parse import quote
 from zoneinfo import ZoneInfo
 
 import gevent
@@ -512,6 +513,7 @@ class ICATLIMS(AbstractLims):
         data_portal_url: str | None = None
         logbook_url: str | None = None
         user_portal_url: str | None = None
+        datafile_viewer_url: str | None = None
         use_set_endstation_name: bool = False
         pause_queue_on_upload_failure: bool = False
         # list, or comma/space separated string
@@ -1097,6 +1099,10 @@ class ICATLIMS(AbstractLims):
         return self.get_property("logbook_url", None)
 
     @property
+    def datafile_viewer_url(self):
+        return self.get_property("datafile_viewer_url", None)
+
+    @property
     def before_offset_days(self):
         return self.get_property("before_offset_days", "1")
 
@@ -1283,6 +1289,36 @@ class ICATLIMS(AbstractLims):
             )
         except Exception:
             return ""
+
+    def get_datafile_id(self, location: str) -> Optional[int]:
+        """Returns the ICAT datafile id of the file at location, None if the
+        file is not (yet) registered in ICAT"""
+        try:
+            datafiles = self._icat_client.get_datafiles_by(location=location)
+        except Exception:
+            logger.exception("Failed to retrieve ICAT datafile for %s", location)
+            return None
+
+        if not datafiles:
+            logger.debug("No ICAT datafile found for %s", location)
+            return None
+
+        return int(datafiles[0].id)
+
+    def get_datafile_url(self, location: str) -> Optional[str]:
+        """Returns the URL of the data portal viewer displaying the file at
+        location, None if no viewer is configured or the file is not in ICAT"""
+        if self.datafile_viewer_url is None:
+            return None
+
+        datafile_id = self.get_datafile_id(location)
+        if datafile_id is None:
+            return None
+
+        name = quote("/" + Path(location).name, safe="")
+        return self.datafile_viewer_url.replace(
+            "{datafile_id}", str(datafile_id)
+        ).replace("{name}", name)
 
     def __get_proposal_number_by_investigation(
         self, investigation: icat_models.InvestigationDetails

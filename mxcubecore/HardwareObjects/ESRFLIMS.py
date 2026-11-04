@@ -231,6 +231,9 @@ class ESRFLIMS(AbstractLims):
     def get_session_by_id(self, sid: str):
         return self.drac.get_session_by_id(sid)
 
+    def get_datafile_url(self, location: str):
+        return self.drac.get_datafile_url(location)
+
     def get_user_name(self):
         return self.drac.get_user_name()
 
