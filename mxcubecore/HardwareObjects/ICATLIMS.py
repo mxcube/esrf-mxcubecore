@@ -650,8 +650,16 @@ class ICATLIMS(AbstractLims):
         if not self._active_user:
             self.set_active_user(username)
 
-        # Retrieving user's investigations
-        sessions = self.to_sessions(self.__get_all_investigations())
+        # Retrieving the investigations of the user logging in, using that
+        # user's own credentials and not those of the active user
+        investigations = self.__get_all_investigations(icat_client, icat_session)
+
+        # self.investigations is used to look up the active session, only
+        # the active user's investigations are kept there
+        if username == self._active_user:
+            self.investigations = investigations
+
+        sessions = self.to_sessions(investigations)
 
         if len(sessions) == 0:
             msg = f"No sessions available for user {username}"
@@ -1118,7 +1126,7 @@ class ICATLIMS(AbstractLims):
     def set_active_session_by_id(self, session_id: str) -> Session:
         logger.debug(f"set_active_session_by_id: {session_id}")
 
-        if self.is_session_already_active(self.session_manager.active_session):
+        if self.is_session_already_active(session_id):
             return self.session_manager.active_session
 
         sessions = self.session_manager.sessions
@@ -1129,7 +1137,7 @@ class ICATLIMS(AbstractLims):
             logger.warning("Session list is empty. No session candidates")
             raise RuntimeError("No sessions available")
 
-        if len(sessions) == 1:
+        if len(sessions) == 1 and sessions[0].session_id == session_id:
             self.session_manager.active_session = sessions[0]
             logger.debug(
                 "Session list contains a single session. proposal_name=%s",
@@ -1178,25 +1186,29 @@ class ICATLIMS(AbstractLims):
         logger.warning("No investigation found")
         return None
 
-    def __get_all_investigations(self) -> List[icat_models.InvestigationDetails]:
-        """Returns all investigations by user. An investigation corresponds to
-        one experimental session. It returns an empty array in case of error"""
-        self.investigations = []
+    def __get_all_investigations(
+        self,
+        icat_client: IcatClient,
+        icat_session: icat_models.AuthSession,
+    ) -> List[icat_models.InvestigationDetails]:
+        """Returns all investigations accessible with icat_client/icat_session.
+        An investigation corresponds to one experimental session. It returns an
+        empty array in case of error"""
+        investigations = []
         try:
             msg = f"__get_all_investigations before={self.before_offset_days} "
             msg += f"after={self.after_offset_days} "
             msg += f"beamline={self.override_beamline_name} "
-            msg += f"isInstrumentScientist={self.icat_session.is_instrument_scientist} "
-            msg += f"isAdministrator={self.icat_session.is_administrator} "
+            msg += f"isInstrumentScientist={icat_session.is_instrument_scientist} "
+            msg += f"isAdministrator={icat_session.is_administrator} "
             msg += f"compatible_beamlines={self.compatible_beamlines}"
             logger.debug(msg)
 
-            if self.icat_session is not None and (
-                self.icat_session.is_administrator
-                or self.icat_session.is_instrument_scientist
+            if icat_session is not None and (
+                icat_session.is_administrator or icat_session.is_instrument_scientist
             ):
                 # Setting up of the session done by admin or staff
-                self.investigations = self._icat_client.get_investigations_by(
+                investigations = icat_client.get_investigations_by(
                     start_date=datetime.today()
                     - timedelta(days=float(self.before_offset_days)),
                     end_date=datetime.today()
@@ -1213,11 +1225,11 @@ class ICATLIMS(AbstractLims):
                     )
                     return []
 
-                self.investigations = self._icat_client.get_investigations_by(
+                investigations = icat_client.get_investigations_by(
                     ids=[self.session_manager.active_session.session_id],
                 )
             else:
-                self.investigations = self._icat_client.get_investigations_by(
+                investigations = icat_client.get_investigations_by(
                     filter=self.filter,
                     instrument_name=self.compatible_beamlines,
                     start_date=datetime.today()
@@ -1226,14 +1238,14 @@ class ICATLIMS(AbstractLims):
                     + timedelta(days=float(self.after_offset_days)),
                 )
         except Exception:
-            self.investigations = []
+            investigations = []
             logger.exception("Failed on __get_all_investigations")
         else:
             msg = "__get_all_investigations retrieved "
-            msg += f"{len(self.investigations)} investigations"
+            msg += f"{len(investigations)} investigations"
             logger.debug(msg)
 
-        return self.investigations
+        return investigations
 
     def _get_data_portal_url(
         self, investigation: icat_models.InvestigationDetails
