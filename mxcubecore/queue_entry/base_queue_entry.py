@@ -291,6 +291,13 @@ class BaseQueueEntry(QueueEntryContainer):
         """Returns True if failed"""
         return self.status == QUEUE_ENTRY_STATUS.FAILED
 
+    def is_running_in_background(self):
+        """Returns True if work started by the entry is still running after
+        the entry itself has been executed, for instance an asynchronous
+        characterisation. The entry is reported as running until it is done.
+        """
+        return False
+
     def enqueue(self, queue_entry):
         """
         Method inherited from QueueEntryContainer, a derived class

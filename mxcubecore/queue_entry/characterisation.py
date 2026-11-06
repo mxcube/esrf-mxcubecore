@@ -89,6 +89,9 @@ class CharacterisationGroupQueueEntry(BaseQueueEntry):
             self.status = self.dc_qe.status
         BaseQueueEntry.post_execute(self)
 
+    def is_running_in_background(self):
+        return self.char_qe is not None and self.char_qe.is_running_in_background()
+
 
 class CharacterisationQueueEntry(BaseQueueEntry):
     """
@@ -99,6 +102,10 @@ class CharacterisationQueueEntry(BaseQueueEntry):
         BaseQueueEntry.__init__(self, view, data_model, view_set_queue_entry)
         self.edna_result = None
         self.auto_add_diff_plan = True
+        # Greenlet running the characterisation when not waiting for the result
+        self._char_task = None
+        # Final status of the characterisation, None until it has finished
+        self._result_status = None
 
     def __getstate__(self):
         d = BaseQueueEntry.__getstate__(self)
@@ -125,18 +132,51 @@ class CharacterisationQueueEntry(BaseQueueEntry):
         BaseQueueEntry.execute(self)
 
         if HWR.beamline.characterisation is not None:
+            logging.getLogger("user_level_log").warning(
+                "Characterisation: Please wait ..."
+            )
+
             if self.get_data_model().wait_result:
-                logging.getLogger("user_level_log").warning(
-                    "Characterisation: Please wait ..."
-                )
                 self.start_char()
             else:
-                logging.getLogger("user_level_log").warning(
-                    "Characterisation: Please wait ..."
-                )
-                gevent.spawn(self.start_char)
+                self._char_task = gevent.spawn(self.start_char)
+
+    def is_running_in_background(self):
+        return self._char_task is not None and self._result_status is None
 
     def start_char(self):
+        # Also the status if the greenlet running the characterisation is killed
+        status = QUEUE_ENTRY_STATUS.FAILED
+
+        try:
+            status = self._characterise()
+        except Exception:
+            logging.getLogger("HWR").exception("Characterisation failed")
+            self.get_view().setText(1, "Charact. Failed")
+            status = QUEUE_ENTRY_STATUS.FAILED
+        finally:
+            self._set_result(status)
+
+    def _set_result(self, status):
+        """Set the final status of the characterisation, also on the
+        CharacterisationGroupQueueEntry, which may already have been executed
+        when the characterisation runs in the background.
+        """
+        self._result_status = status
+        self.status = status
+        self.get_data_model().set_executed(True)
+        self.get_view().setHighlighted(True)
+
+        entry = self
+        if isinstance(self.get_container(), CharacterisationGroupQueueEntry):
+            entry = self.get_container()
+            entry.status = status
+
+        HWR.beamline.queue_manager.emit("queue_entry_state_changed", (entry,))
+
+    def _characterise(self):
+        """Run the characterisation and return the resulting status"""
+        status = QUEUE_ENTRY_STATUS.SUCCESS
         char = self.get_data_model()
         characterisation_parameters = char.characterisation_parameters
 
@@ -191,7 +231,7 @@ class CharacterisationQueueEntry(BaseQueueEntry):
                         self.get_view().setText(1, "Done")
                     else:
                         self.get_view().setText(1, "No result")
-                        self.status = QUEUE_ENTRY_STATUS.WARNING
+                        status = QUEUE_ENTRY_STATUS.WARNING
                         log.warning(
                             "Characterisation completed "
                             + "successfully but without collection plan."
@@ -199,9 +239,9 @@ class CharacterisationQueueEntry(BaseQueueEntry):
                 else:
                     self.get_view().setText(1, "Charact. Failed")
                     log.error("EDNA-Characterisation completed with a failure.")
+                    status = QUEUE_ENTRY_STATUS.FAILED
 
-        char.set_executed(True)
-        self.get_view().setHighlighted(True)
+        return status
 
     def handle_diffraction_plan(self, edna_result, edna_collections):
         char = self.get_data_model()
@@ -242,6 +282,11 @@ class CharacterisationQueueEntry(BaseQueueEntry):
         self.get_view().setHighlighted(False)
 
     def post_execute(self):
+        # The QueueManager sets the status to SUCCESS once execute returns,
+        # restore the result if the characterisation has already finished
+        if self._result_status is not None:
+            self.status = self._result_status
+
         BaseQueueEntry.post_execute(self)
 
     def get_type_str(self):

@@ -175,25 +175,21 @@ class QueueSerializer:
         if node_id is None:
             return True, UNCOLLECTED
 
-        node, entry = HWR.beamline.queue_manager.get_entry(node_id)
-
-        enabled = node.is_enabled()
-        curr_entry = HWR.beamline.queue_manager.get_current_entry()
-        running = HWR.beamline.queue_manager.is_executing() and (
-            curr_entry == entry or curr_entry == entry._parent_container
+        enabled, is_executed, running, status = (
+            HWR.beamline.queue_manager.get_entry_status(node_id)
         )
 
-        if entry.status == QUEUE_ENTRY_STATUS.FAILED:
+        if status == QUEUE_ENTRY_STATUS.FAILED:
             state = FAILED
-        elif entry.status == QUEUE_ENTRY_STATUS.WARNING:
+        elif status == QUEUE_ENTRY_STATUS.WARNING:
             # e.g. a Characterisation that ran to completion but produced no
             # collection plan (see queue_entry/characterisation.py) - checked
             # before is_executed()/SUCCESS below, since such an entry is also
             # is_executed() but should be reported as WARNING, not COLLECTED.
             state = WARNING
-        elif node.is_executed() or entry.status == QUEUE_ENTRY_STATUS.SUCCESS:
+        elif is_executed or status == QUEUE_ENTRY_STATUS.SUCCESS:
             state = COLLECTED
-        elif running or entry.status == QUEUE_ENTRY_STATUS.RUNNING:
+        elif running or status == QUEUE_ENTRY_STATUS.RUNNING:
             state = RUNNING
         else:
             state = UNCOLLECTED

@@ -441,6 +441,9 @@ class QueueManager(HardwareObject, QueueEntryContainer):
             curr_entry == entry or curr_entry == entry._parent_container
         )
 
+        if entry.is_running_in_background():
+            return enabled, False, True, base_queue_entry.QUEUE_ENTRY_STATUS.RUNNING
+
         return enabled, model.is_executed(), running, entry.status
 
     def enable_entry(
