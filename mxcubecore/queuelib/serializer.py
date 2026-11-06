@@ -71,7 +71,11 @@ class QueueSerializer:
         }
 
         if queue_dict:
-            queue_dict["sample_order"] = list(queue_dict.keys())
+            # Only enabled samples are to be collected, disabled (dequeued)
+            # samples stay in the queue model to keep their history
+            queue_dict["sample_order"] = [
+                sid for sid, sample in queue_dict.items() if sample["checked"]
+            ]
 
         # Always present, even for an empty queue - see JSON_FORMAT.md
         # and queuelib/json_schema.py.

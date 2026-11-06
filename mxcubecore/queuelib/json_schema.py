@@ -61,8 +61,9 @@ def get_json_schema() -> dict:
                 "type": "array",
                 "items": {"type": "string"},
                 "description": (
-                    "Sample IDs in queue order. Absent (not empty) when the "
-                    "queue has zero samples."
+                    "IDs of the enabled samples in queue order, disabled "
+                    "(dequeued) samples are not included. Absent (not empty) "
+                    "when the queue has zero samples."
                 ),
             },
             "format_version": {

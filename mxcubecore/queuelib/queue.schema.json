@@ -11,7 +11,7 @@
       "items": {
         "type": "string"
       },
-      "description": "Sample IDs in queue order. Absent (not empty) when the queue has zero samples."
+      "description": "IDs of the enabled samples in queue order, disabled (dequeued) samples are not included. Absent (not empty) when the queue has zero samples."
     },
     "format_version": {
       "const": "0.0.1",

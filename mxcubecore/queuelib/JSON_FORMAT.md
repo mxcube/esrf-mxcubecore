@@ -23,7 +23,9 @@ The whole queue is a dict keyed by sample ID:
 }
 ```
 
-- `sample_order` is a list of sample IDs in queue order
+- `sample_order` is a list of the IDs of the enabled samples in queue order.
+  Disabled (dequeued) samples are still keyed in the dict, with
+  `checked: false`, but are not part of `sample_order`
 - `format_version` identifies the version of this document/schema the
   response conforms to `mxcubecore.queuelib.QUEUE_FORMAT_VERSION`.
   `queuelib/json_schema.py`/`queuelib/queue.schema.json` for the generated,
