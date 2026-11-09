@@ -473,6 +473,10 @@ class Sample(TaskNode):
         self.set_name(HWR.beamline.session.get_default_prefix(self))
 
     def set_from_dict(self, p):
+        # A value of None means not set (for instance the LIMS information of
+        # a sample not in LIMS), so that the defaults below apply
+        p = {key: value for key, value in p.items() if value is not None}
+
         self.code = p.get("code", "")
         self.lims_code = p.get("limsCode", "")
         self.holder_length = p.get("holderLength", 22.0)

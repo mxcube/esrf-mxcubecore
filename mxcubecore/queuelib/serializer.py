@@ -540,7 +540,12 @@ class QueueSerializer:
 
     def _queue_add_item_rec(self, parent_node_id: int | None, item: SampleNode):
         if item.type == "Sample":
-            sample_node_id = self.builder.add_sample(item.sampleID, item.dict())
+            # Leave out the fields without a value (for instance the LIMS
+            # information of a sample not in LIMS) so that the defaults of
+            # Sample.set_from_dict apply
+            sample_node_id = self.builder.add_sample(
+                item.sampleID, item.dict(exclude_none=True)
+            )
 
             for task in item.tasks or []:
                 self._queue_add_item_rec(sample_node_id, task)
