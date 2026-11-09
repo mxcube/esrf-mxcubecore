@@ -69,7 +69,7 @@ class Argus(HardwareObject):
         self.running_processes = {}
         self.available_classes = {}
         self.last_response = {}
-        self.streams = []
+        self.streams = {}
         self.closable_running = (
             False  # keep track if there are any closable processes running
         )
