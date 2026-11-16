@@ -332,26 +332,40 @@ class SsxBaseQueueEntry(BaseQueueEntry):
         self.emit_progress(0)
 
     def post_execute(self):
-        super().post_execute()
-        data_root_path = self.get_data_path()
-        data_process_path = self.get_process_path()
-        self._data_model._task_data.lims_parameters.end_time = datetime.datetime.now()
+        try:
+            super().post_execute()
+            data_root_path = self.get_data_path()
+            data_process_path = self.get_process_path()
+            self._data_model._task_data.lims_parameters.end_time = (
+                datetime.datetime.now()
+            )
 
-        parameters = {}
-        parameters["collection_parameters"] = self._data_model._task_data
-        parameters["data_path"] = data_root_path
-        parameters["data_process_path"] = data_process_path
-        parameters["beamline_parameters"] = self._beamline_values
-        parameters["extra_lims_values"] = self._data_model._task_data.lims_parameters
-        parameters["sample"] = self._data_model.get_parent().get_parent().crystals[0]
-        parameters["experiment_type"] = (
-            self._data_model._task_data.lims_parameters.experiment_type
-        )
+            parameters = {}
+            parameters["collection_parameters"] = self._data_model._task_data
+            parameters["data_path"] = data_root_path
+            parameters["data_process_path"] = data_process_path
+            parameters["beamline_parameters"] = self._beamline_values
+            parameters["extra_lims_values"] = (
+                self._data_model._task_data.lims_parameters
+            )
+            parameters["sample"] = (
+                self._data_model.get_parent().get_parent().crystals[0]
+            )
+            parameters["experiment_type"] = (
+                self._data_model._task_data.lims_parameters.experiment_type
+            )
 
-        HWR.beamline.lims.finalize_data_collection(parameters)
+            HWR.beamline.lims.finalize_data_collection(parameters)
 
-        self.start_ewoks(parameters)
+            self.start_ewoks(parameters)
+        finally:
+            # Also when storing in LIMS or starting the processing failed
+            self._secure_beamline()
 
+    def _secure_beamline(self):
+        """Move the detector back (if configured to) and close the OH2 safety
+        shutter after a collection
+        """
         try:
             move_back = HWR.beamline.detector.move_detector.get_value().value
         except ValueError:
