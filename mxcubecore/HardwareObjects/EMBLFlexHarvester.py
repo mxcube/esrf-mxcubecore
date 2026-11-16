@@ -109,9 +109,18 @@ class EMBLFlexHarvester(EMBLFlexHCD):
         # Process each sample independently to avoid global failure
         for index, x_tal_uuid in enumerate(ha_sample_lists):
             sample = sample_list[index]
-            img_url = self._harvester_hwo.get_crystal_images_urls(x_tal_uuid)
-            img_target_x = self._harvester_hwo.get_image_target_x(x_tal_uuid)
-            img_target_y = self._harvester_hwo.get_image_target_y(x_tal_uuid)
+
+            # The Harvester raises (Null object reference) for a crystal
+            # without image, the sample is still usable without it
+            try:
+                img_url = self._harvester_hwo.get_crystal_images_urls(x_tal_uuid)
+                img_target_x = self._harvester_hwo.get_image_target_x(x_tal_uuid)
+                img_target_y = self._harvester_hwo.get_image_target_y(x_tal_uuid)
+            except Exception as err:
+                self.user_log.warning(
+                    f"No image from Harvester for crystal {x_tal_uuid}: {err}"
+                )
+                img_url, img_target_x, img_target_y = None, None, None
 
             # Enrich sample object in MXCuBE
             sample.set_id(x_tal_uuid)

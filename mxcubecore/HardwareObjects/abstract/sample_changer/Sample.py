@@ -113,7 +113,7 @@ class Sample(Component):
 
     def _set_image_url(self, value):
         if (value is not None) and (value.startswith("http://")):
-            value = "https://" + value[7]
+            value = "https://" + value[7:]
         self._set_property(self.__IMAGE_URL_PROPERTY__, value)
 
     def get_image_url(self):
